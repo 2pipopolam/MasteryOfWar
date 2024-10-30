@@ -1,0 +1,865 @@
+{
+	"folders": [
+		{
+			"name": "MasteryOfWar",
+			"path": "."
+		},
+		{
+			"name": "UE5",
+			"path": "/home/pipopolam/UE5"
+		}
+	],
+	"settings": {
+		"typescript.tsc.autoDetect": "off",
+		"npm.autoDetect": "off"
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.cpptools",
+			"ms-dotnettools.csharp"
+		]
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "MasteryOfWar Linux Debug Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Debug Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar Linux Debug Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Debug Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux DebugGame Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux DebugGame Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar Linux DebugGame Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux DebugGame Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Development Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Development Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar Linux Development Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Development Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Test Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Test",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Test Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Test",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar Linux Test Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Test Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Test",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Shipping Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Shipping",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Shipping Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Shipping",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar Linux Shipping Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar Linux Shipping Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"Linux",
+					"Shipping",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Debug Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Debug Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar LinuxArm64 Debug Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Debug Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 DebugGame Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 DebugGame Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar LinuxArm64 DebugGame Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 DebugGame Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Development Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Development Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar LinuxArm64 Development Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Development Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Test Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Test",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Test Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Test",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar LinuxArm64 Test Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Test Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Test",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Shipping Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Shipping",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Shipping Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Shipping",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWar LinuxArm64 Shipping Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWar LinuxArm64 Shipping Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWar",
+					"LinuxArm64",
+					"Shipping",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux Debug Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux Debug Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWarEditor Linux Debug Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux Debug Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"Debug",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux DebugGame Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux DebugGame Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWarEditor Linux DebugGame Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux DebugGame Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"DebugGame",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux Development Build",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux Development Rebuild",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex"
+				],
+				"problemMatcher": "$msCompile",
+				"dependsOn": [
+					"MasteryOfWarEditor Linux Development Clean"
+				],
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			},
+			{
+				"label": "MasteryOfWarEditor Linux Development Clean",
+				"group": "build",
+				"command": "Engine/Build/BatchFiles/Linux/Build.sh",
+				"args": [
+					"MasteryOfWarEditor",
+					"Linux",
+					"Development",
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-waitmutex",
+					"-clean"
+				],
+				"problemMatcher": "$msCompile",
+				"type": "shell",
+				"options": {
+					"cwd": "/home/pipopolam/UE5"
+				}
+			}
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Launch MasteryOfWar (Debug)",
+				"request": "launch",
+				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Debug",
+				"preLaunchTask": "MasteryOfWar Linux Debug Build",
+				"args": [
+				],
+				"cwd": "/home/pipopolam/UE5",
+				"type": "cppdbg",
+				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MasteryOfWar (DebugGame)",
+				"request": "launch",
+				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-DebugGame",
+				"preLaunchTask": "MasteryOfWar Linux DebugGame Build",
+				"args": [
+				],
+				"cwd": "/home/pipopolam/UE5",
+				"type": "cppdbg",
+				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MasteryOfWar (Development)",
+				"request": "launch",
+				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame",
+				"preLaunchTask": "MasteryOfWar Linux Development Build",
+				"args": [
+				],
+				"cwd": "/home/pipopolam/UE5",
+				"type": "cppdbg",
+				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MasteryOfWar (Test)",
+				"request": "launch",
+				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Test",
+				"preLaunchTask": "MasteryOfWar Linux Test Build",
+				"args": [
+				],
+				"cwd": "/home/pipopolam/UE5",
+				"type": "cppdbg",
+				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MasteryOfWar (Shipping)",
+				"request": "launch",
+				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Shipping",
+				"preLaunchTask": "MasteryOfWar Linux Shipping Build",
+				"args": [
+				],
+				"cwd": "/home/pipopolam/UE5",
+				"type": "cppdbg",
+				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MasteryOfWarEditor (Debug)",
+				"request": "launch",
+				"program": "/home/pipopolam/UE5/Engine/Binaries/Linux/UnrealEditor-Linux-Debug",
+				"preLaunchTask": "MasteryOfWarEditor Linux Debug Build",
+				"args": [
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
+				],
+				"cwd": "/home/pipopolam/UE5",
+				"type": "cppdbg",
+				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MasteryOfWarEditor (DebugGame)",
+				"request": "launch",
+				"program": "/home/pipopolam/UE5/Engine/Binaries/Linux/UnrealEditor-Linux-DebugGame",
+				"preLaunchTask": "MasteryOfWarEditor Linux DebugGame Build",
+				"args": [
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
+				],
+				"cwd": "/home/pipopolam/UE5",
+				"type": "cppdbg",
+				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Launch MasteryOfWarEditor (Development)",
+				"request": "launch",
+				"program": "/home/pipopolam/UE5/Engine/Binaries/Linux/UnrealEditor",
+				"preLaunchTask": "MasteryOfWarEditor Linux Development Build",
+				"args": [
+					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
+				],
+				"cwd": "/home/pipopolam/UE5",
+				"type": "cppdbg",
+				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"showDisplayString": true
+			},
+			{
+				"name": "Generate Project Files",
+				"type": "coreclr",
+				"request": "launch",
+				"preLaunchTask": "UnrealBuildTool Linux Development Build",
+				"program": "/home/pipopolam/UE5/Engine/Build/BatchFiles/RunUBT.bat",
+				"args": [
+					"-projectfiles",
+					"-vscode",
+					"-project=/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"-game",
+					"-engine",
+					"-dotnet"
+				],
+				"console": "internalConsole",
+				"internalConsoleOptions": "openOnSessionStart",
+				"stopAtEntry": false,
+				"cwd": "/home/pipopolam/UE5"
+			}
+		]
+	}
+}
