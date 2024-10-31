@@ -17,6 +17,12 @@ public:
 	virtual ~UShootingComponent() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Shooting")
+	void StartFiring();
+
+	UFUNCTION(BlueprintCallable, Category = "Shooting")
+	void StopFiring();
+
+	UFUNCTION(BlueprintCallable, Category = "Shooting")
 	void Shoot();
 
 protected:
@@ -29,10 +35,16 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Shooting", meta = (AllowPrivateAccess = "true"))
 	float WeaponDamage = 20.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Shooting", meta = (AllowPrivateAccess = "true"))
+	float FireRate = 0.1f; // 10 shoots pes second
+
 	UPROPERTY(EditAnywhere, Category = "Effects", meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* MuzzleFlash;
 
 	UPROPERTY(EditAnywhere, Category = "Effects", meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* ImpactEffect;
-	
+
+	FTimerHandle AutoFireTimerHandle;
+    
+	bool bIsFiring = false;
 };

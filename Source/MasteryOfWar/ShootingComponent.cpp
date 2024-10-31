@@ -1,6 +1,7 @@
 #include "ShootingComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "TimerManager.h"
 
 UShootingComponent::UShootingComponent()
 {
@@ -9,11 +10,44 @@ UShootingComponent::UShootingComponent()
 
 UShootingComponent::~UShootingComponent()
 {
+    // Ensure timer is cleared when component is destroyed
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(AutoFireTimerHandle);
+    }
 }
 
 void UShootingComponent::BeginPlay()
 {
     Super::BeginPlay();
+}
+
+void UShootingComponent::StartFiring()
+{
+    if (!bIsFiring)
+    {
+        bIsFiring = true;
+        // Execute first shot immediately
+        Shoot();
+        // Start timer for automatic firing
+        GetWorld()->GetTimerManager().SetTimer(
+            AutoFireTimerHandle,
+            this,
+            &UShootingComponent::Shoot,
+            FireRate,
+            true // Loop the timer
+        );
+    }
+}
+
+void UShootingComponent::StopFiring()
+{
+    if (bIsFiring)
+    {
+        bIsFiring = false;
+        // Stop the timer
+        GetWorld()->GetTimerManager().ClearTimer(AutoFireTimerHandle);
+    }
 }
 
 void UShootingComponent::Shoot()
@@ -74,7 +108,8 @@ void UShootingComponent::Shoot()
             );
         }
 
-/*      // needed actor with HP
+/*
+        // Handle damage
         AActor* HitActor = HitResult.GetActor();
         if (HitActor)
         {
@@ -82,7 +117,7 @@ void UShootingComponent::Shoot()
             HitActor->TakeDamage(WeaponDamage, DamageEvent, OwnerCharacter->GetController(), OwnerCharacter);
         }
 */
-        // logging
+        // Debug visualization
         #if WITH_EDITOR
         DrawDebugLine(
             GetWorld(),
@@ -103,4 +138,3 @@ void UShootingComponent::Shoot()
         #endif
     }
 }
-

@@ -11,6 +11,12 @@ TARGETS = \
 	MasteryOfWarEditor-Linux-DebugGame  \
 	MasteryOfWarEditor-Linux-Shipping  \
 	MasteryOfWarEditor \
+	DotNetPerforceLib-Linux-DebugGame  \
+	DotNetPerforceLib-Linux-Shipping  \
+	DotNetPerforceLib \
+	EventLoopUnitTests-Linux-DebugGame  \
+	EventLoopUnitTests-Linux-Shipping  \
+	EventLoopUnitTests \
 	UnrealEditor-Linux-DebugGame  \
 	UnrealEditor-Linux-Shipping  \
 	UnrealEditor \
@@ -48,6 +54,24 @@ MasteryOfWarEditor-Linux-Shipping:
 
 MasteryOfWarEditor:
 	 $(PROJECTBUILD) MasteryOfWarEditor Linux Development  -project="$(GAMEPROJECTFILE)" $(ARGS)
+
+DotNetPerforceLib-Linux-DebugGame:
+	 $(BUILD) DotNetPerforceLib Linux DebugGame  -project="$(GAMEPROJECTFILE)" $(ARGS)
+
+DotNetPerforceLib-Linux-Shipping:
+	 $(BUILD) DotNetPerforceLib Linux Shipping  -project="$(GAMEPROJECTFILE)" $(ARGS)
+
+DotNetPerforceLib:
+	 $(BUILD) DotNetPerforceLib Linux Development  -project="$(GAMEPROJECTFILE)" $(ARGS)
+
+EventLoopUnitTests-Linux-DebugGame:
+	 $(BUILD) EventLoopUnitTests Linux DebugGame  -project="$(GAMEPROJECTFILE)" $(ARGS)
+
+EventLoopUnitTests-Linux-Shipping:
+	 $(BUILD) EventLoopUnitTests Linux Shipping  -project="$(GAMEPROJECTFILE)" $(ARGS)
+
+EventLoopUnitTests:
+	 $(BUILD) EventLoopUnitTests Linux Development  -project="$(GAMEPROJECTFILE)" $(ARGS)
 
 UnrealEditor-Linux-DebugGame:
 	 $(BUILD) UnrealEditor Linux DebugGame  -project="$(GAMEPROJECTFILE)" $(ARGS)

@@ -850,8 +850,6 @@
 				"args": [
 					"-projectfiles",
 					"-vscode",
-					"-project=/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
-					"-game",
 					"-engine",
 					"-dotnet"
 				],
