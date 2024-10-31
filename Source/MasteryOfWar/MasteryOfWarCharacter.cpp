@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "ShootingComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -55,14 +56,21 @@ AMasteryOfWarCharacter::AMasteryOfWarCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	//FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 
-  FollowCamera->SetupAttachment(GetCapsuleComponent());
+   FollowCamera->SetupAttachment(GetCapsuleComponent());
 
-  //FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+   //FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-  FollowCamera->bUsePawnControlRotation = true;
+   FollowCamera->bUsePawnControlRotation = true;
   // Note: The skeletal mesh and anim blueprint references on the Mesh component
   // (inherited from Character) are set in the derived blueprint asset named
   // ThirdPersonCharacter (to avoid direct content references in C++)
+	
+	
+	
+	
+	
+   ShootingComponent = CreateDefaultSubobject<UShootingComponent>(TEXT("ShootingComponent"));
+  
 }
 
 void AMasteryOfWarCharacter::BeginPlay()
@@ -102,6 +110,8 @@ void AMasteryOfWarCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+	
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMasteryOfWarCharacter::OnFire);
 }
 
 void AMasteryOfWarCharacter::Move(const FInputActionValue& Value)
@@ -137,5 +147,14 @@ void AMasteryOfWarCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+
+void AMasteryOfWarCharacter::OnFire()
+{
+	if (ShootingComponent)
+	{
+		ShootingComponent->Shoot();
 	}
 }

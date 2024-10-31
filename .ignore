@@ -2,3 +2,6 @@
 /Saved
 /Intermediate
 /.vscode
+/DerivedDataCache
+/.git
+/.ccls-cache

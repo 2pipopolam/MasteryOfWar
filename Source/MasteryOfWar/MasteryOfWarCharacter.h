@@ -1,5 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
+// Copyright Epic Games, Inc. All Rights Reserved. 
 #pragma once
 
 #include "CoreMinimal.h"
@@ -43,6 +42,10 @@ class AMasteryOfWarCharacter : public ACharacter
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
+	
+	UPROPERTY(VisibleAnywhere)
+	class UShootingComponent* ShootingComponent;
+	
 
 public:
 	AMasteryOfWarCharacter();
@@ -55,14 +58,23 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
-			
 
-protected:
+
+	void OnFire();
+
+
+
+	
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	// To add mapping context
 	virtual void BeginPlay();
+
+
+
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -70,4 +82,3 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
-
