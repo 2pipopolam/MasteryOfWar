@@ -18,38 +18,31 @@ AMasteryOfWarCharacter::AMasteryOfWarCharacter()
     // Set size for collision capsule
     GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-    // Настройки движения и поворота
     bUseControllerRotationPitch = true;
     bUseControllerRotationYaw = true;      
     bUseControllerRotationRoll = false;
 
-    // Настройка CharacterMovement
     if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
     {
-        // Включаем гравитацию
         MovementComponent->GravityScale = 1.0f;
         
-        // Настройки движения
         MovementComponent->bOrientRotationToMovement = false;
         MovementComponent->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
         
-        // Настройки прыжка
         MovementComponent->JumpZVelocity = 500.f;
         MovementComponent->AirControl = 0.35f;
         
-        // Настройки ходьбы
         MovementComponent->MaxWalkSpeed = 500.f;
         MovementComponent->MinAnalogWalkSpeed = 20.f;
         MovementComponent->BrakingDecelerationWalking = 2000.f;
         MovementComponent->BrakingDecelerationFalling = 1500.0f;
         
-        // Включаем все необходимые флаги движения
+        
         MovementComponent->SetMovementMode(MOVE_Walking);
         MovementComponent->bConstrainToPlane = true;
         MovementComponent->bSnapToPlaneAtStart = true;
     }
 
-    // Создаем и настраиваем камеру
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
     FollowCamera->SetupAttachment(GetCapsuleComponent());
     FollowCamera->SetRelativeLocation(FVector(30.0f, 0.0f, 64.0f));
