@@ -3,5 +3,6 @@
 /.vscode
 /DerivedDataCache
 /.idea
+/.ccls-cache
 /Saved
 /Intermediate

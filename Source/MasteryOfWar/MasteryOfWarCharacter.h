@@ -19,10 +19,13 @@ class AMasteryOfWarCharacter : public ACharacter
     GENERATED_BODY()
 
 private:
-    /** Camera boom positioning the camera behind the character */
-    //UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-    //USpringArmComponent* CameraBoom;
-    
+    bool bShowDebugLine = false;
+
+    UFUNCTION()
+    void ToggleDebugLine();
+
+
+
     /** Follow camera */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
     UCameraComponent* FollowCamera;
@@ -46,15 +49,26 @@ private:
     /** Fire Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* FireAction;
-    
-    /** Shooting Component */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Gameplay, meta = (AllowPrivateAccess = "true"))
-    class UShootingComponent* ShootingComponent;
+
+    /** Reload Input Action */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* ReloadAction;
 
 public:
     AMasteryOfWarCharacter();
+    
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    void AttachWeapon(AAK47* Weapon);
+
+    UFUNCTION(BlueprintCallable, Category = "Debug")
+    bool IsDebugLineEnabled() const { return bShowDebugLine; }
 
 protected:
+
+    UPROPERTY()
+    AAK47* CurrentWeapon;
+
+
     /** Called for movement input */
     void Move(const FInputActionValue& Value);
 
@@ -62,19 +76,20 @@ protected:
     void Look(const FInputActionValue& Value);
 
     /** Called for fire input */
-    void OnFire();
+    void StartFire();
     
     void StopFire();
+
+    /** Called for reload input */
+    void OnReload();
     
     // APawn interface
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     
     // To add mapping context
-    virtual void BeginPlay();
+    virtual void BeginPlay() override;
 
 public:
-    /** Returns CameraBoom subobject **/
-    //FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
     /** Returns FollowCamera subobject **/
     FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
