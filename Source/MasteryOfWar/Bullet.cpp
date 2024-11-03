@@ -123,6 +123,7 @@ void ABullet::BeginPlay()
     StartLocation = GetActorLocation();
     
     // Рисуем отладочную сферу в точке спавна
+    /*
     DrawDebugSphere(
         GetWorld(),
         GetActorLocation(),
@@ -132,7 +133,8 @@ void ABullet::BeginPlay()
         false,
         5.0f
     );
-
+    */
+    
     UE_LOG(LogTemp, Warning, TEXT("Bullet spawned at location: %s with rotation: %s"), 
            *GetActorLocation().ToString(), *GetActorRotation().ToString());
     
@@ -151,17 +153,19 @@ void ABullet::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+
     // Рисуем след пули
     DrawDebugLine(
         GetWorld(),
         GetActorLocation() - GetActorForwardVector() * 50.0f,
         GetActorLocation(),
-        FColor::Red,
+        FColor::Yellow,
         false,
         -1.0f,
         0,
         1.0f
     );
+
 
     float TravelDistance = FVector::Distance(StartLocation, GetActorLocation());
     if (TravelDistance > MaxTravelDistance)
