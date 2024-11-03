@@ -8,7 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "WeaponSystem.generated.h"
 
-// Структура для хранения состояния магазина
+// mag state structure
 USTRUCT(BlueprintType)
 struct FMagazineState
 {
@@ -23,7 +23,7 @@ struct FMagazineState
     FMagazineState() : CurrentAmmo(0), MaxAmmo(0) {}
 };
 
-// Интерфейс расчета урона
+// damage interface
 UINTERFACE(MinimalAPI)
 class UDamageCalculator : public UInterface
 {
@@ -37,7 +37,7 @@ public:
     virtual float CalculateDamage(float Distance) = 0;
 };
 
-// Интерфейс поведения стрельбы
+// interface of shooting
 UINTERFACE(MinimalAPI)
 class UFireBehavior : public UInterface
 {
@@ -57,10 +57,12 @@ class MASTERYOFWAR_API AWeapon : public AActor
     GENERATED_BODY()
 
 public:
+    //Class constructor
     AWeapon();
+    //Class Destructor
     virtual ~AWeapon();
 
-    // Основные функции оружия
+    // weapon func
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual void Fire();
 
@@ -73,7 +75,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual void Reload();
 
-    // Функции магазина
+    // MAG FUNC
     UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
     virtual bool CanFire() const;
 
@@ -83,25 +85,25 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
     virtual void ReloadMagazine();
 
-    // Точки спавна и трансформации
+    //SPAWN AND TRANSFORM POINTS
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual FTransform GetMuzzleTransform() const;
 
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual FTransform GetShellEjectTransform() const;
 
-    // Функции точности
+    //aim func
     UFUNCTION(BlueprintCallable, Category = "Weapon|Accuracy")
     virtual FRotator CalculateSpread() const;
 
     UFUNCTION(BlueprintCallable, Category = "Weapon|Accuracy")
     virtual void UpdateSpread(float DeltaTime);
 
-    // Направление стрельбы
+    // shoot dir
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual FVector GetAdjustedAimDirection() const;
 
-    // Геттеры
+    // Getters
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     float GetFireRate() const { return FireRate; }
 
@@ -122,8 +124,8 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     float GetRange() const { return Range; }
-
-    // Сеттеры для компонентов поведения
+    
+    // Setters of behavior
     void SetDamageCalculator(TScriptInterface<IDamageCalculator> NewCalculator) { DamageCalculator = NewCalculator; }
     void SetFireBehavior(TScriptInterface<IFireBehavior> NewBehavior) { FireBehavior = NewBehavior; }
 
@@ -131,7 +133,7 @@ protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
-    // Компоненты оружия
+    //weapon components
     UPROPERTY(EditDefaultsOnly, Category = "Weapon")
     UStaticMeshComponent* WeaponModel;
 
@@ -156,7 +158,7 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Weapon")
     UParticleSystem* MuzzleFlash;
 
-    // Параметры точности
+    //Aim params 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
     float BaseSpread = 0.0f;
 
@@ -171,26 +173,25 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
     float MaxSpread = 5.0f;
-
-    // Сокеты
+    
+    // Sockets
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
     FName MuzzleSocketName = "MuzzleSocket";
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
     FName ShellEjectSocketName = "ShellEjectSocket";
 
-    // Смещение спавна
+    // weapon spawn point
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Spawn")
     FVector MuzzleOffset = FVector(0.0f, 0.0f, 0.0f);
 
-    // Состояние
+    // state
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Magazine")
     FMagazineState MagazineState;
 
     float CurrentSpread;
     bool bIsFiring;
 
-    // Компоненты поведения
     UPROPERTY()
     TScriptInterface<IDamageCalculator> DamageCalculator;
 
@@ -199,7 +200,6 @@ protected:
 
     FTimerHandle AutoFireTimerHandle;
 
-    // Вспомогательные функции
     bool IsCharacterMoving() const;
     bool IsCharacterJumping() const;
 };

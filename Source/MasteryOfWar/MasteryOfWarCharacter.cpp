@@ -26,7 +26,7 @@ AMasteryOfWarCharacter::AMasteryOfWarCharacter()
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); 
 
     // Set movement properties
-    GetCharacterMovement()->JumpZVelocity = 700.f;
+    GetCharacterMovement()->JumpZVelocity = 500.f;
     GetCharacterMovement()->AirControl = 0.35f;
     GetCharacterMovement()->MaxWalkSpeed = 500.f;
     GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
@@ -59,7 +59,7 @@ void AMasteryOfWarCharacter::BeginPlay()
     }
     
 
-    // Создаем и прикрепляем оружие при старте игры
+    // create and attach weapon
     if (UWorld* World = GetWorld())
     {
         FActorSpawnParameters SpawnParams;
@@ -105,10 +105,9 @@ void AMasteryOfWarCharacter::AttachWeapon(AAK47* Weapon)
         return;
     }
 
-    // Сохраняем указатель на текущее оружие
     CurrentWeapon = Weapon;
     
-    // Прикрепляем оружие к сокету на персонаже
+    // attach gun to socket
     FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
     Weapon->AttachToComponent(GetMesh(), AttachRules, FName("WeaponSocket"));
     
@@ -143,10 +142,6 @@ void AMasteryOfWarCharacter::OnReload()
 
 
 
-
-
-
-
 void AMasteryOfWarCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
@@ -168,7 +163,7 @@ void AMasteryOfWarCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
         // Reloading
         EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &AMasteryOfWarCharacter::OnReload);
         
-        // draw 
+        // draw rays
         PlayerInputComponent->BindKey(EKeys::Y, IE_Pressed, this, &AMasteryOfWarCharacter::ToggleDebugLine);
     }
 }

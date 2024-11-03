@@ -63,6 +63,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Debug")
     bool IsDebugLineEnabled() const { return bShowDebugLine; }
 
+
+
 protected:
 
     UPROPERTY()
@@ -81,6 +83,8 @@ protected:
     void StopFire();
 
     /** Called for reload input */
+    
+    UFUNCTION(BlueprintCallable, Category = "Character")
     void OnReload();
     
     // APawn interface

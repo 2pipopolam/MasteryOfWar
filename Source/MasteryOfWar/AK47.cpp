@@ -4,6 +4,8 @@
 #include "Animation/AnimInstance.h"
 #include "BulletFireBehavior.h"
 
+//#include "Blueprint/UserWidget.h"
+//#include "AmmoWidget.h"
 
 AAK47::AAK47()
 {
@@ -14,14 +16,10 @@ AAK47::AAK47()
         SetFireBehavior(FireBehaviorObj);
     }
 
-
-
     static ConstructorHelpers::FClassFinder<ABullet> BulletBPClass(TEXT("/Game/Weapons/Blueprints/BP_Bullet"));
-    
-    
     if (BulletBPClass.Succeeded())
     {
-        BulletClass = BulletBPClass.Class;  // Просто присваиваем значение
+        BulletClass = BulletBPClass.Class;
         UE_LOG(LogTemp, Warning, TEXT("Successfully loaded bullet class"));
     }
     else
@@ -29,25 +27,33 @@ AAK47::AAK47()
         UE_LOG(LogTemp, Error, TEXT("Failed to load bullet class BP_Bullet"));
     }
 
+   /*
+    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/MofW/Blueprints/WBP_AmmoWidget"));
+    if(WidgetClassFinder.Succeeded())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Successfully found AmmoWidget class"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to find AmmoWidget class blueprint"));
+    }
+    */
     
-    // Уникальные параметры АК-47
-    FireRate = 0.1f;         // 600 RPM
-    MinDamage = 25.0f;      // Минимальный урон
-    MaxDamage = 45.0f;      // Максимальный урон
-    Range = 8000.0f;        // Дальность стрельбы
+    FireRate = 0.1f;         // 600 shots per second
+    MinDamage = 25.0f;      
+    MaxDamage = 45.0f;     
+    Range = 8000.0f;
     
-    // Параметры разброса
-    BaseSpread = 0.2f;          // Базовый разброс
-    MovementSpread = 1.5f;      // Разброс при движении
-    JumpingSpread = 3.0f;       // Разброс при прыжке
-    SpreadRecoveryRate = 0.5f;  // Скорость восстановления точности
+    BaseSpread = 0.2f;          
+    MovementSpread = 1.5f;      
+    JumpingSpread = 3.0f;       
+    SpreadRecoveryRate = 0.5f;  
     MaxSpread = 4.0f; 
-    
     
     MagazineState.MaxAmmo = 30;
     MagazineState.CurrentAmmo = 30;
 
-    // Загрузка ассетов
+    // load assets
     static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/Weapons/Meshes/AK47_Mesh"));
     if (MeshAsset.Succeeded())
     {
@@ -97,12 +103,10 @@ AAK47::AAK47()
     }
 }
 
-
 void AAK47::BeginPlay()
 {
     Super::BeginPlay();
     
-    // Создаем и устанавливаем поведение стрельбы
     UBulletFireBehavior* FireBehaviorObj = NewObject<UBulletFireBehavior>();
     if (FireBehaviorObj)
     {
@@ -114,41 +118,67 @@ void AAK47::BeginPlay()
         UE_LOG(LogTemp, Error, TEXT("Failed to create FireBehavior in BeginPlay"));
     }
 
-    // Инициализируем магазин
+    // create mag
     MagazineState.CurrentAmmo = MagazineState.MaxAmmo;
     UE_LOG(LogTemp, Warning, TEXT("Initialized magazine: %d/%d"), 
            MagazineState.CurrentAmmo, MagazineState.MaxAmmo);
+           
+    // ammo widget
+    /*
+    if (APlayerController* PC = Cast<APlayerController>(GetOwner()->GetInstigatorController()))
+    {
+        static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/MofW/Blueprints/WBP_AmmoWidget"));
+        if(WidgetClassFinder.Succeeded())
+        {
+            AmmoWidget = CreateWidget<UAmmoWidget>(PC, WidgetClassFinder.Class);
+            if (AmmoWidget)
+            {
+                AmmoWidget->AddToViewport(1);
+                UpdateAmmoDisplay();
+                UE_LOG(LogTemp, Warning, TEXT("Successfully created and added AmmoWidget to viewport"));
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("Failed to create AmmoWidget instance"));
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to find AmmoWidget class blueprint"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to get PlayerController"));
+    }
+    
+     */
 }
 
-
-
-
-
-
-
-
-
-
+/*
+void AAK47::UpdateAmmoDisplay()
+{
+    if (AmmoWidget)
+    {
+        AmmoWidget->UpdateAmmoCount(MagazineState.CurrentAmmo, MagazineState.MaxAmmo);
+    }
+}
+*/
 
 void AAK47::SetupWeaponCollision()
 {
-    // Отключаем коллизию для оружия
     if (WeaponModel)
     {
         WeaponModel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         WeaponModel->SetCollisionResponseToAllChannels(ECR_Ignore);
     }
 
-    // Прикрепляем к персонажу если есть
     if (ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner()))
     {
         FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
         AttachToComponent(OwningCharacter->GetMesh(), AttachRules, FName("WeaponSocket"));
     }
 }
-
-
-
 
 void AAK47::Fire()
 {
@@ -160,7 +190,6 @@ void AAK47::Fire()
         return;
     }
 
-    // Проверяем FireBehavior
     if (FireBehavior)
     {
         UE_LOG(LogTemp, Warning, TEXT("Calling FireBehavior->Fire"));
@@ -174,14 +203,12 @@ void AAK47::Fire()
 
     PlayFireEffects();
     ApplyRecoil();
+    
+    //UpdateAmmoDisplay();
 }
-
-
-
 
 void AAK47::PlayFireEffects()
 {
-    // Проигрываем анимацию стрельбы
     if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
     {
         if (UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance())
@@ -193,7 +220,6 @@ void AAK47::PlayFireEffects()
         }
     }
 
-    // Спавним эффект гильзы
     if (EjectedShellEffect)
     {
         FTransform ShellTransform = GetShellEjectTransform();
@@ -203,6 +229,23 @@ void AAK47::PlayFireEffects()
             ShellTransform.GetLocation(),
             ShellTransform.GetRotation().Rotator()
         );
+    }
+    
+    if (FireSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(
+            this,
+            FireSound,
+            GetActorLocation(),
+            1.0f,
+            1.0f,
+            0.0f
+        );
+        UE_LOG(LogTemp, Warning, TEXT("Playing fire sound"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("FireSound is null"));
     }
 }
 
@@ -218,8 +261,6 @@ void AAK47::ApplyRecoil()
     }
 }
 
-
-
 void AAK47::StartFiring()
 {
     UE_LOG(LogTemp, Warning, TEXT("AK47 StartFiring called"));
@@ -229,7 +270,6 @@ void AAK47::StartFiring()
         bIsFiring = true;
         Fire();
         
-        // Проверяем настройку таймера
         if (GetWorld())
         {
             UE_LOG(LogTemp, Warning, TEXT("Setting up fire timer with rate: %f"), FireRate);
@@ -248,15 +288,6 @@ void AAK47::StartFiring()
     }
 }
 
-
-
-
-
-
-
-
-
-
 void AAK47::StopFiring()
 {
     if (bIsFiring)
@@ -264,8 +295,6 @@ void AAK47::StopFiring()
         Super::StopFiring();
     }
 }
-
-
 
 void AAK47::Reload()
 {
@@ -281,7 +310,6 @@ void AAK47::Reload()
     StopFiring();
     PlayReloadEffects();
 
-    // Запускаем таймер перезарядки
     FTimerHandle ReloadTimerHandle;
     GetWorld()->GetTimerManager().SetTimer(
         ReloadTimerHandle,
@@ -294,13 +322,8 @@ void AAK47::Reload()
     UE_LOG(LogTemp, Warning, TEXT("Started reload timer"));
 }
 
-
-
-
-
 void AAK47::PlayReloadEffects()
 {
-    // Проигрываем анимацию перезарядки
     if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
     {
         if (UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance())
@@ -312,7 +335,6 @@ void AAK47::PlayReloadEffects()
         }
     }
 
-    // Проигрываем звук перезарядки
     if (ReloadSound)
     {
         UGameplayStatics::PlaySoundAtLocation(
@@ -323,13 +345,27 @@ void AAK47::PlayReloadEffects()
     }
 }
 
-
-
 void AAK47::ReloadMagazine()
 {
     int32 OldAmmo = MagazineState.CurrentAmmo;
-    Super::ReloadMagazine();
+    
+    MagazineState.CurrentAmmo = MagazineState.MaxAmmo;
+    
     UE_LOG(LogTemp, Warning, TEXT("Magazine reloaded: %d -> %d"), 
            OldAmmo, MagazineState.CurrentAmmo);
+    
     OnReloadComplete.Broadcast();
+    
+    if (ReloadSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(
+            this,
+            ReloadSound,
+            GetActorLocation(),
+            1.0f,
+            1.0f,
+            0.0f
+        );
+    }
+    //UpdateAmmoDisplay();
 }

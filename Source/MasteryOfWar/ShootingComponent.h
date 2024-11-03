@@ -1,3 +1,8 @@
+
+/*  ATTENTION!!!
+	This class is not in use now and will probably be deleted
+*/
+
 #pragma once
 
 #include "CoreMinimal.h"
