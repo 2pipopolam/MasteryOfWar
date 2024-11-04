@@ -111,6 +111,7 @@ void AWeapon::Fire()
     {
         FireBehavior->Fire(this);
         ConsumeAmmo();
+        UpdateAmmoWidget();
     }
 }
 
@@ -159,12 +160,14 @@ void AWeapon::ConsumeAmmo()
     if (MagazineState.CurrentAmmo > 0)
     {
         MagazineState.CurrentAmmo--;
+        UpdateAmmoWidget();
     }
 }
 
 void AWeapon::ReloadMagazine()
 {
     MagazineState.CurrentAmmo = MagazineState.MaxAmmo;
+    UpdateAmmoWidget();
 }
 
 FTransform AWeapon::GetMuzzleTransform() const
@@ -237,19 +240,44 @@ bool AWeapon::IsCharacterJumping() const
     return false;
 }
 
-FVector AWeapon::GetAdjustedAimDirection() const
-{
-    FVector AimDirection = GetActorForwardVector();
-    
-    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+ 
+    FVector AWeapon::GetAdjustedAimDirection() const
     {
-        if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
+        FVector AimDirection = GetActorForwardVector();
+    
+        if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
         {
-            AimDirection = Camera->GetForwardVector();
+            if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
+            {
+                AimDirection = Camera->GetForwardVector();
+            }
+        }
+    
+        FRotator SpreadRotator = CalculateSpread();
+        return AimDirection.RotateAngleAxis(SpreadRotator.Pitch, GetActorRightVector())
+                          .RotateAngleAxis(SpreadRotator.Yaw, GetActorUpVector());
+    }
+ 
+ 
+    void AWeapon::CreateAmmoWidget(APlayerController* PC)
+    {
+        if (!PC || !AmmoWidgetClass) return;
+
+        if (!AmmoWidget)
+        {
+            AmmoWidget = CreateWidget<UAmmoWidget>(PC, AmmoWidgetClass);
+            if (AmmoWidget)
+            {
+                AmmoWidget->AddToViewport(1);
+                UpdateAmmoWidget();
+            }
         }
     }
-    
-    FRotator SpreadRotator = CalculateSpread();
-    return AimDirection.RotateAngleAxis(SpreadRotator.Pitch, GetActorRightVector())
-                      .RotateAngleAxis(SpreadRotator.Yaw, GetActorUpVector());
-}
+
+    void AWeapon::UpdateAmmoWidget()
+    {
+        if (AmmoWidget)
+        {
+            AmmoWidget->UpdateAmmoCount(MagazineState.CurrentAmmo, MagazineState.MaxAmmo);
+        }
+    }

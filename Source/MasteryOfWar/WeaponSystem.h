@@ -7,6 +7,7 @@
 #include "Sound/SoundBase.h"
 #include "Camera/CameraComponent.h"
 #include "WeaponConfig.h"
+#include "AmmoWidget.h"
 #include "WeaponSystem.generated.h"
 
 // Interfaces remain the same
@@ -114,6 +115,23 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     EWeaponType GetWeaponType() const { return Config.WeaponType; }
 
+
+    // UI Functions
+    UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
+    virtual void CreateAmmoWidget(APlayerController* PC);
+
+    UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
+    virtual void UpdateAmmoWidget();
+    
+    
+    // Getters for AmmoWidget
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
+    int32 GetCurrentAmmo() const { return MagazineState.CurrentAmmo; }
+
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
+    int32 GetMaxAmmo() const { return MagazineState.MaxAmmo; } 
+
+
     // Behavior setters
     void SetDamageCalculator(TScriptInterface<IDamageCalculator> NewCalculator) { DamageCalculator = NewCalculator; }
     void SetFireBehavior(TScriptInterface<IFireBehavior> NewBehavior) { FireBehavior = NewBehavior; }
@@ -157,6 +175,14 @@ protected:
     TScriptInterface<IFireBehavior> FireBehavior;
 
     FTimerHandle AutoFireTimerHandle;
+
+    // UI Components
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|UI")
+    TSubclassOf<UAmmoWidget> AmmoWidgetClass;
+
+    UPROPERTY()
+    UAmmoWidget* AmmoWidget;
+
 
     // Helper functions
     bool IsCharacterMoving() const;

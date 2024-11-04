@@ -1,4 +1,3 @@
-/*
 #include "AmmoWidget.h"
 #include "Components/TextBlock.h"
 
@@ -12,7 +11,7 @@ void UAmmoWidget::UpdateAmmoCount(int32 CurrentAmmo, int32 MaxAmmo)
 	if (!AmmoText) return;
 
 	// text update
-	FString AmmoString = FString::Printf(TEXT("%d/%d"), CurrentAmmo, MaxAmmo);
+	FString AmmoString = FString::Printf(TEXT("%d"), CurrentAmmo);
 	AmmoText->SetText(FText::FromString(AmmoString));
 
 	// color update
@@ -37,4 +36,3 @@ FLinearColor UAmmoWidget::GetAmmoColor(int32 CurrentAmmo, int32 MaxAmmo) const
 		return FLinearColor(1.0f, RedIntensity, 0.0f);
 	}
 }
-*/

@@ -1,4 +1,3 @@
-/*
 #pragma once
 
 #include "CoreMinimal.h"
@@ -22,5 +21,3 @@ protected:
 private:
 	FLinearColor GetAmmoColor(int32 CurrentAmmo, int32 MaxAmmo) const;
 };
-
- */

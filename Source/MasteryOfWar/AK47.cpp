@@ -18,6 +18,13 @@ AAK47::AAK47()
 
 	// Load assets
 	LoadWeaponAssets();
+	
+	
+    static ConstructorHelpers::FClassFinder<UAmmoWidget> WidgetClassFinder(TEXT("/Game/MofW/Blueprints/WBP_AmmoWidget"));
+    if(WidgetClassFinder.Succeeded())
+    {
+        AmmoWidgetClass = WidgetClassFinder.Class;
+    }
 }
 
 void AAK47::InitializeWeaponConfig()
@@ -71,6 +78,13 @@ void AAK47::BeginPlay()
     }
 
     SetupWeaponCollision();
+    
+    
+    // Create AmmoWidget
+    if (APlayerController* PC = Cast<APlayerController>(GetOwner()->GetInstigatorController()))
+    {
+        CreateAmmoWidget(PC);
+    } 
 }
 
 void AAK47::Fire()
@@ -95,6 +109,7 @@ void AAK47::Fire()
         ConsumeAmmo();
         PlayFireEffects();
         ApplyRecoil();
+        UpdateAmmoWidget();
     }
 }
 
@@ -210,6 +225,7 @@ void AAK47::PlayReloadEffects()
 void AAK47::ReloadMagazine()
 {
     Super::ReloadMagazine();
+    UpdateAmmoWidget();
     OnReloadComplete.Broadcast();
 }
 
