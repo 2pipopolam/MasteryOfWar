@@ -122,7 +122,7 @@ void ABullet::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
         
         UE_LOG(LogTemp, Warning, TEXT("Bullet hit actor: %s with damage: %f"), 
                *OtherActor->GetName(), WeaponDamage);
-        
+        /*
         DrawDebugSphere(
             GetWorld(),
             Hit.ImpactPoint,
@@ -132,6 +132,7 @@ void ABullet::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
             false,
             2.0f
         );
+        */
     }
 
     Destroy();

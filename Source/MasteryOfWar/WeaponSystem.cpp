@@ -18,10 +18,6 @@ AWeapon::AWeapon()
 
     bIsFiring = false;
     CurrentSpread = 0.0f;
-
-    MagazineState.MaxAmmo = 30;
-    MagazineState.CurrentAmmo = 30;
-
 }
 
 AWeapon::~AWeapon()
@@ -32,17 +28,79 @@ AWeapon::~AWeapon()
     }
 }
 
+void AWeapon::Initialize(const FBaseWeaponConfig& InConfig)
+{
+    Config = InConfig;
+    MagazineState.MaxAmmo = Config.MaxAmmo;
+    MagazineState.CurrentAmmo = Config.MaxAmmo;
+}
+
 void AWeapon::BeginPlay()
 {
     Super::BeginPlay();
     CurrentSpread = 0.0f;
     bIsFiring = false;
+    
+    // Initialize magazine if not done already
+    if (MagazineState.MaxAmmo == 0)
+    {
+        MagazineState.MaxAmmo = Config.MaxAmmo;
+        MagazineState.CurrentAmmo = Config.MaxAmmo;
+    }
 }
 
 void AWeapon::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
     UpdateSpread(DeltaTime);
+}
+
+void AWeapon::HandleFireMode()
+{
+    if (IsAutomaticFireMode())
+    {
+        // For automatic weapons, continue firing while button is held
+        if (bIsFiring)
+        {
+            Fire();
+        }
+    }
+    else
+    {
+        // For semi-automatic, fire once per press
+        Fire();
+    }
+}
+
+bool AWeapon::IsAutomaticFireMode() const
+{
+    return Config.FireMode == EFireMode::Automatic;
+}
+
+void AWeapon::ProcessFireInput(bool bPressed)
+{
+    if (bPressed)
+    {
+        if (IsAutomaticFireMode())
+        {
+            StartFiring();
+        }
+        else
+        {
+            // Semi-automatic weapons fire once per press
+            if (!bIsFiring)
+            {
+                Fire();
+            }
+        }
+    }
+    else
+    {
+        if (IsAutomaticFireMode())
+        {
+            StopFiring();
+        }
+    }
 }
 
 void AWeapon::Fire()
@@ -62,13 +120,17 @@ void AWeapon::StartFiring()
     {
         bIsFiring = true;
         Fire();
-        GetWorld()->GetTimerManager().SetTimer(
-            AutoFireTimerHandle,
-            this,
-            &AWeapon::Fire,
-            FireRate,
-            true
-        );
+        
+        if (IsAutomaticFireMode())
+        {
+            GetWorld()->GetTimerManager().SetTimer(
+                AutoFireTimerHandle,
+                this,
+                &AWeapon::Fire,
+                Config.FireRate,
+                true
+            );
+        }
     }
 }
 
@@ -109,8 +171,8 @@ FTransform AWeapon::GetMuzzleTransform() const
 {
     if (WeaponModel)
     {
-        FTransform SocketTransform = WeaponModel->GetSocketTransform(MuzzleSocketName);
-        SocketTransform.AddToTranslation(MuzzleOffset);
+        FTransform SocketTransform = WeaponModel->GetSocketTransform(Config.MuzzleSocketName);
+        SocketTransform.AddToTranslation(Config.MuzzleOffset);
         return SocketTransform;
     }
     return GetActorTransform();
@@ -120,7 +182,7 @@ FTransform AWeapon::GetShellEjectTransform() const
 {
     if (WeaponModel)
     {
-        return WeaponModel->GetSocketTransform(ShellEjectSocketName);
+        return WeaponModel->GetSocketTransform(Config.ShellEjectSocketName);
     }
     return GetActorTransform();
 }
@@ -131,12 +193,12 @@ FRotator AWeapon::CalculateSpread() const
     
     if (IsCharacterMoving())
     {
-        TotalSpread += MovementSpread;
+        TotalSpread += Config.MovementSpread;
     }
     
     if (IsCharacterJumping())
     {
-        TotalSpread += JumpingSpread;
+        TotalSpread += Config.JumpingSpread;
     }
     
     float RandomPitch = FMath::RandRange(-TotalSpread, TotalSpread);
@@ -149,11 +211,11 @@ void AWeapon::UpdateSpread(float DeltaTime)
 {
     if (bIsFiring)
     {
-        CurrentSpread = FMath::Min(CurrentSpread + (BaseSpread * DeltaTime), MaxSpread);
+        CurrentSpread = FMath::Min(CurrentSpread + (Config.BaseSpread * DeltaTime), Config.MaxSpread);
     }
     else
     {
-        CurrentSpread = FMath::Max(CurrentSpread - (SpreadRecoveryRate * DeltaTime), 0.0f);
+        CurrentSpread = FMath::Max(CurrentSpread - (Config.SpreadRecoveryRate * DeltaTime), 0.0f);
     }
 }
 

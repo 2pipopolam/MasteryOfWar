@@ -2,8 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "WeaponSystem.h"
-//#include "Blueprint/UserWidget.h"
-//#include "AmmoWidget.h"
+#include "WeaponConfig.h"
 #include "AK47.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReloadComplete);
@@ -24,20 +23,18 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Weapon|Events")
 	FOnReloadComplete OnReloadComplete;
 
-/*
-	UPROPERTY()
-	class UAmmoWidget* AmmoWidget;
-*/
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void ReloadMagazine() override;
 	virtual void SetupWeaponCollision();
 
-
-	//void UpdateAmmoDisplay();
-	
 private:
+	void InitializeWeaponConfig();
+	void LoadWeaponAssets();
+    
+	UPROPERTY()
+	FAK47Config AK47Config;
+
 	UPROPERTY(EditDefaultsOnly, Category = "AK47|Animation")
 	UAnimMontage* ReloadAnimation;
 
@@ -52,9 +49,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "AK47|Audio")
 	USoundBase* ReloadSound;
-
-	UPROPERTY(EditDefaultsOnly, Category = "AK47|Effects")
-	float RecoilStrength = 5.0f;
 
 	void ApplyRecoil();
 	void PlayFireEffects();
