@@ -15,7 +15,10 @@ struct MASTERYOFWAR_API FMagazineState
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magazine")
     int32 MaxAmmo;
 
-    FMagazineState() : CurrentAmmo(0), MaxAmmo(0) {}
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magazine")
+    bool bIsReloading;
+
+    FMagazineState() : CurrentAmmo(0), MaxAmmo(0), bIsReloading(false) {}
 };
 
 UENUM(BlueprintType)
@@ -64,6 +67,10 @@ struct MASTERYOFWAR_API FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Magazine")
     int32 MaxAmmo = 30;
 
+    // Reload configuration
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Reload")
+    float ReloadTime = 2.0f;
+
     // Accuracy parameters
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
     float BaseSpread = 0.0f;
@@ -107,6 +114,7 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         MaxDamage = 45.0f;
         Range = 8000.0f;
         MaxAmmo = 30;
+        ReloadTime = 2.0f;
         
         BaseSpread = 0.2f;
         MovementSpread = 1.5f;

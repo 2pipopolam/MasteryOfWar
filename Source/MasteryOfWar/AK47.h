@@ -19,6 +19,7 @@ public:
 	virtual void StartFiring() override;
 	virtual void StopFiring() override;
 	virtual void Reload() override;
+	virtual bool CanFire() const override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Weapon|Events")
 	FOnReloadComplete OnReloadComplete;

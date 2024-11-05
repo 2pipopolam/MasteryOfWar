@@ -27,7 +27,7 @@ TSubclassOf<AWeapon> UWeaponFactory::GetWeaponClass(EWeaponType WeaponType)
 	{
 	case EWeaponType::AK47:
 		return AAK47::StaticClass();
-		// Add cases for other weapons when implemented
+		// cases for other weapons will be
 	default:
 		return nullptr;
 	}

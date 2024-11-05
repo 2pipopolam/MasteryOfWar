@@ -150,10 +150,12 @@ void AWeapon::Reload()
     ReloadMagazine();
 }
 
+
 bool AWeapon::CanFire() const
 {
-    return MagazineState.CurrentAmmo > 0;
+    return MagazineState.CurrentAmmo > 0 && !MagazineState.bIsReloading;
 }
+
 
 void AWeapon::ConsumeAmmo()
 {
@@ -164,11 +166,14 @@ void AWeapon::ConsumeAmmo()
     }
 }
 
+
 void AWeapon::ReloadMagazine()
 {
     MagazineState.CurrentAmmo = MagazineState.MaxAmmo;
+    MagazineState.bIsReloading = false;
     UpdateAmmoWidget();
 }
+
 
 FTransform AWeapon::GetMuzzleTransform() const
 {

@@ -132,6 +132,10 @@ public:
     int32 GetMaxAmmo() const { return MagazineState.MaxAmmo; } 
 
 
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
+    bool IsReloading() const { return MagazineState.bIsReloading; }
+
+
     // Behavior setters
     void SetDamageCalculator(TScriptInterface<IDamageCalculator> NewCalculator) { DamageCalculator = NewCalculator; }
     void SetFireBehavior(TScriptInterface<IFireBehavior> NewBehavior) { FireBehavior = NewBehavior; }

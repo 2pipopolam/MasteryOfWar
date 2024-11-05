@@ -6,20 +6,19 @@
 
 AAK47::AAK47()
 {
-	// Create and set fire behavior
-	UBulletFireBehavior* FireBehaviorObj = NewObject<UBulletFireBehavior>();
-	if (FireBehaviorObj)
-	{
-		SetFireBehavior(FireBehaviorObj);
-	}
+    // Create and set fire behavior
+    UBulletFireBehavior* FireBehaviorObj = NewObject<UBulletFireBehavior>();
+    if (FireBehaviorObj)
+    {
+        SetFireBehavior(FireBehaviorObj);
+    }
 
-	// Initialize AK47-specific configuration
-	InitializeWeaponConfig();
+    // Initialize AK47-specific configuration
+    InitializeWeaponConfig();
 
-	// Load assets
-	LoadWeaponAssets();
-	
-	
+    // Load assets
+    LoadWeaponAssets();
+    
     static ConstructorHelpers::FClassFinder<UAmmoWidget> WidgetClassFinder(TEXT("/Game/MofW/Blueprints/WBP_AmmoWidget"));
     if(WidgetClassFinder.Succeeded())
     {
@@ -29,36 +28,35 @@ AAK47::AAK47()
 
 void AAK47::InitializeWeaponConfig()
 {
-	AK47Config = FAK47Config(); // This will set all the default values
-	Initialize(AK47Config); // Initialize base weapon with AK47 config
+    AK47Config = FAK47Config(); // This will set all the default values
+    Initialize(AK47Config); // Initialize base weapon with AK47 config
 }
 
 void AAK47::LoadWeaponAssets()
 {
-	// Load bullet blueprint
-	static ConstructorHelpers::FClassFinder<ABullet> BulletBPClass(TEXT("/Game/Weapons/Blueprints/BP_Bullet"));
-	if (BulletBPClass.Succeeded())
-	{
-		BulletClass = BulletBPClass.Class;
-	}
+    // Load bullet blueprint
+    static ConstructorHelpers::FClassFinder<ABullet> BulletBPClass(TEXT("/Game/Weapons/Blueprints/BP_Bullet"));
+    if (BulletBPClass.Succeeded())
+    {
+        BulletClass = BulletBPClass.Class;
+    }
 
-	// Load weapon mesh
-	if (UStaticMesh* MeshAsset = Cast<UStaticMesh>(AK47Config.WeaponMeshPath.TryLoad()))
-	{
-		WeaponModel->SetStaticMesh(MeshAsset);
-	}
+    // Load weapon mesh
+    if (UStaticMesh* MeshAsset = Cast<UStaticMesh>(AK47Config.WeaponMeshPath.TryLoad()))
+    {
+        WeaponModel->SetStaticMesh(MeshAsset);
+    }
 
-	// Load effects
-	MuzzleFlash = Cast<UParticleSystem>(AK47Config.MuzzleFlashPath.TryLoad());
-	EjectedShellEffect = Cast<UParticleSystem>(AK47Config.ShellEjectPath.TryLoad());
+    // Load effects
+    MuzzleFlash = Cast<UParticleSystem>(AK47Config.MuzzleFlashPath.TryLoad());
+    EjectedShellEffect = Cast<UParticleSystem>(AK47Config.ShellEjectPath.TryLoad());
 
-	// Load sounds
-	FireSound = Cast<USoundBase>(AK47Config.FireSoundPath.TryLoad());
-	EmptyMagazineSound = Cast<USoundBase>(AK47Config.EmptyMagSoundPath.TryLoad());
-	ReloadSound = Cast<USoundBase>(AK47Config.ReloadSoundPath.TryLoad());
-	
-	
-// Load animations
+    // Load sounds
+    FireSound = Cast<USoundBase>(AK47Config.FireSoundPath.TryLoad());
+    EmptyMagazineSound = Cast<USoundBase>(AK47Config.EmptyMagSoundPath.TryLoad());
+    ReloadSound = Cast<USoundBase>(AK47Config.ReloadSoundPath.TryLoad());
+    
+    // Load animations
     ReloadAnimation = Cast<UAnimMontage>(AK47Config.ReloadAnimationPath.TryLoad());
     FireAnimation = Cast<UAnimMontage>(AK47Config.FireAnimationPath.TryLoad());
 }
@@ -79,7 +77,6 @@ void AAK47::BeginPlay()
 
     SetupWeaponCollision();
     
-    
     // Create AmmoWidget
     if (APlayerController* PC = Cast<APlayerController>(GetOwner()->GetInstigatorController()))
     {
@@ -91,8 +88,8 @@ void AAK47::Fire()
 {
     if (!CanFire())
     {
-        // Play empty magazine sound
-        if (EmptyMagazineSound)
+        // Play empty magazine sound if we're not reloading
+        if (EmptyMagazineSound && !MagazineState.bIsReloading)
         {
             UGameplayStatics::PlaySoundAtLocation(
                 this,
@@ -103,7 +100,7 @@ void AAK47::Fire()
         return;
     }
 
-    if (FireBehavior)
+    if (FireBehavior && !MagazineState.bIsReloading)
     {
         FireBehavior->Fire(this);
         ConsumeAmmo();
@@ -167,8 +164,10 @@ void AAK47::ApplyRecoil()
 
 void AAK47::StartFiring()
 {
-    // Использует базовую логику из WeaponSystem с учетом режима стрельбы
-    Super::StartFiring();
+    if (!MagazineState.bIsReloading)
+    {
+        Super::StartFiring();
+    }
 }
 
 void AAK47::StopFiring()
@@ -178,21 +177,22 @@ void AAK47::StopFiring()
 
 void AAK47::Reload()
 {
-    if (MagazineState.CurrentAmmo == MagazineState.MaxAmmo)
+    if (MagazineState.CurrentAmmo == MagazineState.MaxAmmo || MagazineState.bIsReloading)
     {
         return;
     }
 
     StopFiring();
+    MagazineState.bIsReloading = true;
     PlayReloadEffects();
 
-    // Start reload timer based on animation length
+    // Start reload timer based on config reload time
     FTimerHandle ReloadTimerHandle;
     GetWorld()->GetTimerManager().SetTimer(
         ReloadTimerHandle,
         this,
         &AAK47::ReloadMagazine,
-        ReloadAnimation ? ReloadAnimation->GetPlayLength() : 2.0f,
+        AK47Config.ReloadTime,
         false
     );
 }
@@ -225,8 +225,14 @@ void AAK47::PlayReloadEffects()
 void AAK47::ReloadMagazine()
 {
     Super::ReloadMagazine();
+    MagazineState.bIsReloading = false;
     UpdateAmmoWidget();
     OnReloadComplete.Broadcast();
+}
+
+bool AAK47::CanFire() const
+{
+    return Super::CanFire() && !MagazineState.bIsReloading;
 }
 
 void AAK47::SetupWeaponCollision()
