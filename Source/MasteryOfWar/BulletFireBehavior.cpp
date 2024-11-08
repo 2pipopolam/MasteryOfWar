@@ -3,8 +3,6 @@
 #include "DrawDebugHelpers.h"
 #include "MasteryOfWarCharacter.h"
 
-class AMasteryOfWarCharacter;
-
 void UBulletFireBehavior::Fire(AWeapon* Weapon)
 {
     if (!Weapon)
@@ -20,70 +18,69 @@ void UBulletFireBehavior::Fire(AWeapon* Weapon)
         return;
     }
 
-	// new aim dir because of recoil and etc.
-    FVector Direction = Weapon->GetAdjustedAimDirection();
-    FTransform MuzzleTransform = Weapon->GetMuzzleTransform();
+    
+    FTransform MuzzleTransform = Weapon->GetMuzzleSocketTransform();
+    
+    
+    if (MuzzleTransform.Equals(FTransform::Identity))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Invalid muzzle transform - cannot spawn bullet"));
+        return;
+    }
 
-	//check for bullet
+    FVector SpawnLocation = MuzzleTransform.GetLocation();
+    FVector Direction = Weapon->GetAdjustedAimDirection();
+
+   
+    DrawDebugSphere(
+        World,
+        SpawnLocation,
+        5.0f,
+        12,
+        FColor::Green,
+        false,
+        5.0f
+    );
+
+    DrawDebugLine(
+        World,
+        SpawnLocation,
+        SpawnLocation + Direction * 100.0f,
+        FColor::Blue,
+        false,
+        5.0f,
+        0,
+        2.0f
+    );
+
     TSubclassOf<ABullet> BulletClass = Weapon->GetBulletClass();
     if (!BulletClass)
     {
         UE_LOG(LogTemp, Error, TEXT("BulletClass is null!"));
         return;
     }
-   
-	
-    
-	if (APawn* OwnerPawn = Cast<APawn>(Weapon->GetOwner()))
-	{
-		if (AMasteryOfWarCharacter* Character = Cast<AMasteryOfWarCharacter>(OwnerPawn))
-		{
-			if (Character->IsDebugLineEnabled()) // добавьте этот геттер в Character
-			{
-				DrawDebugLine(
-					World,
-					MuzzleTransform.GetLocation(),
-					MuzzleTransform.GetLocation() + Direction * 1000.0f,
-					FColor::Green,
-					false,
-					5.0f,
-					0,
-					2.0f
-				);
-			}
-		}
-	}
-    
-    
+
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = Weapon;
     SpawnParams.Instigator = Cast<APawn>(Weapon->GetOwner());
 
-    FRotator BulletRotation = Direction.Rotation();
-    
     ABullet* Bullet = World->SpawnActor<ABullet>(
         BulletClass,
-        MuzzleTransform.GetLocation(),
-        BulletRotation,
+        SpawnLocation,
+        Direction.Rotation(),
         SpawnParams
     );
 
     if (Bullet)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Bullet spawned with direction: %s"), *Direction.ToString());
         float Damage = FMath::RandRange(Weapon->GetMinDamage(), Weapon->GetMaxDamage());
         float Speed = 8000.0f;
         Bullet->InitializeBullet(Damage, Speed, Weapon->GetRange());
         
-        /*
-        if (UGameplayStatics::GetPlayerController(World, 0))
-        {
-            // some effect will be
-        }
-         */
+        UE_LOG(LogTemp, Warning, TEXT("Bullet spawned successfully from weapon at location: %s"), *SpawnLocation.ToString());
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("Failed to spawn bullet"));
+        UE_LOG(LogTemp, Error, TEXT("Failed to spawn bullet from weapon at location: %s"), *SpawnLocation.ToString());
     }
 }

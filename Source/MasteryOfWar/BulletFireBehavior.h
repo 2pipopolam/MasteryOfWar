@@ -6,8 +6,6 @@
 #include "Bullet.h"
 #include "BulletFireBehavior.generated.h"
 
-class AMasteryOfWarCharacter;
-
 UCLASS()
 class MASTERYOFWAR_API UBulletFireBehavior : public UObject, public IFireBehavior
 {

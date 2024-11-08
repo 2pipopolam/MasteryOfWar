@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "WeaponSystem.h"
 #include "MasteryOfWarCharacter.generated.h"
 
 class USpringArmComponent;
@@ -18,13 +19,35 @@ class AMasteryOfWarCharacter : public ACharacter
 {
     GENERATED_BODY()
 
+public:
+    AMasteryOfWarCharacter();
+
+    // Weapon configuration
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    TSubclassOf<AWeapon> DefaultWeaponClass;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    FName WeaponSocketName = FName("WeaponSocket");
+
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    void AttachWeapon(AAK47* Weapon);
+
+    UFUNCTION(BlueprintCallable, Category = "Debug")
+    bool IsDebugLineEnabled() const { return bShowDebugLine; }
+
 private:
     bool bShowDebugLine = false;
 
     UFUNCTION()
     void ToggleDebugLine();
 
+    /** First Person Arms Mesh */
+    UPROPERTY(VisibleDefaultsOnly, Category = "Mesh")
+    USkeletalMeshComponent* FPSArms;
 
+    /** Preview Weapon Mesh Component */
+    UPROPERTY(VisibleDefaultsOnly, Category = "Weapon")
+    UStaticMeshComponent* WeaponMeshComponent;
 
     /** Follow camera */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -54,22 +77,9 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* ReloadAction;
 
-public:
-    AMasteryOfWarCharacter();
-    
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    void AttachWeapon(AAK47* Weapon);
-
-    UFUNCTION(BlueprintCallable, Category = "Debug")
-    bool IsDebugLineEnabled() const { return bShowDebugLine; }
-
-
-
 protected:
-
-    UPROPERTY()
-    AAK47* CurrentWeapon;
-
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
+    AWeapon* CurrentWeapon;
 
     /** Called for movement input */
     void Move(const FInputActionValue& Value);
@@ -79,11 +89,9 @@ protected:
 
     /** Called for fire input */
     void StartFire();
-    
     void StopFire();
 
     /** Called for reload input */
-    
     UFUNCTION(BlueprintCallable, Category = "Character")
     void OnReload();
     
@@ -96,4 +104,10 @@ protected:
 public:
     /** Returns FollowCamera subobject **/
     FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+    /** Returns FPSArms subobject **/
+    FORCEINLINE class USkeletalMeshComponent* GetFPSArms() const { return FPSArms; }
+
+    /** Returns WeaponMeshComponent subobject **/
+    FORCEINLINE class UStaticMeshComponent* GetWeaponMeshComponent() const { return WeaponMeshComponent; }
 };

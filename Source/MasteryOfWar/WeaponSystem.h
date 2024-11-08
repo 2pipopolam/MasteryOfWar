@@ -8,9 +8,11 @@
 #include "Camera/CameraComponent.h"
 #include "WeaponConfig.h"
 #include "AmmoWidget.h"
+#include "Bullet.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "WeaponSystem.generated.h"
 
-// Interfaces remain the same
+// Damage Calculator Interface
 UINTERFACE(MinimalAPI)
 class UDamageCalculator : public UInterface
 {
@@ -24,6 +26,7 @@ public:
     virtual float CalculateDamage(float Distance) = 0;
 };
 
+// Fire Behavior Interface
 UINTERFACE(MinimalAPI)
 class UFireBehavior : public UInterface
 {
@@ -37,159 +40,155 @@ public:
     virtual void Fire(class AWeapon* Weapon) = 0;
 };
 
-UCLASS(Abstract)
+// Base Weapon Class
+UCLASS(Abstract, BlueprintType, Blueprintable)
 class MASTERYOFWAR_API AWeapon : public AActor
 {
     GENERATED_BODY()
 
 public:
     AWeapon();
-    virtual ~AWeapon();
 
-    // Initialize weapon with config
-    virtual void Initialize(const FBaseWeaponConfig& InConfig);
-
-    // Base weapon functions
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    // Core weapon functions
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Actions")
     virtual void Fire();
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    virtual void ProcessFireInput(bool bPressed);
-
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Actions")
     virtual void StartFiring();
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Actions")
     virtual void StopFiring();
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Actions")
     virtual void Reload();
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    TSubclassOf<class ABullet> GetBulletClass() const { return BulletClass; }
-    
-    // Magazine functions
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Actions")
     virtual bool CanFire() const;
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
-    virtual void ConsumeAmmo();
+    // Getters
+    UFUNCTION(BlueprintPure, Category = "Weapon")
+    TSubclassOf<class ABullet> GetBulletClass() const { return BulletClass; }
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
-    virtual void ReloadMagazine();
+    UFUNCTION(BlueprintPure, Category = "Weapon")
+    float GetMinDamage() const { return WeaponConfig.MinDamage; }
 
-    // Transform functions
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    virtual FTransform GetMuzzleTransform() const;
+    UFUNCTION(BlueprintPure, Category = "Weapon")
+    float GetMaxDamage() const { return WeaponConfig.MaxDamage; }
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    virtual FTransform GetShellEjectTransform() const;
+    UFUNCTION(BlueprintPure, Category = "Weapon")
+    float GetRange() const { return WeaponConfig.Range; }
 
-    // Accuracy functions
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Accuracy")
-    virtual FRotator CalculateSpread() const;
+    UFUNCTION(BlueprintPure, Category = "Weapon")
+    EFireMode GetFireMode() const { return WeaponConfig.FireMode; }
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Accuracy")
-    virtual void UpdateSpread(float DeltaTime);
+    // Socket and aiming utilities
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
+    virtual FTransform GetMuzzleSocketTransform() const;
 
-    // Aim functions
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
+    virtual FTransform GetShellEjectSocketTransform() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
     virtual FVector GetAdjustedAimDirection() const;
 
-    // Getters
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    float GetFireRate() const { return Config.FireRate; }
+    // Components
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Components")
+    UStaticMeshComponent* WeaponMesh;
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    float GetMinDamage() const { return Config.MinDamage; }
+    // Projectile settings
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Projectile")
+    TSubclassOf<class ABullet> BulletClass;
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    float GetMaxDamage() const { return Config.MaxDamage; }
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Projectile")
+    float ProjectileSpeed;
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    float GetRange() const { return Config.Range; }
+    // Effects
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
+    UParticleSystem* MuzzleFlashTemplate;
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    EFireMode GetFireMode() const { return Config.FireMode; }
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
+    UParticleSystem* ShellEjectTemplate;
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    EWeaponType GetWeaponType() const { return Config.WeaponType; }
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
+    USoundBase* FireSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
+    USoundBase* EmptyMagazineSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
+    USoundBase* ReloadSound;
+
+    // Animations
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Animation")
+    UAnimMontage* FireAnimation;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Animation")
+    UAnimMontage* ReloadAnimation;
+
+    // Magazine state
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Magazine")
+    FMagazineState MagazineState;
+
+    // UI
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|UI")
+    TSubclassOf<UAmmoWidget> AmmoWidgetClass;
+
+    
+    // Fire behavior
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Behavior")
+    void SetWeaponFireBehavior(const TScriptInterface<IFireBehavior>& NewBehavior) { FireBehavior = NewBehavior; }
 
 
-    // UI Functions
+protected:
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
+
+    // Weapon configuration
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Config")
+    FBaseWeaponConfig WeaponConfig;
+
+    // Effects
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Effects")
+    virtual void PlayFireEffects();
+
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Effects")
+    virtual void PlayReloadEffects();
+
+    // UI
     UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
     virtual void CreateAmmoWidget(APlayerController* PC);
 
     UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
     virtual void UpdateAmmoWidget();
-    
-    
-    // Getters for AmmoWidget
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
-    int32 GetCurrentAmmo() const { return MagazineState.CurrentAmmo; }
 
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
-    int32 GetMaxAmmo() const { return MagazineState.MaxAmmo; } 
+    // Accuracy
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Accuracy")
+    virtual FRotator CalculateSpread() const;
 
-
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Magazine")
-    bool IsReloading() const { return MagazineState.bIsReloading; }
-
-
-    // Behavior setters
-    void SetDamageCalculator(TScriptInterface<IDamageCalculator> NewCalculator) { DamageCalculator = NewCalculator; }
-    void SetFireBehavior(TScriptInterface<IFireBehavior> NewBehavior) { FireBehavior = NewBehavior; }
-
-protected:
-    virtual void BeginPlay() override;
-    virtual void Tick(float DeltaTime) override;
-    virtual void HandleFireMode();
-
-    // Configuration
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Config")
-    FBaseWeaponConfig Config;
-
-    // Components
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-    UStaticMeshComponent* WeaponModel;
-
-    // Visual and audio effects
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    UParticleSystem* MuzzleFlash;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    USoundBase* FireSound;
-
-    // Bullet class
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-    TSubclassOf<class ABullet> BulletClass;
-
-    // State
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Magazine")
-    FMagazineState MagazineState;
-
-    float CurrentSpread;
-    bool bIsFiring;
-
-    // Behaviors
-    UPROPERTY()
-    TScriptInterface<IDamageCalculator> DamageCalculator;
-
+    // Fire behavior
     UPROPERTY()
     TScriptInterface<IFireBehavior> FireBehavior;
 
+
+    // Damage calculator
+    UPROPERTY()
+    TScriptInterface<IDamageCalculator> DamageCalculator;
+
+    // Weapon state
+    bool bIsFiring;
+    float CurrentSpread;
     FTimerHandle AutoFireTimerHandle;
 
-    // UI Components
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|UI")
-    TSubclassOf<UAmmoWidget> AmmoWidgetClass;
-
-    UPROPERTY()
-    UAmmoWidget* AmmoWidget;
-
-
-    // Helper functions
+    // Utilities
+    bool HasValidMuzzleSocket() const;
+    void UpdateSpread(float DeltaTime);
     bool IsCharacterMoving() const;
     bool IsCharacterJumping() const;
+    void ConsumeAmmo();
     bool IsAutomaticFireMode() const;
+    void HandleAutoFire();
+
+private:
+    UPROPERTY()
+    UAmmoWidget* AmmoWidget;
 };

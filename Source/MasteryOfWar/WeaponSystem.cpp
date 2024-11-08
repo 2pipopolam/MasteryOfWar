@@ -2,50 +2,59 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Animation/AnimInstance.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "DrawDebugHelpers.h"
 
 AWeapon::AWeapon()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    WeaponModel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-    RootComponent = WeaponModel;
+    // Create weapon mesh component
+    WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
+    RootComponent = WeaponMesh;
 
-    if (WeaponModel)
+    // Setup collision
+    if (WeaponMesh)
     {
-        WeaponModel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        WeaponModel->SetCollisionResponseToAllChannels(ECR_Ignore);
+        WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
     }
 
+    // Initialize default values
     bIsFiring = false;
     CurrentSpread = 0.0f;
-}
-
-AWeapon::~AWeapon()
-{
-    if (GetWorld())
-    {
-        GetWorld()->GetTimerManager().ClearTimer(AutoFireTimerHandle);
-    }
-}
-
-void AWeapon::Initialize(const FBaseWeaponConfig& InConfig)
-{
-    Config = InConfig;
-    MagazineState.MaxAmmo = Config.MaxAmmo;
-    MagazineState.CurrentAmmo = Config.MaxAmmo;
+    ProjectileSpeed = 8000.0f;
 }
 
 void AWeapon::BeginPlay()
 {
     Super::BeginPlay();
-    CurrentSpread = 0.0f;
-    bIsFiring = false;
-    
-    // Initialize magazine if not done already
+
+    // Initialize magazine if not set in editor
     if (MagazineState.MaxAmmo == 0)
     {
-        MagazineState.MaxAmmo = Config.MaxAmmo;
-        MagazineState.CurrentAmmo = Config.MaxAmmo;
+        MagazineState.MaxAmmo = WeaponConfig.MaxAmmo;
+        MagazineState.CurrentAmmo = WeaponConfig.MaxAmmo;
+    }
+
+    // Validate weapon setup
+    if (HasValidMuzzleSocket())
+    {
+        UE_LOG(LogTemp, Log, TEXT("Weapon %s initialized with valid muzzle socket"), *GetName());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Weapon %s missing muzzle socket configuration!"), *GetName());
+    }
+
+    // Initialize AmmoWidget if we have a player controller
+    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+    {
+        if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
+        {
+            CreateAmmoWidget(PC);
+        }
     }
 }
 
@@ -55,64 +64,69 @@ void AWeapon::Tick(float DeltaTime)
     UpdateSpread(DeltaTime);
 }
 
-void AWeapon::HandleFireMode()
+bool AWeapon::HasValidMuzzleSocket() const
 {
-    if (IsAutomaticFireMode())
-    {
-        // For automatic weapons, continue firing while button is held
-        if (bIsFiring)
-        {
-            Fire();
-        }
-    }
-    else
-    {
-        // For semi-automatic, fire once per press
-        Fire();
-    }
+    return WeaponMesh && WeaponMesh->DoesSocketExist(WeaponConfig.MuzzleSocketName);
 }
 
-bool AWeapon::IsAutomaticFireMode() const
+FTransform AWeapon::GetMuzzleSocketTransform() const
 {
-    return Config.FireMode == EFireMode::Automatic;
+    if (HasValidMuzzleSocket())
+    {
+        return WeaponMesh->GetSocketTransform(WeaponConfig.MuzzleSocketName);
+    }
+    return GetActorTransform();
 }
 
-void AWeapon::ProcessFireInput(bool bPressed)
+FTransform AWeapon::GetShellEjectSocketTransform() const
 {
-    if (bPressed)
+    if (WeaponMesh && WeaponMesh->DoesSocketExist(WeaponConfig.ShellEjectSocketName))
     {
-        if (IsAutomaticFireMode())
-        {
-            StartFiring();
-        }
-        else
-        {
-            // Semi-automatic weapons fire once per press
-            if (!bIsFiring)
-            {
-                Fire();
-            }
-        }
+        return WeaponMesh->GetSocketTransform(WeaponConfig.ShellEjectSocketName);
     }
-    else
-    {
-        if (IsAutomaticFireMode())
-        {
-            StopFiring();
-        }
-    }
+    return GetActorTransform();
 }
 
 void AWeapon::Fire()
 {
-    if (!CanFire()) return;
-
-    if (FireBehavior)
+    if (!CanFire()) 
     {
-        FireBehavior->Fire(this);
-        ConsumeAmmo();
-        UpdateAmmoWidget();
+        if (EmptyMagazineSound && !MagazineState.bIsReloading)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, EmptyMagazineSound, GetActorLocation());
+        }
+        return;
     }
+
+    // Get spawn location and direction
+    FTransform MuzzleTransform = GetMuzzleSocketTransform();
+    FVector Direction = GetAdjustedAimDirection();
+
+    // Spawn bullet
+    if (UWorld* World = GetWorld())
+    {
+        if (BulletClass)
+        {
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.Owner = this;
+            SpawnParams.Instigator = Cast<APawn>(GetOwner());
+
+            if (ABullet* Bullet = World->SpawnActor<ABullet>(
+                BulletClass, 
+                MuzzleTransform.GetLocation(),
+                Direction.Rotation(),
+                SpawnParams))
+            {
+                float Damage = FMath::RandRange(WeaponConfig.MinDamage, WeaponConfig.MaxDamage);
+                Bullet->InitializeBullet(Damage, ProjectileSpeed, WeaponConfig.Range);
+            }
+        }
+    }
+
+    // Play effects and consume ammo
+    PlayFireEffects();
+    ConsumeAmmo();
+    UpdateAmmoWidget();
 }
 
 void AWeapon::StartFiring()
@@ -127,8 +141,8 @@ void AWeapon::StartFiring()
             GetWorld()->GetTimerManager().SetTimer(
                 AutoFireTimerHandle,
                 this,
-                &AWeapon::Fire,
-                Config.FireRate,
+                &AWeapon::HandleAutoFire,
+                WeaponConfig.FireRate,
                 true
             );
         }
@@ -144,55 +158,79 @@ void AWeapon::StopFiring()
     }
 }
 
-void AWeapon::Reload()
+void AWeapon::HandleAutoFire()
 {
-    StopFiring();
-    ReloadMagazine();
+    if (bIsFiring && CanFire())
+    {
+        Fire();
+    }
+    else
+    {
+        StopFiring();
+    }
 }
 
+void AWeapon::Reload()
+{
+    if (MagazineState.CurrentAmmo == MagazineState.MaxAmmo || MagazineState.bIsReloading)
+    {
+        return;
+    }
+
+    StopFiring();
+    MagazineState.bIsReloading = true;
+    PlayReloadEffects();
+
+    // Set timer for reload completion
+    FTimerHandle ReloadTimerHandle;
+    GetWorld()->GetTimerManager().SetTimer(
+        ReloadTimerHandle,
+        [this]()
+        {
+            MagazineState.CurrentAmmo = MagazineState.MaxAmmo;
+            MagazineState.bIsReloading = false;
+            UpdateAmmoWidget();
+        },
+        WeaponConfig.ReloadTime,
+        false
+    );
+}
 
 bool AWeapon::CanFire() const
 {
-    return MagazineState.CurrentAmmo > 0 && !MagazineState.bIsReloading;
+    return MagazineState.CurrentAmmo > 0 && 
+           !MagazineState.bIsReloading && 
+           HasValidMuzzleSocket();
 }
-
 
 void AWeapon::ConsumeAmmo()
 {
     if (MagazineState.CurrentAmmo > 0)
     {
         MagazineState.CurrentAmmo--;
-        UpdateAmmoWidget();
     }
 }
 
-
-void AWeapon::ReloadMagazine()
+bool AWeapon::IsAutomaticFireMode() const
 {
-    MagazineState.CurrentAmmo = MagazineState.MaxAmmo;
-    MagazineState.bIsReloading = false;
-    UpdateAmmoWidget();
+    return WeaponConfig.FireMode == EFireMode::Automatic;
 }
 
-
-FTransform AWeapon::GetMuzzleTransform() const
+FVector AWeapon::GetAdjustedAimDirection() const
 {
-    if (WeaponModel)
+    FVector AimDirection = GetActorForwardVector();
+
+    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
     {
-        FTransform SocketTransform = WeaponModel->GetSocketTransform(Config.MuzzleSocketName);
-        SocketTransform.AddToTranslation(Config.MuzzleOffset);
-        return SocketTransform;
+        if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
+        {
+            AimDirection = Camera->GetForwardVector();
+        }
     }
-    return GetActorTransform();
-}
 
-FTransform AWeapon::GetShellEjectTransform() const
-{
-    if (WeaponModel)
-    {
-        return WeaponModel->GetSocketTransform(Config.ShellEjectSocketName);
-    }
-    return GetActorTransform();
+    FRotator SpreadRotator = CalculateSpread();
+    return AimDirection.RotateAngleAxis(SpreadRotator.Pitch, GetActorRightVector())
+                      .RotateAngleAxis(SpreadRotator.Yaw, GetActorUpVector());
 }
 
 FRotator AWeapon::CalculateSpread() const
@@ -201,12 +239,12 @@ FRotator AWeapon::CalculateSpread() const
     
     if (IsCharacterMoving())
     {
-        TotalSpread += Config.MovementSpread;
+        TotalSpread += WeaponConfig.MovementSpread;
     }
     
     if (IsCharacterJumping())
     {
-        TotalSpread += Config.JumpingSpread;
+        TotalSpread += WeaponConfig.JumpingSpread;
     }
     
     float RandomPitch = FMath::RandRange(-TotalSpread, TotalSpread);
@@ -219,11 +257,13 @@ void AWeapon::UpdateSpread(float DeltaTime)
 {
     if (bIsFiring)
     {
-        CurrentSpread = FMath::Min(CurrentSpread + (Config.BaseSpread * DeltaTime), Config.MaxSpread);
+        CurrentSpread = FMath::Min(CurrentSpread + (WeaponConfig.BaseSpread * DeltaTime), 
+                                  WeaponConfig.MaxSpread);
     }
     else
     {
-        CurrentSpread = FMath::Max(CurrentSpread - (Config.SpreadRecoveryRate * DeltaTime), 0.0f);
+        CurrentSpread = FMath::Max(CurrentSpread - (WeaponConfig.SpreadRecoveryRate * DeltaTime), 
+                                  0.0f);
     }
 }
 
@@ -245,44 +285,126 @@ bool AWeapon::IsCharacterJumping() const
     return false;
 }
 
- 
-    FVector AWeapon::GetAdjustedAimDirection() const
+
+
+
+void AWeapon::PlayFireEffects()
+{
+    // Muzzle flash
+    if (MuzzleFlashTemplate && HasValidMuzzleSocket())
     {
-        FVector AimDirection = GetActorForwardVector();
-    
+        FTransform EmitterTransform = GetMuzzleSocketTransform();
+        EmitterTransform.SetScale3D(FVector(0.5f));
+
+        UParticleSystemComponent* MuzzleFlash = UGameplayStatics::SpawnEmitterAttached(
+            MuzzleFlashTemplate,
+            WeaponMesh,
+            WeaponConfig.MuzzleSocketName,
+            EmitterTransform.GetLocation(),
+            EmitterTransform.GetRotation().Rotator(),
+            EmitterTransform.GetScale3D(),
+            EAttachLocation::SnapToTarget
+        );
+
+        if (MuzzleFlash)
+        {
+            // Установка размера
+            MuzzleFlash->SetRelativeScale3D(FVector(0.5f));
+            
+            // Параметры частиц
+            MuzzleFlash->SetFloatParameter(TEXT("Size"), 0.5f);
+            MuzzleFlash->SetFloatParameter(TEXT("Lifetime"), 0.2f);
+        }
+    }
+
+    // Shell ejection
+    if (ShellEjectTemplate)
+    {
+        FTransform ShellTransform = GetShellEjectSocketTransform();
+        ShellTransform.SetScale3D(FVector(0.3f));
+
+        UParticleSystemComponent* ShellEject = UGameplayStatics::SpawnEmitterAtLocation(
+            GetWorld(),
+            ShellEjectTemplate,
+            ShellTransform
+        );
+
+        if (ShellEject)
+        {
+            ShellEject->SetFloatParameter(TEXT("SpawnRate"), 1.0f);
+        }
+    }
+
+    // Fire sound
+    if (FireSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(
+            this,
+            FireSound,
+            GetActorLocation()
+        );
+    }
+
+    // Fire animation
+    if (FireAnimation)
+    {
         if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
         {
-            if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
+            if (UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance())
             {
-                AimDirection = Camera->GetForwardVector();
+                AnimInstance->Montage_Play(FireAnimation);
             }
         }
-    
-        FRotator SpreadRotator = CalculateSpread();
-        return AimDirection.RotateAngleAxis(SpreadRotator.Pitch, GetActorRightVector())
-                          .RotateAngleAxis(SpreadRotator.Yaw, GetActorUpVector());
     }
- 
- 
-    void AWeapon::CreateAmmoWidget(APlayerController* PC)
-    {
-        if (!PC || !AmmoWidgetClass) return;
+}
 
-        if (!AmmoWidget)
+
+
+
+void AWeapon::PlayReloadEffects()
+{
+    // Reload sound
+    if (ReloadSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(
+            this,
+            ReloadSound,
+            GetActorLocation()
+        );
+    }
+
+    // Reload animation
+    if (ReloadAnimation)
+    {
+        if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
         {
-            AmmoWidget = CreateWidget<UAmmoWidget>(PC, AmmoWidgetClass);
-            if (AmmoWidget)
+            if (UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance())
             {
-                AmmoWidget->AddToViewport(1);
-                UpdateAmmoWidget();
+                AnimInstance->Montage_Play(ReloadAnimation);
             }
         }
     }
+}
 
-    void AWeapon::UpdateAmmoWidget()
+void AWeapon::CreateAmmoWidget(APlayerController* PC)
+{
+    if (!PC || !AmmoWidgetClass) return;
+
+    if (!AmmoWidget)
     {
+        AmmoWidget = CreateWidget<UAmmoWidget>(PC, AmmoWidgetClass);
         if (AmmoWidget)
         {
-            AmmoWidget->UpdateAmmoCount(MagazineState.CurrentAmmo, MagazineState.MaxAmmo);
+            AmmoWidget->AddToViewport(1);
+            UpdateAmmoWidget();
         }
     }
+}
+
+void AWeapon::UpdateAmmoWidget()
+{
+    if (AmmoWidget)
+    {
+        AmmoWidget->UpdateAmmoCount(MagazineState.CurrentAmmo, MagazineState.MaxAmmo);
+    }
+}

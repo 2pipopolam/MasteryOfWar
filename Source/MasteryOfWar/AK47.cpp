@@ -4,148 +4,142 @@
 #include "Animation/AnimInstance.h"
 #include "BulletFireBehavior.h"
 
+
+
 AAK47::AAK47()
 {
     // Create and set fire behavior
     UBulletFireBehavior* FireBehaviorObj = NewObject<UBulletFireBehavior>();
     if (FireBehaviorObj)
     {
-        SetFireBehavior(FireBehaviorObj);
+        FireBehavior = FireBehaviorObj;
     }
 
     // Initialize AK47-specific configuration
     InitializeWeaponConfig();
-
-    // Load assets
     LoadWeaponAssets();
-    
-    static ConstructorHelpers::FClassFinder<UAmmoWidget> WidgetClassFinder(TEXT("/Game/MofW/Blueprints/WBP_AmmoWidget"));
-    if(WidgetClassFinder.Succeeded())
-    {
-        AmmoWidgetClass = WidgetClassFinder.Class;
-    }
 }
 
 void AAK47::InitializeWeaponConfig()
 {
     AK47Config = FAK47Config(); // This will set all the default values
-    Initialize(AK47Config); // Initialize base weapon with AK47 config
+    WeaponConfig = AK47Config; // Initialize base weapon config
 }
 
 void AAK47::LoadWeaponAssets()
 {
-    // Load bullet blueprint
+    // Загружаем статический меш для оружия
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/Weapons/Meshes/AK47/ak-47"));
+    if (MeshAsset.Succeeded() && WeaponMesh)
+    {
+        WeaponMesh->SetStaticMesh(MeshAsset.Object);
+    }
+
+    //effects
+    static ConstructorHelpers::FObjectFinder<UParticleSystem> MuzzleFlashFX(TEXT("/Game/Effects/Particles/P_MuzzleFlash_AK47"));
+    if (MuzzleFlashFX.Succeeded())
+    {
+        MuzzleFlashTemplate = MuzzleFlashFX.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<UParticleSystem> ShellEjectFX(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
+    if (ShellEjectFX.Succeeded())
+    {
+        EjectedShellEffect = ShellEjectFX.Object;
+    }
+
+    // sounds
+    static ConstructorHelpers::FObjectFinder<USoundBase> FireSFX(TEXT("/Game/Sounds/Weapons/S_AK47_Fire"));
+    if (FireSFX.Succeeded())
+    {
+        FireSound = FireSFX.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> EmptySFX(TEXT("/Game/Sounds/Weapons/S_EmptyMag"));
+    if (EmptySFX.Succeeded())
+    {
+        EmptyMagazineSound = EmptySFX.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> ReloadSFX(TEXT("/Game/Sounds/Weapons/S_AK47_Reload"));
+    if (ReloadSFX.Succeeded())
+    {
+        ReloadSound = ReloadSFX.Object;
+    }
+
+    // animations
+    static ConstructorHelpers::FObjectFinder<UAnimMontage> ReloadAnim(TEXT("/Game/Animations/AM_AK47_Reload"));
+    if (ReloadAnim.Succeeded())
+    {
+        ReloadAnimation = ReloadAnim.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<UAnimMontage> FireAnim(TEXT("/Game/Animations/AM_AK47_Fire"));
+    if (FireAnim.Succeeded())
+    {
+        FireAnimation = FireAnim.Object;
+    }
+
+    // bullet
     static ConstructorHelpers::FClassFinder<ABullet> BulletBPClass(TEXT("/Game/Weapons/Blueprints/BP_Bullet"));
     if (BulletBPClass.Succeeded())
     {
         BulletClass = BulletBPClass.Class;
     }
 
-    // Load weapon mesh
-    if (UStaticMesh* MeshAsset = Cast<UStaticMesh>(AK47Config.WeaponMeshPath.TryLoad()))
+    // widget
+    static ConstructorHelpers::FClassFinder<UAmmoWidget> WidgetClassFinder(TEXT("/Game/UI/WBP_AmmoWidget"));
+    if(WidgetClassFinder.Succeeded())
     {
-        WeaponModel->SetStaticMesh(MeshAsset);
+        AmmoWidgetClass = WidgetClassFinder.Class;
     }
-
-    // Load effects
-    MuzzleFlash = Cast<UParticleSystem>(AK47Config.MuzzleFlashPath.TryLoad());
-    EjectedShellEffect = Cast<UParticleSystem>(AK47Config.ShellEjectPath.TryLoad());
-
-    // Load sounds
-    FireSound = Cast<USoundBase>(AK47Config.FireSoundPath.TryLoad());
-    EmptyMagazineSound = Cast<USoundBase>(AK47Config.EmptyMagSoundPath.TryLoad());
-    ReloadSound = Cast<USoundBase>(AK47Config.ReloadSoundPath.TryLoad());
-    
-    // Load animations
-    ReloadAnimation = Cast<UAnimMontage>(AK47Config.ReloadAnimationPath.TryLoad());
-    FireAnimation = Cast<UAnimMontage>(AK47Config.FireAnimationPath.TryLoad());
 }
+
+
+
 
 void AAK47::BeginPlay()
 {
     Super::BeginPlay();
-    
-    // Create new fire behavior if needed
-    if (!FireBehavior)
+    SetupWeaponCollision();
+
+    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
     {
-        UBulletFireBehavior* FireBehaviorObj = NewObject<UBulletFireBehavior>();
-        if (FireBehaviorObj)
+        if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
         {
-            SetFireBehavior(FireBehaviorObj);
+            CreateAmmoWidget(PC);
         }
     }
-
-    SetupWeaponCollision();
-    
-    // Create AmmoWidget
-    if (APlayerController* PC = Cast<APlayerController>(GetOwner()->GetInstigatorController()))
-    {
-        CreateAmmoWidget(PC);
-    } 
 }
 
 void AAK47::Fire()
 {
     if (!CanFire())
     {
-        // Play empty magazine sound if we're not reloading
         if (EmptyMagazineSound && !MagazineState.bIsReloading)
         {
-            UGameplayStatics::PlaySoundAtLocation(
-                this,
-                EmptyMagazineSound,
-                GetActorLocation()
-            );
+            UGameplayStatics::PlaySoundAtLocation(this, EmptyMagazineSound, GetActorLocation());
         }
         return;
     }
 
-    if (FireBehavior && !MagazineState.bIsReloading)
-    {
-        FireBehavior->Fire(this);
-        ConsumeAmmo();
-        PlayFireEffects();
-        ApplyRecoil();
-        UpdateAmmoWidget();
-    }
+    Super::Fire();
+    ApplyRecoil();
 }
 
 void AAK47::PlayFireEffects()
 {
-    // Play fire animation
-    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
-    {
-        if (UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance())
-        {
-            if (FireAnimation)
-            {
-                AnimInstance->Montage_Play(FireAnimation);
-            }
-        }
-    }
+    Super::PlayFireEffects();
 
-    // Spawn shell casing effect
+    // Additional AK47-specific effects
     if (EjectedShellEffect)
     {
-        FTransform ShellTransform = GetShellEjectTransform();
+        FTransform ShellTransform = GetShellEjectSocketTransform();
         UGameplayStatics::SpawnEmitterAtLocation(
             GetWorld(),
             EjectedShellEffect,
             ShellTransform.GetLocation(),
             ShellTransform.GetRotation().Rotator()
-        );
-    }
-    
-    // Play fire sound
-    if (FireSound)
-    {
-        UGameplayStatics::PlaySoundAtLocation(
-            this,
-            FireSound,
-            GetActorLocation(),
-            1.0f,
-            1.0f,
-            0.0f
         );
     }
 }
@@ -182,51 +176,7 @@ void AAK47::Reload()
         return;
     }
 
-    StopFiring();
-    MagazineState.bIsReloading = true;
-    PlayReloadEffects();
-
-    // Start reload timer based on config reload time
-    FTimerHandle ReloadTimerHandle;
-    GetWorld()->GetTimerManager().SetTimer(
-        ReloadTimerHandle,
-        this,
-        &AAK47::ReloadMagazine,
-        AK47Config.ReloadTime,
-        false
-    );
-}
-
-void AAK47::PlayReloadEffects()
-{
-    // Play reload animation
-    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
-    {
-        if (UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance())
-        {
-            if (ReloadAnimation)
-            {
-                AnimInstance->Montage_Play(ReloadAnimation);
-            }
-        }
-    }
-
-    // Play reload sound
-    if (ReloadSound)
-    {
-        UGameplayStatics::PlaySoundAtLocation(
-            this,
-            ReloadSound,
-            GetActorLocation()
-        );
-    }
-}
-
-void AAK47::ReloadMagazine()
-{
-    Super::ReloadMagazine();
-    MagazineState.bIsReloading = false;
-    UpdateAmmoWidget();
+    Super::Reload();
     OnReloadComplete.Broadcast();
 }
 
@@ -235,17 +185,22 @@ bool AAK47::CanFire() const
     return Super::CanFire() && !MagazineState.bIsReloading;
 }
 
+void AAK47::PlayReloadEffects()
+{
+    Super::PlayReloadEffects();
+}
+
+
 void AAK47::SetupWeaponCollision()
 {
-    if (WeaponModel)
+    // Disable collision on the weapon mesh to prevent it from interfering with other objects
+    if (WeaponMesh)
     {
-        WeaponModel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        WeaponModel->SetCollisionResponseToAllChannels(ECR_Ignore);
+        WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+        
+        // Optionally enable overlap events if needed for specific features
+        // WeaponMesh->SetGenerateOverlapEvents(false);
     }
 
-    if (ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner()))
-    {
-        FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
-        AttachToComponent(OwningCharacter->GetMesh(), AttachRules, FName("WeaponSocket"));
-    }
-}	
+}

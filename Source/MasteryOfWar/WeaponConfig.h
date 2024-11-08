@@ -96,7 +96,7 @@ struct MASTERYOFWAR_API FBaseWeaponConfig
 
     // Spawn configuration
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Spawn")
-    FVector MuzzleOffset = FVector(0.0f, 0.0f, 0.0f);
+    FVector MuzzleOffset = FVector(0.0f, 0.0f, 30.0f);
 };
 
 // AK47-specific configuration
@@ -126,13 +126,14 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Effects")
     float RecoilStrength = 5.0f;
 
+/*
     // Asset paths
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
-    FSoftObjectPath WeaponMeshPath = FSoftObjectPath(TEXT("/Game/Weapons/Meshes/AK47_Mesh"));
+    FSoftObjectPath WeaponMeshPath = FSoftObjectPath(TEXT("/Game/Weapons/AK47/ak-47"));
 
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
-    FSoftObjectPath MuzzleFlashPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_MuzzleFlash_AK47"));
-
+    FSoftObjectPath MuzzleFlashPath = FSoftObjectPath(TEXT("/Game/StarterContent/Particles/P_Explosion"));
+*/
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
 

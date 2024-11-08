@@ -26,32 +26,18 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void ReloadMagazine() override;
-	virtual void SetupWeaponCollision();
+	virtual void PlayFireEffects() override;
+	virtual void PlayReloadEffects() override;
 
 private:
 	void InitializeWeaponConfig();
 	void LoadWeaponAssets();
+	void SetupWeaponCollision();
+	void ApplyRecoil();
     
 	UPROPERTY()
 	FAK47Config AK47Config;
 
-	UPROPERTY(EditDefaultsOnly, Category = "AK47|Animation")
-	UAnimMontage* ReloadAnimation;
-
-	UPROPERTY(EditDefaultsOnly, Category = "AK47|Animation")
-	UAnimMontage* FireAnimation;
-
 	UPROPERTY(EditDefaultsOnly, Category = "AK47|Effects")
 	UParticleSystem* EjectedShellEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category = "AK47|Audio")
-	USoundBase* EmptyMagazineSound;
-
-	UPROPERTY(EditDefaultsOnly, Category = "AK47|Audio")
-	USoundBase* ReloadSound;
-
-	void ApplyRecoil();
-	void PlayFireEffects();
-	void PlayReloadEffects();
 };
