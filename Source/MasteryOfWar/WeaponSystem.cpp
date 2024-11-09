@@ -23,8 +23,12 @@ AWeapon::AWeapon()
 
     // Initialize default values
     bIsFiring = false;
+    bIsInRecoil = false;
     CurrentSpread = 0.0f;
     ProjectileSpeed = 8000.0f;
+    CurrentRecoilOffset = FVector::ZeroVector;
+    CurrentRecoilRotation = FRotator::ZeroRotator;
+    RecoilTime = 0.0f;
 }
 
 void AWeapon::BeginPlay()
@@ -36,6 +40,17 @@ void AWeapon::BeginPlay()
     {
         MagazineState.MaxAmmo = WeaponConfig.MaxAmmo;
         MagazineState.CurrentAmmo = WeaponConfig.MaxAmmo;
+    }
+
+    // Save initial weapon transform
+    if (WeaponMesh)
+    {
+        InitialWeaponLocation = WeaponMesh->GetRelativeLocation();
+        InitialWeaponRotation = WeaponMesh->GetRelativeRotation();
+        
+        // Make sure collision is disabled
+        WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
     }
 
     // Validate weapon setup
@@ -62,29 +77,105 @@ void AWeapon::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
     UpdateSpread(DeltaTime);
+    UpdateRecoilState(DeltaTime);
 }
 
-bool AWeapon::HasValidMuzzleSocket() const
+void AWeapon::HandleRecoil()
 {
-    return WeaponMesh && WeaponMesh->DoesSocketExist(WeaponConfig.MuzzleSocketName);
+    if (!WeaponMesh) return;
+
+    // random recoil
+    float RandomX = FMath::RandRange(-WeaponConfig.RecoilRandomness, WeaponConfig.RecoilRandomness);
+    float RandomY = FMath::RandRange(-WeaponConfig.RecoilRandomness, WeaponConfig.RecoilRandomness);
+    float RandomZ = FMath::RandRange(-WeaponConfig.RecoilRandomness, WeaponConfig.RecoilRandomness);
+
+    // attach recoil
+    CurrentRecoilOffset = FVector(
+        -WeaponConfig.RecoilOffset * 0.5f,  // move back
+        RandomY * 0.3f,                      // random move to side
+        WeaponConfig.RecoilOffset            // move up
+    );
+
+    // rotate
+    CurrentRecoilRotation = FRotator(
+        WeaponConfig.RecoilRotation,     // up
+        RandomY * 0.5f,                  // to side
+        RandomZ * 0.2f                 
+    );
+
+    // apply recoil
+    FVector NewLocation = InitialWeaponLocation + CurrentRecoilOffset;
+    FRotator NewRotation = InitialWeaponRotation + CurrentRecoilRotation;
+    WeaponMesh->SetRelativeLocationAndRotation(NewLocation, NewRotation);
+
+    bIsInRecoil = true;
+    RecoilTime = 0.0f;
 }
 
-FTransform AWeapon::GetMuzzleSocketTransform() const
+void AWeapon::UpdateRecoilState(float DeltaTime)
 {
-    if (HasValidMuzzleSocket())
+    if (!WeaponMesh || !bIsInRecoil) return;
+
+    RecoilTime += DeltaTime;
+    
+    // current transform
+    FVector CurrentLocation = WeaponMesh->GetRelativeLocation();
+    FRotator CurrentRotation = WeaponMesh->GetRelativeRotation();
+
+    // go to initial location
+    FVector NewLocation;
+    FRotator NewRotation;
+
+    if (bIsFiring)
     {
-        return WeaponMesh->GetSocketTransform(WeaponConfig.MuzzleSocketName);
+        // go to initial position before prev shoot
+        NewLocation = FMath::VInterpTo(
+            CurrentLocation, 
+            InitialWeaponLocation + FVector(0, 0, WeaponConfig.RecoilOffset * 0.3f), 
+            DeltaTime, 
+            WeaponConfig.RecoilRecoverySpeed
+        );
+        
+        NewRotation = FMath::RInterpTo(
+            CurrentRotation,
+            InitialWeaponRotation + FRotator(WeaponConfig.RecoilRotation * 0.3f, 0, 0),
+            DeltaTime,
+            WeaponConfig.RecoilRecoverySpeed
+        );
     }
-    return GetActorTransform();
-}
-
-FTransform AWeapon::GetShellEjectSocketTransform() const
-{
-    if (WeaponMesh && WeaponMesh->DoesSocketExist(WeaponConfig.ShellEjectSocketName))
+    else
     {
-        return WeaponMesh->GetSocketTransform(WeaponConfig.ShellEjectSocketName);
+        // go to init pos if dont shoot
+        NewLocation = FMath::VInterpTo(
+            CurrentLocation, 
+            InitialWeaponLocation, 
+            DeltaTime, 
+            WeaponConfig.RecoilRecoverySpeed
+        );
+        
+        NewRotation = FMath::RInterpTo(
+            CurrentRotation, 
+            InitialWeaponRotation, 
+            DeltaTime, 
+            WeaponConfig.RecoilRecoverySpeed
+        );
     }
-    return GetActorTransform();
+
+    // new transform
+    WeaponMesh->SetRelativeLocationAndRotation(NewLocation, NewRotation);
+
+    
+    if (!bIsFiring)
+    {
+        float LocationDiff = FVector::Dist(NewLocation, InitialWeaponLocation);
+        float RotationDiff = NewRotation.Equals(InitialWeaponRotation, 0.1f) ? 0.0f : 1.0f;
+
+        if (LocationDiff < 0.1f && RotationDiff < 0.1f)
+        {
+            bIsInRecoil = false;
+            WeaponMesh->SetRelativeLocationAndRotation(InitialWeaponLocation, InitialWeaponRotation);
+        }
+    }
 }
 
 void AWeapon::Fire()
@@ -93,16 +184,24 @@ void AWeapon::Fire()
     {
         if (EmptyMagazineSound && !MagazineState.bIsReloading)
         {
-            UGameplayStatics::PlaySoundAtLocation(this, EmptyMagazineSound, GetActorLocation());
+            UGameplayStatics::PlaySoundAtLocation(
+                this, 
+                EmptyMagazineSound, 
+                GetActorLocation()
+            );
         }
         return;
     }
 
-    // Get spawn location and direction
+    // Get spawn location
     FTransform MuzzleTransform = GetMuzzleSocketTransform();
-    FVector Direction = GetAdjustedAimDirection();
+    
+    // current rotation
+    FRotator CurrentAimRotation = GetAdjustedAimDirection().Rotation();
+    CurrentAimRotation += CurrentRecoilRotation;
+    FVector Direction = CurrentAimRotation.Vector();
 
-    // Spawn bullet
+    // Spawn bullet with adjusted direction
     if (UWorld* World = GetWorld())
     {
         if (BulletClass)
@@ -114,7 +213,7 @@ void AWeapon::Fire()
             if (ABullet* Bullet = World->SpawnActor<ABullet>(
                 BulletClass, 
                 MuzzleTransform.GetLocation(),
-                Direction.Rotation(),
+                CurrentAimRotation,
                 SpawnParams))
             {
                 float Damage = FMath::RandRange(WeaponConfig.MinDamage, WeaponConfig.MaxDamage);
@@ -123,31 +222,52 @@ void AWeapon::Fire()
         }
     }
 
+    // Apply recoil before effects
+    HandleRecoil();
+
     // Play effects and consume ammo
     PlayFireEffects();
     ConsumeAmmo();
     UpdateAmmoWidget();
 }
 
+
+
+
+
 void AWeapon::StartFiring()
 {
-    if (!bIsFiring && CanFire())
+    if (!bIsFiring)
     {
-        bIsFiring = true;
-        Fire();
-        
-        if (IsAutomaticFireMode())
+        if (CanFire())
         {
-            GetWorld()->GetTimerManager().SetTimer(
-                AutoFireTimerHandle,
-                this,
-                &AWeapon::HandleAutoFire,
-                WeaponConfig.FireRate,
-                true
+            bIsFiring = true;
+            Fire();
+            
+            if (IsAutomaticFireMode())
+            {
+                GetWorld()->GetTimerManager().SetTimer(
+                    AutoFireTimerHandle,
+                    this,
+                    &AWeapon::HandleAutoFire,
+                    WeaponConfig.FireRate,
+                    true
+                );
+            }
+        }
+        else if (!MagazineState.bIsReloading && EmptyMagazineSound)
+        {
+            // empty mag sound
+            UGameplayStatics::PlaySoundAtLocation(
+                this, 
+                EmptyMagazineSound,
+                GetActorLocation()
             );
         }
     }
 }
+
+
 
 void AWeapon::StopFiring()
 {
@@ -158,15 +278,28 @@ void AWeapon::StopFiring()
     }
 }
 
+
+
 void AWeapon::HandleAutoFire()
 {
-    if (bIsFiring && CanFire())
+    if (bIsFiring)
     {
-        Fire();
-    }
-    else
-    {
-        StopFiring();
+        if (CanFire())
+        {
+            Fire();
+        }
+        else 
+        {
+            if (!MagazineState.bIsReloading && EmptyMagazineSound)
+            {
+                UGameplayStatics::PlaySoundAtLocation(
+                    this, 
+                    EmptyMagazineSound,
+                    GetActorLocation()
+                );
+            }
+            StopFiring();
+        }
     }
 }
 
@@ -181,7 +314,6 @@ void AWeapon::Reload()
     MagazineState.bIsReloading = true;
     PlayReloadEffects();
 
-    // Set timer for reload completion
     FTimerHandle ReloadTimerHandle;
     GetWorld()->GetTimerManager().SetTimer(
         ReloadTimerHandle,
@@ -285,48 +417,79 @@ bool AWeapon::IsCharacterJumping() const
     return false;
 }
 
-
-
-
 void AWeapon::PlayFireEffects()
 {
-    // Muzzle flash
-    if (MuzzleFlashTemplate && HasValidMuzzleSocket())
-    {
-        FTransform EmitterTransform = GetMuzzleSocketTransform();
-        EmitterTransform.SetScale3D(FVector(0.5f));
+    if (!HasValidMuzzleSocket())
+        return;
 
+    // Muzzle flash
+    if (MuzzleFlashTemplate)
+    {
         UParticleSystemComponent* MuzzleFlash = UGameplayStatics::SpawnEmitterAttached(
             MuzzleFlashTemplate,
             WeaponMesh,
             WeaponConfig.MuzzleSocketName,
-            EmitterTransform.GetLocation(),
-            EmitterTransform.GetRotation().Rotator(),
-            EmitterTransform.GetScale3D(),
-            EAttachLocation::SnapToTarget
+            FVector::ZeroVector,          
+            FRotator::ZeroRotator,  
+            MuzzleFlashScale,             
+            EAttachLocation::SnapToTarget,
+            true,
+            EPSCPoolMethod::AutoRelease,
+            true
         );
 
         if (MuzzleFlash)
         {
-            // Установка размера
-            MuzzleFlash->SetRelativeScale3D(FVector(0.5f));
-            
-            // Параметры частиц
-            MuzzleFlash->SetFloatParameter(TEXT("Size"), 0.5f);
-            MuzzleFlash->SetFloatParameter(TEXT("Lifetime"), 0.2f);
+            MuzzleFlash->SetFloatParameter(TEXT("Lifetime"), MuzzleFlashLifetime);
         }
     }
 
-    // Shell ejection
-    if (ShellEjectTemplate)
+    // Smoke effect
+    if (MuzzleSmokeTemplate)
     {
-        FTransform ShellTransform = GetShellEjectSocketTransform();
-        ShellTransform.SetScale3D(FVector(0.3f));
+        FTimerHandle SmokeSpawnTimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(
+            SmokeSpawnTimerHandle,
+            [this]()
+            {
+                FTransform MuzzleTransform = WeaponMesh->GetSocketTransform(WeaponConfig.MuzzleSocketName);
+                FVector WorldSpaceOffset = MuzzleTransform.TransformVector(SmokeSpawnOffset);
+                FVector SpawnLocation = MuzzleTransform.GetLocation() + WorldSpaceOffset;
+
+                UParticleSystemComponent* SmokeEffect = UGameplayStatics::SpawnEmitterAtLocation(
+                    GetWorld(),
+                    MuzzleSmokeTemplate,
+                    SpawnLocation,
+                    MuzzleTransform.Rotator(),
+                    MuzzleSmokeScale
+                );
+
+                if (SmokeEffect)
+                {
+                    SmokeEffect->SetFloatParameter(TEXT("Lifetime"), SmokeLifetime);
+                }
+            },
+            0.1f,
+            false
+        );
+    }
+
+    // Shell ejection
+    if (ShellEjectTemplate && WeaponMesh->DoesSocketExist(WeaponConfig.ShellEjectSocketName))
+    {
+        FTransform ShellTransform = WeaponMesh->GetSocketTransform(WeaponConfig.ShellEjectSocketName);
+        FVector EjectionDirection = WeaponMesh->GetRightVector() * ShellEjectOffset.X + 
+                                  WeaponMesh->GetUpVector() * ShellEjectOffset.Y +
+                                  WeaponMesh->GetForwardVector() * ShellEjectOffset.Z;
+        
+        ShellTransform.SetLocation(ShellTransform.GetLocation() + EjectionDirection);
 
         UParticleSystemComponent* ShellEject = UGameplayStatics::SpawnEmitterAtLocation(
             GetWorld(),
             ShellEjectTemplate,
-            ShellTransform
+            ShellTransform.GetLocation(),
+            ShellTransform.GetRotation().Rotator(),
+            ShellEjectScale
         );
 
         if (ShellEject)
@@ -341,7 +504,7 @@ void AWeapon::PlayFireEffects()
         UGameplayStatics::PlaySoundAtLocation(
             this,
             FireSound,
-            GetActorLocation()
+            WeaponMesh->GetSocketLocation(WeaponConfig.MuzzleSocketName)
         );
     }
 
@@ -358,12 +521,8 @@ void AWeapon::PlayFireEffects()
     }
 }
 
-
-
-
 void AWeapon::PlayReloadEffects()
 {
-    // Reload sound
     if (ReloadSound)
     {
         UGameplayStatics::PlaySoundAtLocation(
@@ -373,7 +532,6 @@ void AWeapon::PlayReloadEffects()
         );
     }
 
-    // Reload animation
     if (ReloadAnimation)
     {
         if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
@@ -407,4 +565,27 @@ void AWeapon::UpdateAmmoWidget()
     {
         AmmoWidget->UpdateAmmoCount(MagazineState.CurrentAmmo, MagazineState.MaxAmmo);
     }
+}
+
+bool AWeapon::HasValidMuzzleSocket() const
+{
+    return WeaponMesh && WeaponMesh->DoesSocketExist(WeaponConfig.MuzzleSocketName);
+}
+
+FTransform AWeapon::GetMuzzleSocketTransform() const
+{
+    if (HasValidMuzzleSocket())
+    {
+        return WeaponMesh->GetSocketTransform(WeaponConfig.MuzzleSocketName);
+    }
+    return GetActorTransform();
+}
+
+FTransform AWeapon::GetShellEjectSocketTransform() const
+{
+    if (WeaponMesh && WeaponMesh->DoesSocketExist(WeaponConfig.ShellEjectSocketName))
+    {
+        return WeaponMesh->GetSocketTransform(WeaponConfig.ShellEjectSocketName);
+    }
+    return GetActorTransform();
 }

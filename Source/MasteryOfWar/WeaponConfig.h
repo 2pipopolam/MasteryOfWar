@@ -87,6 +87,19 @@ struct MASTERYOFWAR_API FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
     float MaxSpread = 5.0f;
 
+    // Recoil parameters
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Recoil")
+    float RecoilOffset = 3.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Recoil")
+    float RecoilRotation = 2.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Recoil")
+    float RecoilRecoverySpeed = 8.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Recoil")
+    float RecoilRandomness = 0.3f;
+
     // Socket names
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
     FName MuzzleSocketName = "MuzzleSocket";
@@ -116,24 +129,20 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         MaxAmmo = 30;
         ReloadTime = 2.0f;
         
+        // Accuracy
         BaseSpread = 0.2f;
         MovementSpread = 1.5f;
         JumpingSpread = 3.0f;
         SpreadRecoveryRate = 0.5f;
         MaxSpread = 4.0f;
+
+        // RECOIL
+        RecoilOffset = 28.0f;           // Recoil force (movement)
+        RecoilRotation = 25.0f;         // Recoil force (turning)
+        RecoilRecoverySpeed = 8.0f;    // Rate of return
+        RecoilRandomness = 2.5f;       
     }
 
-    UPROPERTY(EditDefaultsOnly, Category = "AK47|Effects")
-    float RecoilStrength = 5.0f;
-
-/*
-    // Asset paths
-    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
-    FSoftObjectPath WeaponMeshPath = FSoftObjectPath(TEXT("/Game/Weapons/AK47/ak-47"));
-
-    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
-    FSoftObjectPath MuzzleFlashPath = FSoftObjectPath(TEXT("/Game/StarterContent/Particles/P_Explosion"));
-*/
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
 
@@ -144,7 +153,7 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
     FSoftObjectPath ReloadSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/reloading_ak47"));
 
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
-    FSoftObjectPath EmptyMagSoundPath = FSoftObjectPath(TEXT("/Game/Sounds/Weapons/S_EmptyMag"));
+    FSoftObjectPath EmptyMagSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/empty_mag_sound"));
 
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath FireAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_AK47_Fire"));

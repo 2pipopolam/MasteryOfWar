@@ -4,8 +4,6 @@
 #include "Animation/AnimInstance.h"
 #include "BulletFireBehavior.h"
 
-
-
 AAK47::AAK47()
 {
     // Create and set fire behavior
@@ -55,7 +53,7 @@ void AAK47::LoadWeaponAssets()
         FireSound = FireSFX.Object;
     }
 
-    static ConstructorHelpers::FObjectFinder<USoundBase> EmptySFX(TEXT("/Game/Sounds/Weapons/S_EmptyMag"));
+    static ConstructorHelpers::FObjectFinder<USoundBase> EmptySFX(TEXT("/Game/Weapons/Sounds/empty_mag_sound"));
     if (EmptySFX.Succeeded())
     {
         EmptyMagazineSound = EmptySFX.Object;
@@ -95,9 +93,6 @@ void AAK47::LoadWeaponAssets()
     }
 }
 
-
-
-
 void AAK47::BeginPlay()
 {
     Super::BeginPlay();
@@ -124,7 +119,6 @@ void AAK47::Fire()
     }
 
     Super::Fire();
-    ApplyRecoil();
 }
 
 void AAK47::PlayFireEffects()
@@ -141,18 +135,6 @@ void AAK47::PlayFireEffects()
             ShellTransform.GetLocation(),
             ShellTransform.GetRotation().Rotator()
         );
-    }
-}
-
-void AAK47::ApplyRecoil()
-{
-    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
-    {
-        float RecoilPitch = FMath::RandRange(1.0f, 2.0f) * AK47Config.RecoilStrength;
-        float RecoilYaw = FMath::RandRange(-0.5f, 0.5f) * AK47Config.RecoilStrength;
-        
-        Character->AddControllerPitchInput(-RecoilPitch * 0.05f);
-        Character->AddControllerYawInput(RecoilYaw * 0.05f);
     }
 }
 
@@ -190,17 +172,11 @@ void AAK47::PlayReloadEffects()
     Super::PlayReloadEffects();
 }
 
-
 void AAK47::SetupWeaponCollision()
 {
-    // Disable collision on the weapon mesh to prevent it from interfering with other objects
     if (WeaponMesh)
     {
         WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-        
-        // Optionally enable overlap events if needed for specific features
-        // WeaponMesh->SetGenerateOverlapEvents(false);
     }
-
 }

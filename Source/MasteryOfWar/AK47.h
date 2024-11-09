@@ -33,7 +33,6 @@ private:
 	void InitializeWeaponConfig();
 	void LoadWeaponAssets();
 	void SetupWeaponCollision();
-	void ApplyRecoil();
     
 	UPROPERTY()
 	FAK47Config AK47Config;
