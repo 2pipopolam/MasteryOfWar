@@ -130,17 +130,17 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         ReloadTime = 2.0f;
         
         // Accuracy
-        BaseSpread = 0.2f;
-        MovementSpread = 1.5f;
-        JumpingSpread = 3.0f;
-        SpreadRecoveryRate = 0.5f;
-        MaxSpread = 4.0f;
+        BaseSpread = 0.1f;
+        MovementSpread = 5.5f;
+        JumpingSpread = 8.0f;
+        SpreadRecoveryRate = 2.5f;
+        MaxSpread = 5.0f;
 
         // RECOIL
-        RecoilOffset = 28.0f;           // Recoil force (movement)
-        RecoilRotation = 25.0f;         // Recoil force (turning)
-        RecoilRecoverySpeed = 8.0f;    // Rate of return
-        RecoilRandomness = 2.5f;       
+        RecoilOffset = 58.0f;           // Recoil force (movement)
+        RecoilRotation = 35.0f;         // Recoil force (turning)
+        RecoilRecoverySpeed = 10.0f;    // Rate of return
+        RecoilRandomness = 8.5f;       
     }
 
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
