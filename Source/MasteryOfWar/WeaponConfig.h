@@ -3,6 +3,33 @@
 #include "CoreMinimal.h"
 #include "WeaponConfig.generated.h"
 
+
+// Recoil pattern structure
+USTRUCT(BlueprintType)
+struct MASTERYOFWAR_API FCameraRecoilPattern
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
+    TArray<FVector2D> PatternPoints;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
+    float RecoilStrength = 10.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
+    float RecoverySpeed = 5.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
+    float RandomDeviation = 0.1f;
+
+    FCameraRecoilPattern()
+        : RecoilStrength(1.0f)
+        , RecoverySpeed(5.0f)
+        , RandomDeviation(0.1f)
+    {
+    }
+};
+
 // Magazine state structure
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FMagazineState
@@ -104,9 +131,7 @@ struct MASTERYOFWAR_API FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
     FName MuzzleSocketName = "MuzzleSocket";
 
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
-    FName ShellEjectSocketName = "ShellEjectSocket";
-
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets") FName ShellEjectSocketName = "ShellEjectSocket"; 
     // Spawn configuration
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Spawn")
     FVector MuzzleOffset = FVector(0.0f, 0.0f, 30.0f);
@@ -117,7 +142,6 @@ USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
 {
     GENERATED_BODY()
-
     FAK47Config()
     {
         WeaponType = EWeaponType::AK47;
@@ -128,21 +152,53 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         Range = 8000.0f;
         MaxAmmo = 30;
         ReloadTime = 2.0f;
-        
-        // Accuracy
-        BaseSpread = 0.1f;
-        MovementSpread = 5.5f;
-        JumpingSpread = 8.0f;
-        SpreadRecoveryRate = 2.5f;
-        MaxSpread = 5.0f;
 
-        // RECOIL
-        RecoilOffset = 58.0f;           // Recoil force (movement)
-        RecoilRotation = 35.0f;         // Recoil force (turning)
-        RecoilRecoverySpeed = 10.0f;    // Rate of return
-        RecoilRandomness = 8.5f;       
+FCameraRecoilPattern Pattern;
+
+// AK-474 recoil pattern
+for (int32 i = 0; i < 10; ++i)
+{
+    float progress = static_cast<float>(i) / 10.0f;
+    
+    FVector2D RecoilPoint;
+    if (i < 5)
+    {
+        RecoilPoint.Y = FMath::Lerp(1.0f, 1.5f, progress); // up
+        RecoilPoint.X = -0.2f; // to left a bit
     }
+    // to right 
+    else
+    {
+        RecoilPoint.Y = FMath::Lerp(1.5f, 2.0f, progress); // up
+        RecoilPoint.X = 0.3f; // right
+    }
+    Pattern.PatternPoints.Add(RecoilPoint);
+}
 
+// horizontal recoil
+for (int32 i = 0; i < 20; ++i)
+{
+    float progress = static_cast<float>(i) / 20.0f;
+    
+    FVector2D RecoilPoint;
+    RecoilPoint.Y = 2.0f; // up
+    // right-left
+    RecoilPoint.X = FMath::Sin(progress * PI * 2) * 0.4f;
+    
+    Pattern.PatternPoints.Add(RecoilPoint);
+}
+
+// recoil settings
+Pattern.RecoilStrength = 0.3f;
+Pattern.RecoverySpeed = 2.0f;
+Pattern.RandomDeviation = 0.05f;
+
+RecoilPattern = Pattern;
+
+
+}
+
+    // Asset paths
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
 
@@ -160,4 +216,8 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
 
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ReloadAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_AK47_Reload"));
+
+    // Recoil pattern
+    UPROPERTY(EditDefaultsOnly, Category = "AK47|Recoil")
+    FCameraRecoilPattern RecoilPattern;
 };

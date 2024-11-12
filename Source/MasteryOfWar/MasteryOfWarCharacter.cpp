@@ -194,6 +194,7 @@ void AMasteryOfWarCharacter::Move(const FInputActionValue& Value)
     }
 }
 
+
 void AMasteryOfWarCharacter::Look(const FInputActionValue& Value)
 {
     FVector2D LookAxisVector = Value.Get<FVector2D>();
@@ -207,6 +208,7 @@ void AMasteryOfWarCharacter::Look(const FInputActionValue& Value)
         AddControllerPitchInput(LookAxisVector.Y);
     }
 }
+
 
 void AMasteryOfWarCharacter::StartFire()
 {

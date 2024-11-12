@@ -93,19 +93,46 @@ void AAK47::LoadWeaponAssets()
     }
 }
 
+
 void AAK47::BeginPlay()
 {
     Super::BeginPlay();
     SetupWeaponCollision();
-
-    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+    
+    // Проверка и инициализация отдачи
+    if (CameraRecoilComponent)
     {
-        if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
+        // Убедимся, что паттерн содержит точки
+        ensure(AK47Config.RecoilPattern.PatternPoints.Num() > 0);
+        
+        CameraRecoilComponent->SetRecoilPattern(AK47Config.RecoilPattern);
+        
+        // Проверим владельца и контроллер
+        if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
         {
-            CreateAmmoWidget(PC);
+            if (APlayerController* PC = Cast<APlayerController>(OwnerPawn->GetController()))
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Found valid controller for recoil"));
+                
+                // Проверим камеру
+                if (UCameraComponent* Camera = OwnerPawn->FindComponentByClass<UCameraComponent>())
+                {
+                    CameraRecoilComponent->SetTargetCamera(Camera);
+                    UE_LOG(LogTemp, Warning, TEXT("Camera set for recoil"));
+                }
+            }
         }
+        
+        UE_LOG(LogTemp, Warning, TEXT("Recoil pattern set with %d points, strength: %f"), 
+            AK47Config.RecoilPattern.PatternPoints.Num(),
+            AK47Config.RecoilPattern.RecoilStrength);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("CameraRecoilComponent is null in AK47 BeginPlay!"));
     }
 }
+
 
 void AAK47::Fire()
 {

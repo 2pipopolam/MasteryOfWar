@@ -40,6 +40,39 @@ public:
     virtual void Fire(class AWeapon* Weapon) = 0;
 };
 
+// Camera Recoil Component
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class MASTERYOFWAR_API UCameraRecoilComponent : public UActorComponent
+{
+    GENERATED_BODY()
+
+public:    
+    UCameraRecoilComponent();
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+    void ApplyRecoil();
+    void ResetRecoil();
+    void SetRecoilPattern(const FCameraRecoilPattern& NewPattern);
+    void SetTargetCamera(UCameraComponent* NewCamera) { TargetCamera = NewCamera; }
+    UCameraComponent* GetCharacterCamera() const;
+
+protected:
+    virtual void BeginPlay() override;
+
+private:
+    FCameraRecoilPattern CurrentPattern;
+    int32 CurrentPatternIndex;
+    bool bIsRecoilActive;
+    FVector2D TotalRecoilOffset;
+    FVector2D RecoilRecoveryOffset;
+    
+    UPROPERTY()
+    UCameraComponent* TargetCamera;
+    
+    void RecoverFromRecoil(float DeltaTime);
+    FVector2D GetNextPatternPoint() const;
+};
+
 // Base Weapon Class
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class MASTERYOFWAR_API AWeapon : public AActor
@@ -95,6 +128,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Components")
     UStaticMeshComponent* WeaponMesh;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Components")
+    UCameraRecoilComponent* CameraRecoilComponent;
+
     // Projectile settings
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Projectile")
     TSubclassOf<class ABullet> BulletClass;
@@ -105,6 +141,9 @@ public:
     // Effects
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
     UParticleSystem* MuzzleFlashTemplate;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
+    UParticleSystem* MuzzleSmokeTemplate;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
     UParticleSystem* ShellEjectTemplate;
@@ -132,10 +171,6 @@ public:
     // UI
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|UI")
     TSubclassOf<UAmmoWidget> AmmoWidgetClass;
-
-    // Fire behavior
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Behavior")
-    void SetWeaponFireBehavior(const TScriptInterface<IFireBehavior>& NewBehavior) { FireBehavior = NewBehavior; }
 
 protected:
     virtual void BeginPlay() override;
@@ -167,6 +202,19 @@ protected:
     bool bIsInRecoil;
     float RecoilTime;
 
+    // Fire behavior
+    UPROPERTY()
+    TScriptInterface<IFireBehavior> FireBehavior;
+
+    // Damage calculator
+    UPROPERTY()
+    TScriptInterface<IDamageCalculator> DamageCalculator;
+
+    // Weapon state
+    bool bIsFiring;
+    float CurrentSpread;
+    FTimerHandle AutoFireTimerHandle;
+
     // Utility functions
     UFUNCTION()
     virtual bool HasValidMuzzleSocket() const;
@@ -191,31 +239,28 @@ protected:
 
     // Effects parameters
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    FVector MuzzleFlashScale = FVector(0.05f);
+    FVector MuzzleFlashScale;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    FVector ShellEjectScale = FVector(0.3f);
+    FVector ShellEjectScale;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    FVector MuzzleFlashOffset = FVector(0.0f);
+    FVector MuzzleFlashOffset;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    FVector ShellEjectOffset = FVector(10.0f, 5.0f, 0.0f);
+    FVector ShellEjectOffset;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    float MuzzleFlashLifetime = 0.2f;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Effects")
-    UParticleSystem* MuzzleSmokeTemplate;
+    float MuzzleFlashLifetime;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    FVector MuzzleSmokeScale = FVector(1.0f);
+    FVector MuzzleSmokeScale;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    float SmokeLifetime = 1.0f;
+    float SmokeLifetime;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Effects")
-    FVector SmokeSpawnOffset = FVector(0.0f);
+    FVector SmokeSpawnOffset;
 
     // UI
     UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
@@ -223,23 +268,6 @@ protected:
 
     UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
     virtual void UpdateAmmoWidget();
-
-    // Accuracy
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Accuracy")
-    virtual FRotator CalculateSpread() const;
-
-    // Fire behavior
-    UPROPERTY()
-    TScriptInterface<IFireBehavior> FireBehavior;
-
-    // Damage calculator
-    UPROPERTY()
-    TScriptInterface<IDamageCalculator> DamageCalculator;
-
-    // Weapon state
-    bool bIsFiring;
-    float CurrentSpread;
-    FTimerHandle AutoFireTimerHandle;
 
 private:
     UPROPERTY()
