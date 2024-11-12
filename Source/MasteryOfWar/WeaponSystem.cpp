@@ -7,14 +7,15 @@
 #include "DrawDebugHelpers.h"
 #include "MasteryOfWarCharacter.h"
 
-
 UCameraRecoilComponent::UCameraRecoilComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
     CurrentPatternIndex = 0;
     bIsRecoilActive = false;
+    bIsInSmoothRecovery = false;
     TotalRecoilOffset = FVector2D::ZeroVector;
     RecoilRecoveryOffset = FVector2D::ZeroVector;
+    TimeSinceLastRecoil = 0.0f;
     TargetCamera = nullptr;
 }
 
@@ -22,7 +23,9 @@ void UCameraRecoilComponent::BeginPlay()
 {
     Super::BeginPlay();
     
-    // find camera
+    TimeSinceLastRecoil = 0.0f;
+    bIsInSmoothRecovery = false;
+    
     if (!TargetCamera)
     {
         TargetCamera = GetCharacterCamera();
@@ -35,9 +38,61 @@ void UCameraRecoilComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    if (!bIsRecoilActive && !TotalRecoilOffset.IsNearlyZero())
+    if (!bIsRecoilActive)
     {
-        RecoverFromRecoil(DeltaTime);
+        TimeSinceLastRecoil += DeltaTime;
+
+        if (TimeSinceLastRecoil >= CurrentPattern.RecoveryDelay &&
+            !TotalRecoilOffset.IsNearlyZero(CurrentPattern.MinRecoilForRecovery))
+        {
+            if (!bIsInSmoothRecovery)
+            {
+                bIsInSmoothRecovery = true;
+                SmoothRecoveryStartPosition = TotalRecoilOffset;
+            }
+            
+            HandleSmoothRecovery(DeltaTime);
+        }
+        else if (!bIsInSmoothRecovery && !TotalRecoilOffset.IsNearlyZero())
+        {
+            RecoverFromRecoil(DeltaTime);
+        }
+    }
+}
+
+void UCameraRecoilComponent::HandleSmoothRecovery(float DeltaTime)
+{
+    if (!bIsInSmoothRecovery || !TargetCamera)
+        return;
+
+    FVector2D TargetPosition = FVector2D::ZeroVector;
+    FVector2D NewPosition = FMath::Vector2DInterpTo(
+        TotalRecoilOffset,
+        TargetPosition,
+        DeltaTime,
+        CurrentPattern.SmoothRecoverySpeed
+    );
+
+    
+    FVector2D Delta = NewPosition - TotalRecoilOffset;
+    
+    if (APawn* OwnerPawn = Cast<APawn>(GetOwner()->GetOwner()))
+    {
+        if (APlayerController* PC = Cast<APlayerController>(OwnerPawn->GetController()))
+        {
+            PC->AddPitchInput(Delta.Y);
+            PC->AddYawInput(Delta.X);
+        }
+    }
+
+    TotalRecoilOffset = NewPosition;
+    
+    
+    if (TotalRecoilOffset.IsNearlyZero(0.01f))
+    {
+        bIsInSmoothRecovery = false;
+        TotalRecoilOffset = FVector2D::ZeroVector;
+        RecoilRecoveryOffset = FVector2D::ZeroVector;
     }
 }
 
@@ -56,8 +111,6 @@ UCameraComponent* UCameraRecoilComponent::GetCharacterCamera() const
     return nullptr;
 }
 
-
-
 void UCameraRecoilComponent::ApplyRecoil()
 {
     if (!CurrentPattern.PatternPoints.IsValidIndex(CurrentPatternIndex))
@@ -72,19 +125,22 @@ void UCameraRecoilComponent::ApplyRecoil()
     }
 
     bIsRecoilActive = true;
+    TimeSinceLastRecoil = 0.0f;
+    bIsInSmoothRecovery = false;
+    
     FVector2D RecoilPoint = GetNextPatternPoint();
     
     if (APawn* OwnerPawn = Cast<APawn>(GetOwner()->GetOwner()))
     {
         if (APlayerController* PC = Cast<APlayerController>(OwnerPawn->GetController()))
         {
-          
             float PitchInput = -(RecoilPoint.Y * CurrentPattern.RecoilStrength);
             float YawInput = RecoilPoint.X * CurrentPattern.RecoilStrength;
             
-            // apply impulse via controller
             PC->AddPitchInput(PitchInput);
             PC->AddYawInput(YawInput);
+            
+            TotalRecoilOffset += FVector2D(YawInput, PitchInput);
             
             UE_LOG(LogTemp, Warning, TEXT("Applied recoil - PitchInput: %f, YawInput: %f"), 
                 PitchInput, YawInput);
@@ -94,15 +150,11 @@ void UCameraRecoilComponent::ApplyRecoil()
     CurrentPatternIndex++;
 }
 
-
-
-
-
-
 void UCameraRecoilComponent::ResetRecoil()
 {
     UE_LOG(LogTemp, Warning, TEXT("ResetRecoil called"));
     bIsRecoilActive = false;
+    bIsInSmoothRecovery = false;
     CurrentPatternIndex = 0;
     RecoilRecoveryOffset = TotalRecoilOffset;
 }
@@ -113,10 +165,6 @@ void UCameraRecoilComponent::SetRecoilPattern(const FCameraRecoilPattern& NewPat
     CurrentPattern = NewPattern;
     ResetRecoil();
 }
-
-
-
-
 
 void UCameraRecoilComponent::RecoverFromRecoil(float DeltaTime)
 {
@@ -136,7 +184,6 @@ void UCameraRecoilComponent::RecoverFromRecoil(float DeltaTime)
             
             FVector2D Recovery = RecoveryDirection * RecoveryMagnitude;
             
-            // add recovery via controller
             PC->AddPitchInput(Recovery.Y);
             PC->AddYawInput(Recovery.X);
             
@@ -162,7 +209,6 @@ FVector2D UCameraRecoilComponent::GetNextPatternPoint() const
 
     FVector2D BasePoint = CurrentPattern.PatternPoints[CurrentPatternIndex];
     
-    // Add some random
     float RandomX = FMath::RandRange(-CurrentPattern.RandomDeviation, CurrentPattern.RandomDeviation);
     float RandomY = FMath::RandRange(-CurrentPattern.RandomDeviation, CurrentPattern.RandomDeviation);
     
@@ -171,8 +217,6 @@ FVector2D UCameraRecoilComponent::GetNextPatternPoint() const
 
 
 
-
-// AWeapon Implementation
 
 AWeapon::AWeapon()
 {

@@ -66,10 +66,16 @@ private:
     FVector2D TotalRecoilOffset;
     FVector2D RecoilRecoveryOffset;
     
+    // Новые переменные для плавного возвращения
+    float TimeSinceLastRecoil;
+    bool bIsInSmoothRecovery;
+    FVector2D SmoothRecoveryStartPosition;
+    
     UPROPERTY()
     UCameraComponent* TargetCamera;
     
     void RecoverFromRecoil(float DeltaTime);
+    void HandleSmoothRecovery(float DeltaTime);
     FVector2D GetNextPatternPoint() const;
 };
 
@@ -272,4 +278,4 @@ protected:
 private:
     UPROPERTY()
     UAmmoWidget* AmmoWidget;
-};
+}; 

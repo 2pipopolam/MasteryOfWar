@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "WeaponConfig.generated.h"
 
-
 // Recoil pattern structure
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FCameraRecoilPattern
@@ -22,10 +21,25 @@ struct MASTERYOFWAR_API FCameraRecoilPattern
     UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
     float RandomDeviation = 0.1f;
 
+    // after this time camera starts return 
+    UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
+    float RecoveryDelay = 0.5f;
+
+    // speed of returning after delay
+    UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
+    float SmoothRecoverySpeed = 2.0f;
+
+    // min recoil to start returning
+    UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
+    float MinRecoilForRecovery = 0.1f;
+
     FCameraRecoilPattern()
         : RecoilStrength(1.0f)
         , RecoverySpeed(5.0f)
         , RandomDeviation(0.1f)
+        , RecoveryDelay(0.5f)
+        , SmoothRecoverySpeed(2.0f)
+        , MinRecoilForRecovery(0.1f)
     {
     }
 };
@@ -131,17 +145,21 @@ struct MASTERYOFWAR_API FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
     FName MuzzleSocketName = "MuzzleSocket";
 
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets") FName ShellEjectSocketName = "ShellEjectSocket"; 
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
+    FName ShellEjectSocketName = "ShellEjectSocket";
+
     // Spawn configuration
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Spawn")
     FVector MuzzleOffset = FVector(0.0f, 0.0f, 30.0f);
 };
+
 
 // AK47-specific configuration
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
 {
     GENERATED_BODY()
+    
     FAK47Config()
     {
         WeaponType = EWeaponType::AK47;
@@ -153,52 +171,55 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         MaxAmmo = 30;
         ReloadTime = 2.0f;
 
-FCameraRecoilPattern Pattern;
+        
+        FCameraRecoilPattern Pattern;
 
-// AK-474 recoil pattern
-for (int32 i = 0; i < 10; ++i)
-{
-    float progress = static_cast<float>(i) / 10.0f;
-    
-    FVector2D RecoilPoint;
-    if (i < 5)
-    {
-        RecoilPoint.Y = FMath::Lerp(1.0f, 1.5f, progress); // up
-        RecoilPoint.X = -0.2f; // to left a bit
+        // main recoil pattern for AK-47
+        for (int32 i = 0; i < 10; ++i)
+        {
+            float progress = static_cast<float>(i) / 10.0f;
+            
+            FVector2D RecoilPoint;
+            if (i < 5)
+            {
+                RecoilPoint.Y = FMath::Lerp(1.0f, 1.5f, progress); // up
+                RecoilPoint.X = -0.2f; // left
+            }
+            else
+            {
+                RecoilPoint.Y = FMath::Lerp(1.5f, 2.0f, progress); // up
+                RecoilPoint.X = 0.3f; // right
+            }
+            Pattern.PatternPoints.Add(RecoilPoint);
+        }
+
+        // horizontal recoil
+        for (int32 i = 0; i < 20; ++i)
+        {
+            float progress = static_cast<float>(i) / 20.0f;
+            
+            FVector2D RecoilPoint;
+            RecoilPoint.Y = 2.0f; // to up
+            //left-right
+            RecoilPoint.X = FMath::Sin(progress * PI * 2) * 0.4f;
+            
+            Pattern.PatternPoints.Add(RecoilPoint);
+        }
+
+        // recoil settings
+        Pattern.RecoilStrength = 0.3f;
+        Pattern.RecoverySpeed = 2.0f;
+        Pattern.RandomDeviation = 0.05f;
+        
+        // parameters of gun return
+        Pattern.RecoveryDelay = 0.5f;
+        Pattern.SmoothRecoverySpeed = 2.0f;
+        Pattern.MinRecoilForRecovery = 0.1f;
+
+        RecoilPattern = Pattern;
     }
-    // to right 
-    else
-    {
-        RecoilPoint.Y = FMath::Lerp(1.5f, 2.0f, progress); // up
-        RecoilPoint.X = 0.3f; // right
-    }
-    Pattern.PatternPoints.Add(RecoilPoint);
-}
 
-// horizontal recoil
-for (int32 i = 0; i < 20; ++i)
-{
-    float progress = static_cast<float>(i) / 20.0f;
-    
-    FVector2D RecoilPoint;
-    RecoilPoint.Y = 2.0f; // up
-    // right-left
-    RecoilPoint.X = FMath::Sin(progress * PI * 2) * 0.4f;
-    
-    Pattern.PatternPoints.Add(RecoilPoint);
-}
-
-// recoil settings
-Pattern.RecoilStrength = 0.3f;
-Pattern.RecoverySpeed = 2.0f;
-Pattern.RandomDeviation = 0.05f;
-
-RecoilPattern = Pattern;
-
-
-}
-
-    // Asset paths
+    // assets
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
 
@@ -217,7 +238,7 @@ RecoilPattern = Pattern;
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ReloadAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_AK47_Reload"));
 
-    // Recoil pattern
+    // recoil pattern
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Recoil")
     FCameraRecoilPattern RecoilPattern;
 };

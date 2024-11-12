@@ -26,7 +26,7 @@ void AAK47::InitializeWeaponConfig()
 
 void AAK47::LoadWeaponAssets()
 {
-    // Загружаем статический меш для оружия
+    // upload static mesh
     static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/Weapons/Meshes/AK47/ak-47"));
     if (MeshAsset.Succeeded() && WeaponMesh)
     {
@@ -99,22 +99,21 @@ void AAK47::BeginPlay()
     Super::BeginPlay();
     SetupWeaponCollision();
     
-    // Проверка и инициализация отдачи
+    // camera check and init 
     if (CameraRecoilComponent)
     {
-        // Убедимся, что паттерн содержит точки
+        // does pattern have some points? 
         ensure(AK47Config.RecoilPattern.PatternPoints.Num() > 0);
         
         CameraRecoilComponent->SetRecoilPattern(AK47Config.RecoilPattern);
         
-        // Проверим владельца и контроллер
+        // check owner and controller
         if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
         {
             if (APlayerController* PC = Cast<APlayerController>(OwnerPawn->GetController()))
             {
                 UE_LOG(LogTemp, Warning, TEXT("Found valid controller for recoil"));
                 
-                // Проверим камеру
                 if (UCameraComponent* Camera = OwnerPawn->FindComponentByClass<UCameraComponent>())
                 {
                     CameraRecoilComponent->SetTargetCamera(Camera);
