@@ -296,6 +296,40 @@ void AWeapon::Tick(float DeltaTime)
     UpdateRecoilState(DeltaTime);
 }
 
+
+FTransform AWeapon::GetBulletSpawnTransform() const
+{
+    // get camera
+    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+    {
+        if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
+        {
+            FVector CameraLocation = Camera->GetComponentLocation();
+            FRotator CameraRotation = Camera->GetComponentRotation();
+            
+            FRotator SpreadRotation = CameraRotation;
+            if (CurrentSpread > 0.0f)
+            {
+                float HalfSpread = CurrentSpread * 0.5f;
+                float RandomX = FMath::RandRange(-HalfSpread, HalfSpread);
+                float RandomY = FMath::RandRange(-HalfSpread, HalfSpread);
+                
+                SpreadRotation.Pitch += RandomX;
+                SpreadRotation.Yaw += RandomY;
+            }
+            
+            // spawn bullet
+            FVector SpawnOffset = SpreadRotation.Vector() * 50.0f; // 50 units forward camera
+            FVector SpawnLocation = CameraLocation + SpawnOffset;
+            
+            return FTransform(SpreadRotation, SpawnLocation);
+        }
+    }
+    
+    // IF SOMETHING WRONG
+    return GetMuzzleSocketTransform();
+}
+
 void AWeapon::Fire()
 {
     if (!CanFire()) 
@@ -307,8 +341,8 @@ void AWeapon::Fire()
         return;
     }
 
-    FTransform MuzzleTransform = GetMuzzleSocketTransform();
-    FRotator CurrentAimRotation = GetAdjustedAimDirection().Rotation();
+    // get transform for bullet spawn 
+    FTransform SpawnTransform = GetBulletSpawnTransform();
     
     if (UWorld* World = GetWorld())
     {
@@ -320,8 +354,8 @@ void AWeapon::Fire()
 
             if (ABullet* Bullet = World->SpawnActor<ABullet>(
                 BulletClass, 
-                MuzzleTransform.GetLocation(),
-                CurrentAimRotation,
+                SpawnTransform.GetLocation(),
+                SpawnTransform.GetRotation().Rotator(),
                 SpawnParams))
             {
                 float Damage = FMath::RandRange(WeaponConfig.MinDamage, WeaponConfig.MaxDamage);

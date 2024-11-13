@@ -275,6 +275,10 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
     virtual void UpdateAmmoWidget();
 
+    //bullet transform
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
+    virtual FTransform GetBulletSpawnTransform() const;
+    
 private:
     UPROPERTY()
     UAmmoWidget* AmmoWidget;
