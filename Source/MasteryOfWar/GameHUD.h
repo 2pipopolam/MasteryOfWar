@@ -28,9 +28,7 @@ protected:
 	UAmmoWidget* AmmoWidget;
 
 public:
-	// Функции для обновления ammo из вашего оружия/персонажа
 	void UpdateAmmoCount(int32 CurrentAmmo, int32 MaxAmmo);
-    
-	// Получить виджет прицела (если понадобится обновить его из других классов)
 	UCrosshair* GetCrosshairWidget() const { return CrosshairWidget; }
+	void UpdateCrosshairFromSavedSettings();
 };

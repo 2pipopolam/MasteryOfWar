@@ -5,7 +5,6 @@
 #include "Components/Slider.h"
 #include "Components/CheckBox.h"
 #include "Components/Button.h"
-// Удалена строка с ColorPicker.h
 #include "Components/TextBlock.h"
 #include "CrosshairSettingsTypes.h"
 #include "Crosshair.h"
@@ -15,66 +14,94 @@
 UCLASS()
 class MASTERYOFWAR_API UCrosshairSettingsMenu : public UUserWidget
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UPROPERTY(meta = (BindWidget))
-	class USlider* SizeSlider;
+    // Crosshair Size and Shape Controls
+    UPROPERTY(meta = (BindWidget))
+    class USlider* SizeSlider;
 
-	UPROPERTY(meta = (BindWidget))
-	class USlider* WidthSlider;
+    UPROPERTY(meta = (BindWidget))
+    class USlider* WidthSlider;
 
-	UPROPERTY(meta = (BindWidget))
-	class USlider* OpacitySlider;
+    UPROPERTY(meta = (BindWidget))
+    class USlider* OpacitySlider;
 
-	UPROPERTY(meta = (BindWidget))
-	class USlider* DotSizeSlider;
+    UPROPERTY(meta = (BindWidget))
+    class USlider* DotSizeSlider;
 
-	UPROPERTY(meta = (BindWidget))
-	class UCheckBox* ShowDotCheckBox;
+    UPROPERTY(meta = (BindWidget))
+    class USlider* GapSlider;
 
-	UPROPERTY(meta = (BindWidget))
-	class UButton* SaveButton;
+    UPROPERTY(meta = (BindWidget))
+    class UCheckBox* ShowDotCheckBox;
 
-	UPROPERTY(meta = (BindWidget))
-	class UButton* ResetButton;
+    // Color Controls
+    UPROPERTY(meta = (BindWidget))
+    class USlider* RedSlider;
 
-	UPROPERTY(meta = (BindWidget))
-	UCrosshair* PreviewCrosshair;
+    UPROPERTY(meta = (BindWidget))
+    class USlider* GreenSlider;
 
-	UPROPERTY(meta = (BindWidget))
-	class USlider* RedSlider;
+    UPROPERTY(meta = (BindWidget))
+    class USlider* BlueSlider;
 
-	UPROPERTY(meta = (BindWidget))
-	class USlider* GreenSlider;
+    // Buttons
+    UPROPERTY(meta = (BindWidget))
+    class UButton* SaveButton;
 
-	UPROPERTY(meta = (BindWidget))
-	class USlider* BlueSlider;
+    UPROPERTY(meta = (BindWidget))
+    class UButton* ResetButton;
+
+    // Preview Widget
+    UPROPERTY(meta = (BindWidget))
+    UCrosshair* PreviewCrosshair;
 
 protected:
-	virtual void NativeConstruct() override;
+    virtual void NativeConstruct() override;
 
-	UFUNCTION()
-	void OnSizeChanged(float Value);
+    // Size and Shape Event Handlers
+    UFUNCTION()
+    void OnSizeChanged(float Value);
 
-	UFUNCTION()
-	void OnWidthChanged(float Value);
+    UFUNCTION()
+    void OnWidthChanged(float Value);
 
-	UFUNCTION()
-	void OnOpacityChanged(float Value);
+    UFUNCTION()
+    void OnOpacityChanged(float Value);
 
-	UFUNCTION()
-	void OnDotSizeChanged(float Value);
+    UFUNCTION()
+    void OnDotSizeChanged(float Value);
 
-	UFUNCTION()
-	void OnShowDotChanged(bool bIsChecked);
+    UFUNCTION()
+    void OnGapChanged(float Value);
 
-	UFUNCTION()
-	void OnSaveSettings();
+    UFUNCTION()
+    void OnShowDotChanged(bool bIsChecked);
 
-	UFUNCTION()
-	void OnResetSettings();
+    // Color Event Handlers
+    UFUNCTION()
+    void OnRedChanged(float Value);
+
+    UFUNCTION()
+    void OnGreenChanged(float Value);
+
+    UFUNCTION()
+    void OnBlueChanged(float Value);
+
+    // Button Event Handlers
+    UFUNCTION()
+    void OnSaveSettings();
+
+    UFUNCTION()
+    void OnResetSettings();
+
+    // Utility Functions
+    void LoadSavedSettings();
+    void UpdateCrosshairColor();
+    void UpdateSliderValues();
+    void ApplySettingsToGameCrosshair();
 
 private:
-	FCrosshairSettings CurrentSettings;
+    FCrosshairSettings CurrentSettings;
 };

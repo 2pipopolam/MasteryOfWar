@@ -25,4 +25,7 @@ struct FCrosshairSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crosshair")
 	float CenterDotSize = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crosshair")
+	float GapSize = 10.0f;
 };

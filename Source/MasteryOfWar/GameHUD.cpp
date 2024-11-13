@@ -2,6 +2,7 @@
 #include "CrosshairSaveSettings.h"
 #include "Kismet/GameplayStatics.h"
 
+
 void AGameHUD::BeginPlay()
 {
 	Super::BeginPlay();
@@ -12,16 +13,23 @@ void AGameHUD::BeginPlay()
 		CrosshairWidget = CreateWidget<UCrosshair>(GetWorld(), CrosshairClass);
 		if (CrosshairWidget)
 		{
-			CrosshairWidget->AddToViewport();
+			CrosshairWidget->AddToViewport(100);
             
-			// Load saved crosshair settings
-			UCrosshairSaveSettings* SaveSettings = Cast<UCrosshairSaveSettings>(
-				UGameplayStatics::LoadGameFromSlot("CrosshairSettings", 0));
-                
-			if (SaveSettings)
+			
+			if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(CrosshairWidget->Slot))
 			{
-				CrosshairWidget->UpdateCrosshairAppearance(SaveSettings->SavedSettings);
+				// add to center 
+				CanvasSlot->SetAnchors(FAnchors(0.5f));
+				CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+				CanvasSlot->SetPosition(FVector2D(0.0f, 0.0f));
+                
+				// widget size
+				FVector2D ViewportSize;
+				GEngine->GameViewport->GetViewportSize(ViewportSize);
+				CanvasSlot->SetSize(FVector2D(ViewportSize.X * 0.2f, ViewportSize.Y * 0.2f)); // Настройте размер по необходимости
 			}
+            
+			UpdateCrosshairFromSavedSettings();
 		}
 	}
 
@@ -33,6 +41,27 @@ void AGameHUD::BeginPlay()
 		{
 			AmmoWidget->AddToViewport();
 		}
+	}
+}
+
+
+
+void AGameHUD::UpdateCrosshairFromSavedSettings()
+{
+	if (!CrosshairWidget)
+		return;
+
+	UCrosshairSaveSettings* SaveSettings = Cast<UCrosshairSaveSettings>(
+		UGameplayStatics::LoadGameFromSlot("CrosshairSettings", 0));
+
+	if (SaveSettings)
+	{
+		CrosshairWidget->UpdateCrosshairAppearance(SaveSettings->SavedSettings);
+	}
+	else
+	{
+		FCrosshairSettings DefaultSettings;
+		CrosshairWidget->UpdateCrosshairAppearance(DefaultSettings);
 	}
 }
 
