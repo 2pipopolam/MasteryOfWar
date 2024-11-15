@@ -27,27 +27,27 @@ void AAK47::InitializeWeaponConfig()
 void AAK47::LoadWeaponAssets()
 {
     // upload static mesh
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/Weapons/Meshes/AK47/ak-47"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/Weapons/AK47/ak-47"));
     if (MeshAsset.Succeeded() && WeaponMesh)
     {
         WeaponMesh->SetStaticMesh(MeshAsset.Object);
     }
 
     //effects
-    static ConstructorHelpers::FObjectFinder<UParticleSystem> MuzzleFlashFX(TEXT("/Game/Effects/Particles/P_MuzzleFlash_AK47"));
+    static ConstructorHelpers::FObjectFinder<UParticleSystem> MuzzleFlashFX(TEXT("/Game/Weapons/Particles/Fire"));
     if (MuzzleFlashFX.Succeeded())
     {
         MuzzleFlashTemplate = MuzzleFlashFX.Object;
     }
 
-    static ConstructorHelpers::FObjectFinder<UParticleSystem> ShellEjectFX(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
+    static ConstructorHelpers::FObjectFinder<UParticleSystem> ShellEjectFX(TEXT("/Game/Weapons/Particles/P_ShellEject_AK47"));
     if (ShellEjectFX.Succeeded())
     {
         EjectedShellEffect = ShellEjectFX.Object;
     }
 
     // sounds
-    static ConstructorHelpers::FObjectFinder<USoundBase> FireSFX(TEXT("/Game/Sounds/Weapons/S_AK47_Fire"));
+    static ConstructorHelpers::FObjectFinder<USoundBase> FireSFX(TEXT("/Game/Weapons/Sounds/single_shoot_ak47"));
     if (FireSFX.Succeeded())
     {
         FireSound = FireSFX.Object;
@@ -59,7 +59,7 @@ void AAK47::LoadWeaponAssets()
         EmptyMagazineSound = EmptySFX.Object;
     }
 
-    static ConstructorHelpers::FObjectFinder<USoundBase> ReloadSFX(TEXT("/Game/Sounds/Weapons/S_AK47_Reload"));
+    static ConstructorHelpers::FObjectFinder<USoundBase> ReloadSFX(TEXT("/Game/Weapons/Sounds/reloading_ak47"));
     if (ReloadSFX.Succeeded())
     {
         ReloadSound = ReloadSFX.Object;
@@ -86,7 +86,7 @@ void AAK47::LoadWeaponAssets()
     }
 
     // widget
-    static ConstructorHelpers::FClassFinder<UAmmoWidget> WidgetClassFinder(TEXT("/Game/UI/WBP_AmmoWidget"));
+    static ConstructorHelpers::FClassFinder<UAmmoWidget> WidgetClassFinder(TEXT("/Game/MofW/Blueprints/WBP_AmmoWidget"));
     if(WidgetClassFinder.Succeeded())
     {
         AmmoWidgetClass = WidgetClassFinder.Class;

@@ -1,4 +1,5 @@
 #include "MasteryOfWarCharacter.h"
+#include "MasteryOfWarGameMode.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -8,7 +9,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-#include "AK47.h"
+#include "WeaponFactory.h"
+#include "GameModeConfig.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -25,8 +27,6 @@ AMasteryOfWarCharacter::AMasteryOfWarCharacter()
     // Configure character movement
     GetCharacterMovement()->bOrientRotationToMovement = false;  
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); 
-
-    // Set movement properties
     GetCharacterMovement()->JumpZVelocity = 500.f;
     GetCharacterMovement()->AirControl = 0.35f;
     GetCharacterMovement()->MaxWalkSpeed = 500.f;
@@ -37,7 +37,7 @@ AMasteryOfWarCharacter::AMasteryOfWarCharacter()
     // Create first person camera
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
     FollowCamera->SetupAttachment(GetCapsuleComponent());
-    FollowCamera->SetRelativeLocation(FVector(0.0f, 0.0f, 64.0f)); // Eye level
+    FollowCamera->SetRelativeLocation(FVector(0.0f, 0.0f, 64.0f));
     FollowCamera->bUsePawnControlRotation = true;
 
     // Create arms for first person view
@@ -49,16 +49,49 @@ AMasteryOfWarCharacter::AMasteryOfWarCharacter()
 
     // Create weapon mesh component for editor preview
     WeaponMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMeshPreview"));
-    WeaponMeshComponent->SetupAttachment(FPSArms, WeaponSocketName);
+    WeaponMeshComponent->SetupAttachment(FPSArms, FName("WeaponSocket"));
     WeaponMeshComponent->SetRelativeLocation(FVector(-20.0f, 5.0f, -10.0f));
     WeaponMeshComponent->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
     WeaponMeshComponent->SetRelativeScale3D(FVector(0.1f));
     WeaponMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
+
+
 void AMasteryOfWarCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    // Проверяем иерархию компонентов
+    if (!FollowCamera)
+    {
+        UE_LOG(LogTemp, Error, TEXT("BeginPlay: FollowCamera is null!"));
+        return;
+    }
+
+    if (!FPSArms)
+    {
+        UE_LOG(LogTemp, Error, TEXT("BeginPlay: FPSArms is null!"));
+        return;
+    }
+
+    if (!WeaponMeshComponent)
+    {
+        UE_LOG(LogTemp, Error, TEXT("BeginPlay: WeaponMeshComponent is null!"));
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Component hierarchy: FollowCamera -> FPSArms -> WeaponMeshComponent verified"));
+    
+    // is WeaponMeshComponent attached to FPSArms ? 
+    if (WeaponMeshComponent->GetAttachParent() != FPSArms)
+    {
+        UE_LOG(LogTemp, Error, TEXT("WeaponMeshComponent is not attached to FPSArms!"));
+    }
+
+    // Check socket
+    FName SocketName = WeaponMeshComponent->GetAttachSocketName();
+    UE_LOG(LogTemp, Warning, TEXT("WeaponMeshComponent attached to socket: %s"), *SocketName.ToString());
 
     // Add Input Mapping Context
     if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -66,20 +99,8 @@ void AMasteryOfWarCharacter::BeginPlay()
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
         {
             Subsystem->AddMappingContext(DefaultMappingContext, 0);
+            UE_LOG(LogTemp, Warning, TEXT("Input mapping context added"));
         }
-    }
-
-    // Debug logging
-    UE_LOG(LogTemp, Warning, TEXT("Character BeginPlay"));
-    UE_LOG(LogTemp, Warning, TEXT("DefaultWeaponClass: %s"), 
-           DefaultWeaponClass ? *DefaultWeaponClass->GetName() : TEXT("None"));
-    UE_LOG(LogTemp, Warning, TEXT("WeaponSocketName: %s"), 
-           *WeaponSocketName.ToString());
-
-    // Hide editor preview weapon in game
-    if (WeaponMeshComponent)
-    {
-        WeaponMeshComponent->SetVisibility(false);
     }
 
     // Setup perspective-specific visibility
@@ -87,63 +108,208 @@ void AMasteryOfWarCharacter::BeginPlay()
     {
         GetMesh()->SetOwnerNoSee(true);
         FPSArms->SetOwnerNoSee(false);
+        if (CurrentWeapon && CurrentWeapon->WeaponMesh)
+        {
+            CurrentWeapon->WeaponMesh->SetOnlyOwnerSee(true);
+        }
+        UE_LOG(LogTemp, Warning, TEXT("Local player visibility set"));
     }
     else
     {
         GetMesh()->SetOwnerNoSee(false);
         FPSArms->SetOwnerNoSee(true);
+        if (CurrentWeapon && CurrentWeapon->WeaponMesh)
+        {
+            CurrentWeapon->WeaponMesh->SetOwnerNoSee(true);
+        }
+        UE_LOG(LogTemp, Warning, TEXT("Remote player visibility set"));
     }
 
-    // Spawn weapon if configured
-    if (DefaultWeaponClass)
+    // set up Blueprint weapon
+    SetupExistingWeapon();
+}
+
+
+void AMasteryOfWarCharacter::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    // check weapon state
+    if (CurrentWeapon && !CurrentWeapon->IsValidLowLevel())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Attempting to spawn weapon of class %s"), 
-               *DefaultWeaponClass->GetName());
+        CurrentWeapon = nullptr;
+        UE_LOG(LogTemp, Warning, TEXT("Invalid weapon reference detected and cleared"));
+    }
+}
 
-        FActorSpawnParameters SpawnParams;
-        SpawnParams.Owner = this;
-        SpawnParams.Instigator = this;
-        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        if (AWeapon* NewWeapon = GetWorld()->SpawnActor<AWeapon>(
-            DefaultWeaponClass, 
-            FVector::ZeroVector,
-            FRotator::ZeroRotator,
-            SpawnParams))
+
+void AMasteryOfWarCharacter::SetupExistingWeapon()
+{
+    TArray<AActor*> AttachedActors;
+    GetAttachedActors(AttachedActors);
+    
+    for (AActor* Actor : AttachedActors)
+    {
+        if (AWeapon* WeaponActor = Cast<AWeapon>(Actor))
         {
-            CurrentWeapon = NewWeapon;
-            UE_LOG(LogTemp, Warning, TEXT("Weapon spawned successfully"));
+            // delete old weapon if exits
+            if (CurrentWeapon && CurrentWeapon != WeaponActor)
+            {
+                CurrentWeapon->Destroy();
+                CurrentWeapon = nullptr;
+            }
             
-            if (FPSArms)
+            CurrentWeapon = WeaponActor;
+            
+            // set up camera recoil
+            if (UCameraRecoilComponent* RecoilComp = CurrentWeapon->CameraRecoilComponent)
             {
-                NewWeapon->AttachToComponent(
-                    FPSArms,
-                    FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-                    WeaponSocketName
-                );
-                
-                // Match the preview weapon's transform
-                NewWeapon->SetActorRelativeLocation(WeaponMeshComponent->GetRelativeLocation());
-                NewWeapon->SetActorRelativeRotation(WeaponMeshComponent->GetRelativeRotation());
-                NewWeapon->SetActorRelativeScale3D(WeaponMeshComponent->GetRelativeScale3D());
-                
-                UE_LOG(LogTemp, Warning, TEXT("Weapon attached successfully"));
+                RecoilComp->SetTargetCamera(FollowCamera);
+                UE_LOG(LogTemp, Warning, TEXT("Camera recoil component set up for existing weapon"));
             }
-            else
+            
+            // weapon visibility
+            if (UStaticMeshComponent* WeaponMesh = CurrentWeapon->WeaponMesh)
             {
-                UE_LOG(LogTemp, Error, TEXT("FPSArms is null"));
+                WeaponMesh->SetOnlyOwnerSee(IsLocallyControlled());
+                WeaponMesh->SetOwnerNoSee(!IsLocallyControlled());
             }
+            
+            // set owner of weapon
+            CurrentWeapon->SetOwner(this);
+            
+            UE_LOG(LogTemp, Warning, TEXT("Found and set up existing weapon from Blueprint"));
+            break;
+        }
+    }
+}
+
+
+
+void AMasteryOfWarCharacter::InitializeForGameMode(const FGameModeConfig& ModeConfig)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Initializing character for game mode: %d"), (int32)ModeConfig.ModeType);
+
+    CurrentModeConfig = ModeConfig;
+    EquipWeaponForMode(ModeConfig.WeaponType);
+
+    if (FPSArms && ModeConfig.AnimConfig.ArmsMesh)
+    {
+        FPSArms->SetSkeletalMesh(ModeConfig.AnimConfig.ArmsMesh);
+        if (ModeConfig.AnimConfig.ArmsAnimClass)
+        {
+            FPSArms->SetAnimInstanceClass(ModeConfig.AnimConfig.ArmsAnimClass);
+        }
+    }
+
+    if (GetMesh() && ModeConfig.AnimConfig.CharacterMesh)
+    {
+        GetMesh()->SetSkeletalMesh(ModeConfig.AnimConfig.CharacterMesh);
+        if (ModeConfig.AnimConfig.AnimationClass)
+        {
+            GetMesh()->SetAnimInstanceClass(ModeConfig.AnimConfig.AnimationClass);
+        }
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Character initialization complete"));
+}
+
+
+
+void AMasteryOfWarCharacter::EquipWeaponForMode(EWeaponType WeaponType)
+{
+    // check Blueprint weapon exists or not
+    if (CurrentWeapon)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Weapon already exists from Blueprint, skipping weapon creation"));
+        return;
+    }
+
+    if (!FPSArms)
+    {
+        UE_LOG(LogTemp, Error, TEXT("EquipWeaponForMode: FPSArms is null!"));
+        return;
+    }
+
+    if (!WeaponMeshComponent)
+    {
+        UE_LOG(LogTemp, Error, TEXT("EquipWeaponForMode: WeaponMeshComponent is null!"));
+        return;
+    }
+
+    // create new weapon via weapon factory 
+    if (UWorld* World = GetWorld())
+    {
+        FTransform SpawnTransform = WeaponMeshComponent->GetComponentTransform();
+        
+        if (AWeapon* NewWeapon = UWeaponFactory::CreateWeapon(World, WeaponType, SpawnTransform))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("New weapon created"));
+            CurrentWeapon = NewWeapon;
+            
+            // attach to FPSArms with rules
+            FAttachmentTransformRules AttachRules(
+                EAttachmentRule::SnapToTarget, // location
+                EAttachmentRule::SnapToTarget, // rotation
+                EAttachmentRule::KeepRelative, // scale
+                true // Weld simulation
+            );
+            
+            NewWeapon->AttachToComponent(FPSArms, AttachRules, WeaponMeshComponent->GetAttachSocketName());
+            
+            // set transform
+            NewWeapon->SetActorRelativeLocation(WeaponMeshComponent->GetRelativeLocation());
+            NewWeapon->SetActorRelativeRotation(WeaponMeshComponent->GetRelativeRotation());
+            NewWeapon->SetActorRelativeScale3D(WeaponMeshComponent->GetRelativeScale3D());
+
+            // set visibility 
+            WeaponMeshComponent->SetVisibility(false);
+            if (UStaticMeshComponent* WeaponMesh = NewWeapon->WeaponMesh)
+            {
+                WeaponMesh->SetOnlyOwnerSee(IsLocallyControlled());
+                WeaponMesh->SetOwnerNoSee(!IsLocallyControlled());
+            }
+            
+            NewWeapon->SetOwner(this);
+            
+            if (UCameraRecoilComponent* RecoilComp = NewWeapon->CameraRecoilComponent)
+            {
+                RecoilComp->SetTargetCamera(FollowCamera);
+            }
+            
+            UE_LOG(LogTemp, Warning, TEXT("Weapon attached to FPSArms at WeaponMeshComponent position"));
         }
         else
         {
-            UE_LOG(LogTemp, Error, TEXT("Failed to spawn weapon"));
+            UE_LOG(LogTemp, Error, TEXT("Failed to create weapon!"));
         }
     }
-    else
+}
+
+
+
+void AMasteryOfWarCharacter::ApplyAnimationConfig(const FCharacterAnimConfig& AnimConfig)
+{
+    if (FPSArms && AnimConfig.ArmsMesh)
     {
-        UE_LOG(LogTemp, Error, TEXT("DefaultWeaponClass not set in BP_MasteryOfWarCharacter"));
+        FPSArms->SetSkeletalMesh(AnimConfig.ArmsMesh);
+        if (AnimConfig.ArmsAnimClass)
+        {
+            FPSArms->SetAnimInstanceClass(AnimConfig.ArmsAnimClass);
+        }
+    }
+
+    if (GetMesh() && AnimConfig.CharacterMesh)
+    {
+        GetMesh()->SetSkeletalMesh(AnimConfig.CharacterMesh);
+        if (AnimConfig.AnimationClass)
+        {
+            GetMesh()->SetAnimInstanceClass(AnimConfig.AnimationClass);
+        }
     }
 }
+
 
 void AMasteryOfWarCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -178,9 +344,6 @@ void AMasteryOfWarCharacter::Move(const FInputActionValue& Value)
 {
     FVector2D MovementVector = Value.Get<FVector2D>();
 
-    UE_LOG(LogTemp, VeryVerbose, TEXT("Move Input: X=%f, Y=%f"), 
-           MovementVector.X, MovementVector.Y);
-
     if (Controller != nullptr)
     {
         const FRotator Rotation = Controller->GetControlRotation();
@@ -194,33 +357,29 @@ void AMasteryOfWarCharacter::Move(const FInputActionValue& Value)
     }
 }
 
-
 void AMasteryOfWarCharacter::Look(const FInputActionValue& Value)
 {
     FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-    UE_LOG(LogTemp, VeryVerbose, TEXT("Look Input: X=%f, Y=%f"), 
-           LookAxisVector.X, LookAxisVector.Y);
-
     if (Controller != nullptr)
     {
-        AddControllerYawInput(LookAxisVector.X);
-        AddControllerPitchInput(LookAxisVector.Y);
+        // Mouse sens
+        const float InterpSpeed = 20.0f;
+        const float DeltaTime = GetWorld()->GetDeltaSeconds();
+        
+        float NewYaw = FMath::FInterpTo(0.0f, LookAxisVector.X, DeltaTime, InterpSpeed);
+        float NewPitch = FMath::FInterpTo(0.0f, LookAxisVector.Y, DeltaTime, InterpSpeed);
+
+        AddControllerYawInput(NewYaw);
+        AddControllerPitchInput(NewPitch);
     }
 }
 
-
 void AMasteryOfWarCharacter::StartFire()
 {
-    UE_LOG(LogTemp, Warning, TEXT("StartFire called"));
     if (CurrentWeapon)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Has weapon, starting fire"));
         CurrentWeapon->StartFiring();
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No weapon attached!"));
     }
 }
 
@@ -234,43 +393,14 @@ void AMasteryOfWarCharacter::StopFire()
 
 void AMasteryOfWarCharacter::OnReload()
 {
-    UE_LOG(LogTemp, Warning, TEXT("OnReload called"));
     if (CurrentWeapon)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Weapon found, attempting reload"));
         CurrentWeapon->Reload();
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No weapon found for reload"));
     }
 }
 
 void AMasteryOfWarCharacter::ToggleDebugLine()
 {
     bShowDebugLine = !bShowDebugLine;
-    UE_LOG(LogTemp, Warning, TEXT("Debug line %s"), 
-           bShowDebugLine ? TEXT("enabled") : TEXT("disabled"));
-}
-
-void AMasteryOfWarCharacter::AttachWeapon(AAK47* Weapon)
-{
-    if (!Weapon)
-    {
-        UE_LOG(LogTemp, Error, TEXT("Attempt to attach null weapon!"));
-        return;
-    }
-
-    CurrentWeapon = Weapon;
-    
-    if (FPSArms)
-    {
-        FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
-        Weapon->AttachToComponent(FPSArms, AttachRules, WeaponSocketName);
-        UE_LOG(LogTemp, Warning, TEXT("Weapon attached successfully to FPSArms"));
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("FPSArms component not found!"));
-    }
+    UE_LOG(LogTemp, Warning, TEXT("Debug line toggled: %s"), bShowDebugLine ? TEXT("On") : TEXT("Off"));
 }

@@ -219,6 +219,7 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         RecoilPattern = Pattern;
     }
 
+    
     // assets
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
@@ -240,5 +241,69 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
 
     // recoil pattern
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Recoil")
+    FCameraRecoilPattern RecoilPattern;
+};
+
+
+
+// Desert Eagle specific configuration
+USTRUCT(BlueprintType)
+struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
+{
+    GENERATED_BODY()
+    
+    FDesertEagleConfig()
+    {
+        WeaponType = EWeaponType::DesertEagle;
+        FireMode = EFireMode::SemiAutomatic;
+        FireRate = 0.2f;         
+        MinDamage = 45.0f;       
+        MaxDamage = 75.0f;
+        Range = 5000.0f;
+        MaxAmmo = 7;             
+        ReloadTime = 1.5f;      
+
+        FCameraRecoilPattern Pattern;
+
+        for (int32 i = 0; i < 5; ++i)
+        {
+            FVector2D RecoilPoint;
+            RecoilPoint.Y = 3.0f;
+            RecoilPoint.X = FMath::RandRange(-0.5f, 0.5f);
+            Pattern.PatternPoints.Add(RecoilPoint);
+        }
+
+        Pattern.RecoilStrength = 0.6f;     
+        Pattern.RecoverySpeed = 1.5f;      
+        Pattern.RandomDeviation = 0.1f;     
+
+        
+        Pattern.RecoveryDelay = 0.3f; 
+        Pattern.SmoothRecoverySpeed = 1.5f; 
+        Pattern.MinRecoilForRecovery = 0.15f;
+
+        RecoilPattern = Pattern;
+    }
+
+    // assets
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_DesertEagle"));
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    FSoftObjectPath FireSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/single_shoot_deagle"));
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    FSoftObjectPath ReloadSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/reloading_deagle"));
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    FSoftObjectPath EmptyMagSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/empty_mag_sound"));
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    FSoftObjectPath FireAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_DesertEagle_Fire"));
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    FSoftObjectPath ReloadAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_DesertEagle_Reload"));
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Recoil")
     FCameraRecoilPattern RecoilPattern;
 };

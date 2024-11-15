@@ -66,7 +66,6 @@ private:
     FVector2D TotalRecoilOffset;
     FVector2D RecoilRecoveryOffset;
     
-    // Новые переменные для плавного возвращения
     float TimeSinceLastRecoil;
     bool bIsInSmoothRecovery;
     FVector2D SmoothRecoveryStartPosition;

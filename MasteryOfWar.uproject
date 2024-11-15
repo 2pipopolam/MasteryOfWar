@@ -26,6 +26,10 @@
 		{
 			"Name": "Bridge",
 			"Enabled": false
+		},
+		{
+			"Name": "SQLiteSupport",
+			"Enabled": true
 		}
 	],
 	"AdditionalPluginDirectories": [

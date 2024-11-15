@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "WeaponSystem.h"
+#include "GameModeConfig.h"
 #include "MasteryOfWarCharacter.generated.h"
 
 class USpringArmComponent;
@@ -22,92 +23,75 @@ class AMasteryOfWarCharacter : public ACharacter
 public:
     AMasteryOfWarCharacter();
 
-    // Weapon configuration
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-    TSubclassOf<AWeapon> DefaultWeaponClass;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-    FName WeaponSocketName = FName("WeaponSocket");
-
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    void AttachWeapon(AAK47* Weapon);
+    // Mode init
+    UFUNCTION(BlueprintCallable, Category = "Character|Configuration")
+    void InitializeForGameMode(const FGameModeConfig& ModeConfig);
 
     UFUNCTION(BlueprintCallable, Category = "Debug")
     bool IsDebugLineEnabled() const { return bShowDebugLine; }
 
-private:
-    bool bShowDebugLine = false;
-
-    UFUNCTION()
-    void ToggleDebugLine();
-
-    /** First Person Arms Mesh */
-    UPROPERTY(VisibleDefaultsOnly, Category = "Mesh")
-    USkeletalMeshComponent* FPSArms;
-
-    /** Preview Weapon Mesh Component */
-    UPROPERTY(VisibleDefaultsOnly, Category = "Weapon")
-    UStaticMeshComponent* WeaponMeshComponent;
-
-    /** Follow camera */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-    UCameraComponent* FollowCamera;
-    
-    /** MappingContext */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    UInputMappingContext* DefaultMappingContext;
-
-    /** Jump Input Action */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    UInputAction* JumpAction;
-
-    /** Move Input Action */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    UInputAction* MoveAction;
-
-    /** Look Input Action */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    UInputAction* LookAction;
-
-    /** Fire Input Action */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    UInputAction* FireAction;
-
-    /** Reload Input Action */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    UInputAction* ReloadAction;
+    // components getters
+    FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+    FORCEINLINE class USkeletalMeshComponent* GetFPSArms() const { return FPSArms; }
+    FORCEINLINE class UStaticMeshComponent* GetWeaponMeshComponent() const { return WeaponMeshComponent; }
+    FORCEINLINE class AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
 
 protected:
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+    // func for weapons
+    void EquipWeaponForMode(EWeaponType WeaponType);
+    void ApplyAnimationConfig(const FCharacterAnimConfig& AnimConfig);
+    void SetupExistingWeapon();
+
+    // Input functions
+    void Move(const FInputActionValue& Value);
+    void Look(const FInputActionValue& Value);
+    void StartFire();
+    void StopFire();
+    void OnReload();
+
     UPROPERTY(BlueprintReadOnly, Category = "Weapon")
     AWeapon* CurrentWeapon;
 
-    /** Called for movement input */
-    void Move(const FInputActionValue& Value);
+    // Current mode config
+    UPROPERTY()
+    FGameModeConfig CurrentModeConfig;
 
-    /** Called for looking input */
-    void Look(const FInputActionValue& Value);
-
-    /** Called for fire input */
-    void StartFire();
-    void StopFire();
-
-    /** Called for reload input */
-    UFUNCTION(BlueprintCallable, Category = "Character")
-    void OnReload();
+private:
+    bool bShowDebugLine = false;
     
-    // APawn interface
-    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-    
-    // To add mapping context
-    virtual void BeginPlay() override;
+    UFUNCTION()
+    void ToggleDebugLine();
 
-public:
-    /** Returns FollowCamera subobject **/
-    FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+    // Components
+    UPROPERTY(VisibleDefaultsOnly, Category = "Mesh")
+    USkeletalMeshComponent* FPSArms;
 
-    /** Returns FPSArms subobject **/
-    FORCEINLINE class USkeletalMeshComponent* GetFPSArms() const { return FPSArms; }
+    UPROPERTY(VisibleDefaultsOnly, Category = "Weapon")
+    UStaticMeshComponent* WeaponMeshComponent;
 
-    /** Returns WeaponMeshComponent subobject **/
-    FORCEINLINE class UStaticMeshComponent* GetWeaponMeshComponent() const { return WeaponMeshComponent; }
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+    UCameraComponent* FollowCamera;
+
+    // Input properties
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputMappingContext* DefaultMappingContext;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* JumpAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* MoveAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* LookAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* FireAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* ReloadAction;
 };
