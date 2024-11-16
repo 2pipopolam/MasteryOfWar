@@ -24,7 +24,7 @@ static int SQLiteCallback(void* data, int argc, char** argv, char** azColName)
 AAuthGameMode::AAuthGameMode()
 {
     Database = nullptr;
-    FString DBPath = FPaths::ProjectContentDir() + TEXT("game.db");
+    FString DBPath = FPaths::ProjectDir() + TEXT("DB/game.db");
     
     // open or create new DB
     auto PathConverter = StringCast<ANSICHAR>(*DBPath);
