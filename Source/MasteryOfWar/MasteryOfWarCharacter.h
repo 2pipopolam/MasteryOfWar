@@ -36,6 +36,19 @@ public:
     FORCEINLINE class UStaticMeshComponent* GetWeaponMeshComponent() const { return WeaponMeshComponent; }
     FORCEINLINE class AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
 
+
+    UFUNCTION(BlueprintCallable, Category = "Arms Configuration")
+    void SetArmsPosition(const FVector& NewPosition, const FRotator& NewRotation);
+
+    UFUNCTION(BlueprintCallable, Category = "Arms Configuration")
+    static void SaveGlobalArmsPosition(const FVector& Position, const FRotator& Rotation);
+
+    UFUNCTION(BlueprintCallable, Category = "Arms Configuration")
+    void LoadAndApplyGlobalArmsPosition();
+
+    UFUNCTION(BlueprintCallable, Category = "Arms Configuration")
+    static bool GetSavedArmsPosition(FVector& OutPosition, FRotator& OutRotation);
+
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;

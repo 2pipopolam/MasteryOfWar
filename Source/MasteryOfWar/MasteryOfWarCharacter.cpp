@@ -11,6 +11,8 @@
 #include "InputActionValue.h"
 #include "WeaponFactory.h"
 #include "GameModeConfig.h"
+#include "Kismet/GameplayStatics.h"
+#include "GlobalArmsConfig.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -62,7 +64,6 @@ void AMasteryOfWarCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Проверяем иерархию компонентов
     if (!FollowCamera)
     {
         UE_LOG(LogTemp, Error, TEXT("BeginPlay: FollowCamera is null!"));
@@ -127,6 +128,8 @@ void AMasteryOfWarCharacter::BeginPlay()
 
     // set up Blueprint weapon
     SetupExistingWeapon();
+
+    LoadAndApplyGlobalArmsPosition();
 }
 
 
@@ -403,4 +406,54 @@ void AMasteryOfWarCharacter::ToggleDebugLine()
 {
     bShowDebugLine = !bShowDebugLine;
     UE_LOG(LogTemp, Warning, TEXT("Debug line toggled: %s"), bShowDebugLine ? TEXT("On") : TEXT("Off"));
+}
+
+
+void AMasteryOfWarCharacter::SetArmsPosition(const FVector& NewPosition, const FRotator& NewRotation)
+{
+    if (FPSArms)
+    {
+        FPSArms->SetRelativeLocation(NewPosition);
+        FPSArms->SetRelativeRotation(NewRotation);
+        UE_LOG(LogTemp, Warning, TEXT("Arms position updated - Position: %s, Rotation: %s"), 
+            *NewPosition.ToString(), *NewRotation.ToString());
+    }
+}
+
+void AMasteryOfWarCharacter::SaveGlobalArmsPosition(const FVector& Position, const FRotator& Rotation)
+{
+    UGlobalArmsConfig* Config = Cast<UGlobalArmsConfig>(
+        UGameplayStatics::CreateSaveGameObject(UGlobalArmsConfig::StaticClass()));
+    
+    Config->ArmsPosition.Position = Position;
+    Config->ArmsPosition.Rotation = Rotation;
+    
+    if (UGameplayStatics::SaveGameToSlot(Config, "GlobalArmsConfig", 0))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Global arms position saved"));
+    }
+}
+
+void AMasteryOfWarCharacter::LoadAndApplyGlobalArmsPosition()
+{
+    FVector Position;
+    FRotator Rotation;
+    
+    if (GetSavedArmsPosition(Position, Rotation))
+    {
+        SetArmsPosition(Position, Rotation);
+        UE_LOG(LogTemp, Warning, TEXT("Global arms position loaded and applied"));
+    }
+}
+
+bool AMasteryOfWarCharacter::GetSavedArmsPosition(FVector& OutPosition, FRotator& OutRotation)
+{
+    if (UGlobalArmsConfig* Config = Cast<UGlobalArmsConfig>(
+        UGameplayStatics::LoadGameFromSlot("GlobalArmsConfig", 0)))
+    {
+        OutPosition = Config->ArmsPosition.Position;
+        OutRotation = Config->ArmsPosition.Rotation;
+        return true;
+    }
+    return false;
 }

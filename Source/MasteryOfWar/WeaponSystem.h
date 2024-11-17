@@ -12,6 +12,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "WeaponSystem.generated.h"
 
+
 // Damage Calculator Interface
 UINTERFACE(MinimalAPI)
 class UDamageCalculator : public UInterface
@@ -56,6 +57,7 @@ public:
     void SetTargetCamera(UCameraComponent* NewCamera) { TargetCamera = NewCamera; }
     UCameraComponent* GetCharacterCamera() const;
 
+    
 protected:
     virtual void BeginPlay() override;
 
