@@ -81,6 +81,7 @@ void ABullet::Tick(float DeltaTime)
 
 
     // tracing
+    /*
     DrawDebugLine(
         GetWorld(),
         GetActorLocation() - GetActorForwardVector() * 50.0f,
@@ -91,7 +92,7 @@ void ABullet::Tick(float DeltaTime)
         0,
         1.0f
     );
-
+    */
 
     float TravelDistance = FVector::Distance(StartLocation, GetActorLocation());
     if (TravelDistance > MaxTravelDistance)

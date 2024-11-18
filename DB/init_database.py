@@ -20,8 +20,10 @@ def init_database():
         nickname TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         salt TEXT NOT NULL,
+        avatar_path TEXT DEFAULT 'default_avatar',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
 
     -- Match types table
     CREATE TABLE IF NOT EXISTS MatchTypes (
