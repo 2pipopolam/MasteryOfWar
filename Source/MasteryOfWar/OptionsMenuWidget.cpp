@@ -69,5 +69,5 @@ void UOptionsMenuWidget::OnInputClicked()
 
 void UOptionsMenuWidget::OnMultiplayerClicked()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Multiplayer settings not implemented yet"));
+    UGameplayStatics::OpenLevel(GetWorld(), FName("MultiplayerSettings"));
 }

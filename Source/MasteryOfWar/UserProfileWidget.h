@@ -28,13 +28,14 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* SaveNicknameButton;
 
-private:
 	UFUNCTION()
 	void OnChangeAvatarClicked();
 
 	UFUNCTION()
 	void OnSaveNicknameClicked();
 
+private:
+	void LoadCurrentUserData();
 	void UpdateAvatarImage(const FString& ImagePath);
 
 	UTexture2D* DefaultAvatar;

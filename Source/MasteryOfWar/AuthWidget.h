@@ -15,7 +15,6 @@ class MASTERYOFWAR_API UAuthWidget : public UUserWidget
 protected:
 	virtual void NativeConstruct() override;
     
-	// UI Elements
 	UPROPERTY(meta = (BindWidget))
 	UEditableTextBox* NicknameInput;
     
@@ -32,20 +31,14 @@ protected:
 	UTextBlock* ErrorText;
     
 private:
-	// Button click handlers
 	UFUNCTION()
 	void OnSignUpClicked();
     
 	UFUNCTION()
 	void OnLoginClicked();
     
-	// Input validation
 	bool ValidateInput(const FString& Nickname, const FString& Password, FString& ErrorMessage);
-    
-	// UI feedback
 	void ShowError(const FString& Message);
 	void ClearError();
-    
-	// Navigation
 	void GoToMainMenu();
 };

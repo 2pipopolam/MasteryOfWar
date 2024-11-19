@@ -1,37 +1,34 @@
 #include "AuthWidget.h"
-#include "AuthGameMode.h"
+#include "MofWGameInstance.h"
+#include "DatabaseManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/Engine.h"
 
 void UAuthWidget::NativeConstruct()
 {
     Super::NativeConstruct();
     
-    // Bind button click events
     if (SignUpButton)
-    {
         SignUpButton->OnClicked.AddDynamic(this, &UAuthWidget::OnSignUpClicked);
-    }
     
     if (LoginButton)
-    {
         LoginButton->OnClicked.AddDynamic(this, &UAuthWidget::OnLoginClicked);
-    }
     
-    // Clear error text initially
     if (ErrorText)
-    {
         ErrorText->SetVisibility(ESlateVisibility::Hidden);
-    }
 }
 
 void UAuthWidget::OnSignUpClicked()
 {
-    if (!NicknameInput || !PasswordInput) return;
+    if (!NicknameInput || !PasswordInput) 
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("SignUp failed: Input fields are null"));
+        return;
+    }
     
     FString Nickname = NicknameInput->GetText().ToString();
     FString Password = PasswordInput->GetText().ToString();
     
-    // Validate input
     FString ErrorMessage;
     if (!ValidateInput(Nickname, Password, ErrorMessage))
     {
@@ -39,29 +36,39 @@ void UAuthWidget::OnSignUpClicked()
         return;
     }
     
-    // Get AuthGameMode
-    if (AAuthGameMode* AuthGameMode = Cast<AAuthGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
+    int32 UserId = FDatabaseManager::Get().RegisterUser(Nickname, Password);
+    if (UserId > 0)
     {
-        // Try to sign up
-        if (AuthGameMode->AuthSignUp(Nickname, Password))
+        UWorld* World = GetWorld();
+        if (!World)
         {
+            return;
+        }
+
+        auto GameInstance = Cast<UMasteryOfWarGameInstance>(World->GetGameInstance());
+        if (GameInstance)
+        {
+            GameInstance->SetCurrentUserId(UserId);
             GoToMainMenu();
         }
-        else
-        {
-            ShowError(TEXT("Failed to create account. Nickname might be taken."));
-        }
+    }
+    else
+    {
+        ShowError(TEXT("Failed to create account. Nickname might be taken."));
     }
 }
 
 void UAuthWidget::OnLoginClicked()
 {
-    if (!NicknameInput || !PasswordInput) return;
+    if (!NicknameInput || !PasswordInput) 
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Login failed: Input fields are null"));
+        return;
+    }
     
     FString Nickname = NicknameInput->GetText().ToString();
     FString Password = PasswordInput->GetText().ToString();
     
-    // Validate input
     FString ErrorMessage;
     if (!ValidateInput(Nickname, Password, ErrorMessage))
     {
@@ -69,45 +76,49 @@ void UAuthWidget::OnLoginClicked()
         return;
     }
     
-    // Get AuthGameMode
-    if (AAuthGameMode* AuthGameMode = Cast<AAuthGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
+    int32 UserId = FDatabaseManager::Get().AuthenticateUser(Nickname, Password);
+    
+    if (UserId > 0)
     {
-        // Try to login
-        if (AuthGameMode->AuthLogin(Nickname, Password))
+        UWorld* World = GetWorld();
+        if (!World)
         {
+            return;
+        }
+
+        auto GameInstance = Cast<UMasteryOfWarGameInstance>(World->GetGameInstance());
+        if (GameInstance)
+        {
+            GameInstance->SetCurrentUserId(UserId);
             GoToMainMenu();
         }
-        else
-        {
-            ShowError(TEXT("Invalid nickname or password"));
-        }
+    }
+    else
+    {
+        ShowError(TEXT("Invalid nickname or password"));
     }
 }
 
 bool UAuthWidget::ValidateInput(const FString& Nickname, const FString& Password, FString& ErrorMessage)
 {
-    // Check for empty fields
     if (Nickname.IsEmpty() || Password.IsEmpty())
     {
         ErrorMessage = TEXT("Nickname and Password cannot be empty");
         return false;
     }
     
-    // Check password length
     if (Password.Len() < 6)
     {
         ErrorMessage = TEXT("Password must be at least 6 characters long");
         return false;
     }
     
-    // Check nickname length
     if (Nickname.Len() < 3)
     {
         ErrorMessage = TEXT("Nickname must be at least 3 characters long");
         return false;
     }
     
-    // Check nickname characters (only letters, numbers and underscores allowed)
     for (TCHAR Character : Nickname)
     {
         if (!FChar::IsAlnum(Character) && Character != '_')
@@ -139,5 +150,13 @@ void UAuthWidget::ClearError()
 
 void UAuthWidget::GoToMainMenu()
 {
-    UGameplayStatics::OpenLevel(GetWorld(), TEXT("MainMenuMap"));
+    const FString LevelName = TEXT("/Game/MofW/Maps/MainMenuMap");
+    
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+    
+    UGameplayStatics::OpenLevel(World, FName(*LevelName));
 }
