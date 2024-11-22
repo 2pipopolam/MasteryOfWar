@@ -72,7 +72,6 @@ void UCameraRecoilComponent::HandleSmoothRecovery(float DeltaTime)
         DeltaTime,
         CurrentPattern.SmoothRecoverySpeed
     );
-
     
     FVector2D Delta = NewPosition - TotalRecoilOffset;
     
@@ -86,7 +85,6 @@ void UCameraRecoilComponent::HandleSmoothRecovery(float DeltaTime)
     }
 
     TotalRecoilOffset = NewPosition;
-    
     
     if (TotalRecoilOffset.IsNearlyZero(0.01f))
     {
@@ -199,7 +197,6 @@ void UCameraRecoilComponent::RecoverFromRecoil(float DeltaTime)
     }
 }
 
-
 FVector2D UCameraRecoilComponent::GetNextPatternPoint() const
 {
     if (!CurrentPattern.PatternPoints.IsValidIndex(CurrentPatternIndex))
@@ -214,9 +211,6 @@ FVector2D UCameraRecoilComponent::GetNextPatternPoint() const
     
     return BasePoint + FVector2D(RandomX, RandomY);
 }
-
-
-
 
 AWeapon::AWeapon()
 {
@@ -235,7 +229,6 @@ AWeapon::AWeapon()
     CurrentRecoilRotation = FRotator::ZeroRotator;
     RecoilTime = 0.0f;
 
-    // Initialize default effect parameters
     MuzzleFlashScale = FVector(0.05f);
     ShellEjectScale = FVector(0.3f);
     MuzzleFlashOffset = FVector::ZeroVector;
@@ -264,10 +257,8 @@ void AWeapon::BeginPlay()
         WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
     }
 
-    // Initialize camera recoil
     if (CameraRecoilComponent)
     {
-        // Try to find the camera if not set
         if (!CameraRecoilComponent->GetCharacterCamera())
         {
             if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
@@ -296,10 +287,8 @@ void AWeapon::Tick(float DeltaTime)
     UpdateRecoilState(DeltaTime);
 }
 
-
 FTransform AWeapon::GetBulletSpawnTransform() const
 {
-    // get camera
     if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
     {
         if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
@@ -318,15 +307,13 @@ FTransform AWeapon::GetBulletSpawnTransform() const
                 SpreadRotation.Yaw += RandomY;
             }
             
-            // spawn bullet
-            FVector SpawnOffset = SpreadRotation.Vector() * 50.0f; // 50 units forward camera
+            FVector SpawnOffset = SpreadRotation.Vector() * 50.0f;
             FVector SpawnLocation = CameraLocation + SpawnOffset;
             
             return FTransform(SpreadRotation, SpawnLocation);
         }
     }
     
-    // IF SOMETHING WRONG
     return GetMuzzleSocketTransform();
 }
 
@@ -341,7 +328,6 @@ void AWeapon::Fire()
         return;
     }
 
-    // get transform for bullet spawn 
     FTransform SpawnTransform = GetBulletSpawnTransform();
     
     if (UWorld* World = GetWorld())
@@ -358,7 +344,8 @@ void AWeapon::Fire()
                 SpawnTransform.GetRotation().Rotator(),
                 SpawnParams))
             {
-                float Damage = FMath::RandRange(WeaponConfig.MinDamage, WeaponConfig.MaxDamage);
+                // Используем фиксированный базовый урон вместо случайного
+                int32 Damage = WeaponConfig.DamageConfig.BaseDamage;
                 Bullet->InitializeBullet(Damage, ProjectileSpeed, WeaponConfig.Range);
             }
         }
@@ -375,6 +362,8 @@ void AWeapon::Fire()
     ConsumeAmmo();
     UpdateAmmoWidget();
 }
+
+
 
 void AWeapon::HandleRecoil()
 {
@@ -654,7 +643,8 @@ void AWeapon::PlayFireEffects()
                 );
 
                 if (SmokeEffect)
-                {SmokeEffect->SetFloatParameter(TEXT("Lifetime"), SmokeLifetime);
+                {
+                    SmokeEffect->SetFloatParameter(TEXT("Lifetime"), SmokeLifetime);
                 }
             },
             0.1f,

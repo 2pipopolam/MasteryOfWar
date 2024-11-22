@@ -7,11 +7,6 @@ AUserProfileGameMode::AUserProfileGameMode()
 	if (WidgetClassFinder.Succeeded())
 	{
 		UserProfileWidgetClass = WidgetClassFinder.Class;
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Found Widget Class"));
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to find Widget Class"));
 	}
 }
 
@@ -19,18 +14,21 @@ void AUserProfileGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("BeginPlay Started"));
+	// Debug messages moved here where GEngine is guaranteed to be valid
+	if (UserProfileWidgetClass)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Widget Class Found"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to find Widget Class"));
+		return;
+	}
 
 	APlayerController* PC = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PC)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to get PlayerController"));
-		return;
-	}
-
-	if (!UserProfileWidgetClass)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("UserProfileWidgetClass is null"));
 		return;
 	}
 

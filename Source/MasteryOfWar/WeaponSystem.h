@@ -12,6 +12,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "WeaponSystem.generated.h"
 
+// Forward declarations
+class UBulletFireBehavior;
 
 // Damage Calculator Interface
 UINTERFACE(MinimalAPI)
@@ -56,7 +58,6 @@ public:
     void SetRecoilPattern(const FCameraRecoilPattern& NewPattern);
     void SetTargetCamera(UCameraComponent* NewCamera) { TargetCamera = NewCamera; }
     UCameraComponent* GetCharacterCamera() const;
-
     
 protected:
     virtual void BeginPlay() override;
@@ -110,10 +111,7 @@ public:
     TSubclassOf<class ABullet> GetBulletClass() const { return BulletClass; }
 
     UFUNCTION(BlueprintPure, Category = "Weapon")
-    float GetMinDamage() const { return WeaponConfig.MinDamage; }
-
-    UFUNCTION(BlueprintPure, Category = "Weapon")
-    float GetMaxDamage() const { return WeaponConfig.MaxDamage; }
+    int32 GetBaseDamage() const { return WeaponConfig.DamageConfig.BaseDamage; }
 
     UFUNCTION(BlueprintPure, Category = "Weapon")
     float GetRange() const { return WeaponConfig.Range; }
@@ -130,6 +128,17 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
     virtual FVector GetAdjustedAimDirection() const;
+
+    // Moved to public for BulletFireBehavior access
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
+    virtual FTransform GetBulletSpawnTransform() const;
+
+    // Effects
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Effects")
+    virtual void PlayFireEffects();
+
+    UFUNCTION(BlueprintCallable, Category = "Weapon|Effects")
+    virtual void PlayReloadEffects();
 
     // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Components")
@@ -186,13 +195,6 @@ protected:
     // Weapon configuration
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Config")
     FBaseWeaponConfig WeaponConfig;
-
-    // Effects
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Effects")
-    virtual void PlayFireEffects();
-
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Effects")
-    virtual void PlayReloadEffects();
 
     // Recoil
     UFUNCTION()
@@ -276,11 +278,7 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
     virtual void UpdateAmmoWidget();
 
-    //bullet transform
-    UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
-    virtual FTransform GetBulletSpawnTransform() const;
-    
 private:
     UPROPERTY()
     UAmmoWidget* AmmoWidget;
-}; 
+};

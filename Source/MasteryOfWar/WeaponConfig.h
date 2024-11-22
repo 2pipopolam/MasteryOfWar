@@ -21,15 +21,12 @@ struct MASTERYOFWAR_API FCameraRecoilPattern
     UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
     float RandomDeviation = 0.1f;
 
-    // after this time camera starts return 
     UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
     float RecoveryDelay = 0.5f;
 
-    // speed of returning after delay
     UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
     float SmoothRecoverySpeed = 2.0f;
 
-    // min recoil to start returning
     UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
     float MinRecoilForRecovery = 0.1f;
 
@@ -60,6 +57,28 @@ struct MASTERYOFWAR_API FMagazineState
     bool bIsReloading;
 
     FMagazineState() : CurrentAmmo(0), MaxAmmo(0), bIsReloading(false) {}
+};
+
+// Damage configuration structure
+USTRUCT(BlueprintType)
+struct MASTERYOFWAR_API FWeaponDamageConfig
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditDefaultsOnly, Category = "Damage")
+    int32 BaseDamage = 30;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Damage|Multipliers")
+    float HeadMultiplier = 4.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Damage|Multipliers")
+    float BodyMultiplier = 1.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Damage|Multipliers")
+    float ArmsMultiplier = 0.75f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Damage|Multipliers")
+    float LegsMultiplier = 0.5f;
 };
 
 UENUM(BlueprintType)
@@ -98,11 +117,9 @@ struct MASTERYOFWAR_API FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Basic")
     float Range = 1000.0f;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Basic")
-    float MinDamage = 20.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Basic")
-    float MaxDamage = 40.0f;
+    // Damage configuration
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Damage")
+    FWeaponDamageConfig DamageConfig;
 
     // Magazine configuration
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Magazine")
@@ -153,7 +170,6 @@ struct MASTERYOFWAR_API FBaseWeaponConfig
     FVector MuzzleOffset = FVector(0.0f, 0.0f, 30.0f);
 };
 
-
 // AK47-specific configuration
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
@@ -164,13 +180,17 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
     {
         WeaponType = EWeaponType::AK47;
         FireMode = EFireMode::Automatic;
-        FireRate = 0.1f;         // 600 RPM
-        MinDamage = 25.0f;
-        MaxDamage = 45.0f;
+        FireRate = 0.1f;
         Range = 8000.0f;
         MaxAmmo = 30;
         ReloadTime = 2.0f;
 
+        // Настройка урона для AK47
+        DamageConfig.BaseDamage = 35;
+        DamageConfig.HeadMultiplier = 4.0f;
+        DamageConfig.BodyMultiplier = 1.0f;
+        DamageConfig.ArmsMultiplier = 0.75f;
+        DamageConfig.LegsMultiplier = 0.5f;
         
         FCameraRecoilPattern Pattern;
 
@@ -182,13 +202,13 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
             FVector2D RecoilPoint;
             if (i < 5)
             {
-                RecoilPoint.Y = FMath::Lerp(1.0f, 1.5f, progress); // up
-                RecoilPoint.X = -0.2f; // left
+                RecoilPoint.Y = FMath::Lerp(1.0f, 1.5f, progress);
+                RecoilPoint.X = -0.2f;
             }
             else
             {
-                RecoilPoint.Y = FMath::Lerp(1.5f, 2.0f, progress); // up
-                RecoilPoint.X = 0.3f; // right
+                RecoilPoint.Y = FMath::Lerp(1.5f, 2.0f, progress);
+                RecoilPoint.X = 0.3f;
             }
             Pattern.PatternPoints.Add(RecoilPoint);
         }
@@ -199,19 +219,15 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
             float progress = static_cast<float>(i) / 20.0f;
             
             FVector2D RecoilPoint;
-            RecoilPoint.Y = 2.0f; // to up
-            //left-right
+            RecoilPoint.Y = 2.0f;
             RecoilPoint.X = FMath::Sin(progress * PI * 2) * 0.4f;
             
             Pattern.PatternPoints.Add(RecoilPoint);
         }
 
-        // recoil settings
         Pattern.RecoilStrength = 0.3f;
         Pattern.RecoverySpeed = 2.0f;
         Pattern.RandomDeviation = 0.05f;
-        
-        // parameters of gun return
         Pattern.RecoveryDelay = 0.5f;
         Pattern.SmoothRecoverySpeed = 2.0f;
         Pattern.MinRecoilForRecovery = 0.1f;
@@ -219,8 +235,6 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         RecoilPattern = Pattern;
     }
 
-    
-    // assets
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
 
@@ -239,12 +253,9 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath ReloadAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_AK47_Reload"));
 
-    // recoil pattern
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Recoil")
     FCameraRecoilPattern RecoilPattern;
 };
-
-
 
 // Desert Eagle specific configuration
 USTRUCT(BlueprintType)
@@ -256,12 +267,17 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
     {
         WeaponType = EWeaponType::DesertEagle;
         FireMode = EFireMode::SemiAutomatic;
-        FireRate = 0.2f;         
-        MinDamage = 45.0f;       
-        MaxDamage = 75.0f;
+        FireRate = 0.2f;
         Range = 5000.0f;
-        MaxAmmo = 7;             
-        ReloadTime = 1.5f;      
+        MaxAmmo = 7;
+        ReloadTime = 1.5f;
+
+        // Настройка урона для Desert Eagle
+        DamageConfig.BaseDamage = 55;
+        DamageConfig.HeadMultiplier = 4.5f;
+        DamageConfig.BodyMultiplier = 1.0f;
+        DamageConfig.ArmsMultiplier = 0.8f;
+        DamageConfig.LegsMultiplier = 0.6f;
 
         FCameraRecoilPattern Pattern;
 
@@ -273,19 +289,16 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
             Pattern.PatternPoints.Add(RecoilPoint);
         }
 
-        Pattern.RecoilStrength = 0.6f;     
-        Pattern.RecoverySpeed = 1.5f;      
-        Pattern.RandomDeviation = 0.1f;     
-
-        
-        Pattern.RecoveryDelay = 0.3f; 
-        Pattern.SmoothRecoverySpeed = 1.5f; 
+        Pattern.RecoilStrength = 0.6f;
+        Pattern.RecoverySpeed = 1.5f;
+        Pattern.RandomDeviation = 0.1f;
+        Pattern.RecoveryDelay = 0.3f;
+        Pattern.SmoothRecoverySpeed = 1.5f;
         Pattern.MinRecoilForRecovery = 0.15f;
 
         RecoilPattern = Pattern;
     }
 
-    // assets
     UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
     FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_DesertEagle"));
 

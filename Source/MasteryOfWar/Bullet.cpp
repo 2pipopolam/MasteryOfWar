@@ -4,7 +4,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/DamageType.h"  
-#include "Engine/DamageEvents.h"       
+#include "Engine/DamageEvents.h"
+#include "TestDummy.h"
 
 
 ABullet::ABullet()
@@ -14,14 +15,13 @@ ABullet::ABullet()
     BulletMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ARAmmo"));
     RootComponent = BulletMesh;
     
-    /////
+    // set mesh
     static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Engine/BasicShapes/Sphere"));
     if (MeshAsset.Succeeded())
     {
         BulletMesh->SetStaticMesh(MeshAsset.Object);
         BulletMesh->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));
     }
-    ///
     
     ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
     ProjectileMovement->SetUpdatedComponent(BulletMesh);
@@ -31,13 +31,15 @@ ABullet::ABullet()
     ProjectileMovement->ProjectileGravityScale = 0.0f;
     ProjectileMovement->bShouldBounce = false;
 
-    // collision
+    // collisions
     BulletMesh->SetCollisionProfileName(TEXT("BlockAll"));
+    BulletMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     BulletMesh->SetGenerateOverlapEvents(true);
-    BulletMesh->SetNotifyRigidBodyCollision(true);
+    
+    BulletMesh->SetSimulatePhysics(false);
+    
     BulletMesh->OnComponentHit.AddDynamic(this, &ABullet::OnBulletHit);
     
-    //bullet lifetime
     InitialLifeSpan = 5.0f;
 }
 
@@ -48,19 +50,7 @@ void ABullet::BeginPlay()
     Super::BeginPlay();
     StartLocation = GetActorLocation();
     
-
-    /*
-    DrawDebugSphere(
-        GetWorld(),
-        GetActorLocation(),
-        20.0f,
-        12,
-        FColor::Yellow,
-        false,
-        5.0f
-    );
-    */
-    
+    // logging
     UE_LOG(LogTemp, Warning, TEXT("Bullet spawned at location: %s with rotation: %s"), 
            *GetActorLocation().ToString(), *GetActorRotation().ToString());
     
@@ -69,30 +59,82 @@ void ABullet::BeginPlay()
         UE_LOG(LogTemp, Warning, TEXT("Bullet mesh is valid. Scale: %s"), 
                *BulletMesh->GetRelativeScale3D().ToString());
     }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Bullet mesh is null!"));
-    }
 }
+
+
+void ABullet::InitializeBullet(float Damage, float Speed, float MaxRange)
+{
+    // round damage value
+    WeaponDamage = FMath::RoundToInt(Damage);
+    
+    ProjectileMovement->InitialSpeed = Speed;
+    ProjectileMovement->MaxSpeed = Speed;
+    MaxTravelDistance = MaxRange;
+    StartLocation = GetActorLocation();
+    
+    UE_LOG(LogTemp, Error, TEXT("Bullet initialized with Damage: %d, Speed: %f, MaxRange: %f"),
+           WeaponDamage, Speed, MaxRange);
+}
+
+
 
 void ABullet::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-
-    // tracing
-    /*
-    DrawDebugLine(
+    FHitResult HitResult;
+    FVector Start = GetActorLocation();
+    FVector End = Start + GetActorForwardVector() * 100.0f;
+    
+    /*DrawDebugLine(
         GetWorld(),
-        GetActorLocation() - GetActorForwardVector() * 50.0f,
-        GetActorLocation(),
-        FColor::Yellow,
+        Start,
+        End,
+        FColor::Red,
         false,
-        -1.0f,
+        -1,
         0,
         1.0f
     );
     */
+
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+    
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams))
+    {
+        if (HitResult.GetActor())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Line trace hit: %s at distance %f"), 
+                   *HitResult.GetActor()->GetName(), HitResult.Distance);
+
+            if (HitResult.GetActor()->GetClass()->GetName().Contains(TEXT("TestDummy")))
+            {
+                FPointDamageEvent DamageEvent(static_cast<float>(WeaponDamage), HitResult, GetActorForwardVector(), nullptr);
+                float AppliedDamage = HitResult.GetActor()->TakeDamage(WeaponDamage, DamageEvent, 
+                                                                      GetInstigatorController(), this);
+                
+                UE_LOG(LogTemp, Error, TEXT("Hit Test Dummy! Base Damage: %d, Applied Damage: %f"), 
+                       WeaponDamage, AppliedDamage);
+                
+                // visualisation
+                /*
+                    DrawDebugString(
+                    GetWorld(),
+                    HitResult.ImpactPoint,
+                    FString::Printf(TEXT("%d"), WeaponDamage),
+                    nullptr,
+                    FColor::Red,
+                    2.0f,
+                    true,
+                    1.0f
+                );
+                */
+
+                Destroy();
+            }
+        }
+    }
 
     float TravelDistance = FVector::Distance(StartLocation, GetActorLocation());
     if (TravelDistance > MaxTravelDistance)
@@ -101,39 +143,26 @@ void ABullet::Tick(float DeltaTime)
     }
 }
 
-void ABullet::InitializeBullet(float Damage, float Speed, float MaxRange)
-{
-    WeaponDamage = Damage;
-    ProjectileMovement->InitialSpeed = Speed;
-    ProjectileMovement->MaxSpeed = Speed;
-    MaxTravelDistance = MaxRange;
-    StartLocation = GetActorLocation();
-}
-
 
 void ABullet::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
                          UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
                          const FHitResult& Hit)
 {
+    UE_LOG(LogTemp, Error, TEXT("OnBulletHit CALLED!"));
+
     if (OtherActor && OtherActor != GetOwner())
     {
-        const UDamageType* DamageType = UDamageType::StaticClass()->GetDefaultObject<UDamageType>();
-        FDamageEvent DamageEvent(DamageType->GetClass());
-        OtherActor->TakeDamage(WeaponDamage, DamageEvent, GetInstigatorController(), this);
+        UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s"), *OtherActor->GetName());
         
-        UE_LOG(LogTemp, Warning, TEXT("Bullet hit actor: %s with damage: %f"), 
-               *OtherActor->GetName(), WeaponDamage);
-        /*
-        DrawDebugSphere(
-            GetWorld(),
-            Hit.ImpactPoint,
-            10.0f,
-            12,
-            FColor::Red,
-            false,
-            2.0f
-        );
-        */
+        // display message 
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, 
+            FString::Printf(TEXT("Hit: %s"), *OtherActor->GetName()));
+
+        // create Point Damage Event
+        FPointDamageEvent DamageEvent(WeaponDamage, Hit, Hit.ImpactNormal, nullptr);
+        float AppliedDamage = OtherActor->TakeDamage(WeaponDamage, DamageEvent, GetInstigatorController(), this);
+        
+        UE_LOG(LogTemp, Error, TEXT("Applied Hit Damage: %f"), AppliedDamage);
     }
 
     Destroy();

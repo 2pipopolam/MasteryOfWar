@@ -24,6 +24,15 @@ public:
 					 UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
 					 const FHitResult& Hit);
 
+
+	/*
+	UFUNCTION()
+	void OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, 
+						 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, 
+						 bool bFromSweep, const FHitResult& SweepResult);
+	*/
+
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -34,8 +43,8 @@ protected:
 	UStaticMeshComponent* BulletMesh;
 
 	UPROPERTY()
-	float WeaponDamage;
-
+	int32 WeaponDamage;
+	
 	UPROPERTY()
 	float MaxTravelDistance;
 

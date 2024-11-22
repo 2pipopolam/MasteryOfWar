@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "WeaponConfig.h"
 #include "GameFramework/Character.h"
+#include "DamageConfig.h"
 #include "GameModeConfig.generated.h"
 
 UENUM(BlueprintType)
@@ -67,13 +68,7 @@ struct MASTERYOFWAR_API FGameModeConfig
 	UPROPERTY(EditDefaultsOnly, Category = "GameMode|Character")
 	TSubclassOf<ACharacter> CharacterClass;
 
-
-	/*
-	FGameModeConfig()
-	{
-		ModeType = EGameModeType::RifleMode;
-		WeaponType = EWeaponType::AK47;
-		CharacterClass = nullptr;
-	}
-	*/
+	// add damage config
+	UPROPERTY(EditDefaultsOnly, Category = "GameMode|Damage")
+	FModeDamageConfig DamageConfig;
 };

@@ -6,7 +6,7 @@
 #include "UserProfileGameMode.generated.h"
 
 UCLASS()
-class  MASTERYOFWAR_API AUserProfileGameMode : public AGameModeBase
+class MASTERYOFWAR_API AUserProfileGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
