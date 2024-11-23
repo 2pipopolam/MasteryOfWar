@@ -3,7 +3,64 @@
 #include "CoreMinimal.h"
 #include "WeaponConfig.generated.h"
 
-// Recoil pattern structure
+// structure for spread
+USTRUCT(BlueprintType)
+struct MASTERYOFWAR_API FSpreadConfig
+{
+    GENERATED_BODY()
+
+    // basic spread
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Base", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+    float BaseSpread = 0.5f;
+
+    // spread during movement
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+    float CrouchMoveSpreadMin = 1.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+    float CrouchMoveSpreadMax = 2.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+    float WalkSpreadMin = 2.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+    float WalkSpreadMax = 3.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+    float RunSpreadMin = 4.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "10.0"))
+    float RunSpreadMax = 5.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "20.0"))
+    float JumpSpreadMin = 6.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "20.0"))
+    float JumpSpreadMax = 8.0f;
+
+    //spread multipliers
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Movement", meta = (ClampMin = "0.0", ClampMax = "5.0"))
+    float SpeedSpreadMultiplier = 2.0f;
+
+    // decrease spread while crouch
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Stance", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float CrouchSpreadMultiplier = 0.7f;
+
+    // spread increasers
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Shooting")
+    float SpreadIncreasePerShot = 0.3f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Shooting")
+    float MaxSpreadIncrease = 5.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Shooting")
+    float SpreadRecoveryRate = 3.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Spread|Shooting")
+    float SpreadRecoveryDelay = 0.2f;
+};
+
+// recoil
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FCameraRecoilPattern
 {
@@ -13,7 +70,7 @@ struct MASTERYOFWAR_API FCameraRecoilPattern
     TArray<FVector2D> PatternPoints;
 
     UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
-    float RecoilStrength = 10.0f;
+    float RecoilStrength = 1.0f;
 
     UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
     float RecoverySpeed = 5.0f;
@@ -29,19 +86,9 @@ struct MASTERYOFWAR_API FCameraRecoilPattern
 
     UPROPERTY(EditDefaultsOnly, Category = "Recoil Pattern")
     float MinRecoilForRecovery = 0.1f;
-
-    FCameraRecoilPattern()
-        : RecoilStrength(1.0f)
-        , RecoverySpeed(5.0f)
-        , RandomDeviation(0.1f)
-        , RecoveryDelay(0.5f)
-        , SmoothRecoverySpeed(2.0f)
-        , MinRecoilForRecovery(0.1f)
-    {
-    }
 };
 
-// Magazine state structure
+// mag structure
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FMagazineState
 {
@@ -59,7 +106,7 @@ struct MASTERYOFWAR_API FMagazineState
     FMagazineState() : CurrentAmmo(0), MaxAmmo(0), bIsReloading(false) {}
 };
 
-// Damage configuration structure
+//damage structure
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FWeaponDamageConfig
 {
@@ -81,6 +128,7 @@ struct MASTERYOFWAR_API FWeaponDamageConfig
     float LegsMultiplier = 0.5f;
 };
 
+// fire mode enum
 UENUM(BlueprintType)
 enum class EFireMode : uint8
 {
@@ -88,6 +136,7 @@ enum class EFireMode : uint8
     SemiAutomatic    UMETA(DisplayName = "Semi-Automatic")
 };
 
+// weapon type enum
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
@@ -97,55 +146,39 @@ enum class EWeaponType : uint8
     None            UMETA(DisplayName = "None")
 };
 
-// Base weapon config
+// basic config
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FBaseWeaponConfig
 {
     GENERATED_BODY()
 
-    // Weapon identification
+    // weapon ID
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Identity")
     EWeaponType WeaponType = EWeaponType::None;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Identity")
     EFireMode FireMode = EFireMode::SemiAutomatic;
 
-    // Basic parameters
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Basic")
     float FireRate = 0.1f;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Basic")
     float Range = 1000.0f;
 
-    // Damage configuration
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Damage")
     FWeaponDamageConfig DamageConfig;
 
-    // Magazine configuration
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Spread")
+    FSpreadConfig SpreadConfig;
+
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Magazine")
     int32 MaxAmmo = 30;
 
-    // Reload configuration
+    
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Reload")
     float ReloadTime = 2.0f;
 
-    // Accuracy parameters
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
-    float BaseSpread = 0.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
-    float MovementSpread = 0.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
-    float JumpingSpread = 0.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
-    float SpreadRecoveryRate = 1.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon|Accuracy")
-    float MaxSpread = 5.0f;
-
-    // Recoil parameters
+    
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Recoil")
     float RecoilOffset = 3.0f;
 
@@ -158,19 +191,18 @@ struct MASTERYOFWAR_API FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Recoil")
     float RecoilRandomness = 0.3f;
 
-    // Socket names
+    // sockets
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
     FName MuzzleSocketName = "MuzzleSocket";
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Sockets")
     FName ShellEjectSocketName = "ShellEjectSocket";
 
-    // Spawn configuration
     UPROPERTY(EditDefaultsOnly, Category = "Weapon|Spawn")
     FVector MuzzleOffset = FVector(0.0f, 0.0f, 30.0f);
 };
 
-// AK47-specific configuration
+//AK47
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
 {
@@ -185,16 +217,39 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         MaxAmmo = 30;
         ReloadTime = 2.0f;
 
-        // Настройка урона для AK47
-        DamageConfig.BaseDamage = 35;
+        // DAMAGE
+        DamageConfig.BaseDamage = 30;
         DamageConfig.HeadMultiplier = 4.0f;
         DamageConfig.BodyMultiplier = 1.0f;
         DamageConfig.ArmsMultiplier = 0.7f;
         DamageConfig.LegsMultiplier = 0.6f;
+
+        //SPREAD
+        SpreadConfig.BaseSpread = 0.3f;
+        SpreadConfig.CrouchMoveSpreadMin = 0.35f;
+        SpreadConfig.CrouchMoveSpreadMax = 0.6f;
+        SpreadConfig.WalkSpreadMin = 1.0f;
+        SpreadConfig.WalkSpreadMax = 1.6f;
+        SpreadConfig.RunSpreadMin = 1.8f;
+        SpreadConfig.RunSpreadMax = 2.2f;
+        SpreadConfig.JumpSpreadMin = 4.0f;
+        SpreadConfig.JumpSpreadMax = 5.0f;
+        SpreadConfig.SpeedSpreadMultiplier = 1.1f;
+        SpreadConfig.CrouchSpreadMultiplier = 0.7f;
+        SpreadConfig.SpreadIncreasePerShot = 0.1f;
+        SpreadConfig.MaxSpreadIncrease = 3.0f;
+        SpreadConfig.SpreadRecoveryRate = 2.0f;
+        SpreadConfig.SpreadRecoveryDelay = 0.2f;
         
         FCameraRecoilPattern Pattern;
+        Pattern.RecoilStrength = 0.3f;
+        Pattern.RecoverySpeed = 2.0f;
+        Pattern.RandomDeviation = 0.05f;
+        Pattern.RecoveryDelay = 0.5f;
+        Pattern.SmoothRecoverySpeed = 2.0f;
+        Pattern.MinRecoilForRecovery = 0.1f;
 
-        // main recoil pattern for AK-47
+        // basic recoil pattern 
         for (int32 i = 0; i < 10; ++i)
         {
             float progress = static_cast<float>(i) / 10.0f;
@@ -217,20 +272,11 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         for (int32 i = 0; i < 20; ++i)
         {
             float progress = static_cast<float>(i) / 20.0f;
-            
             FVector2D RecoilPoint;
             RecoilPoint.Y = 2.0f;
             RecoilPoint.X = FMath::Sin(progress * PI * 2) * 0.4f;
-            
             Pattern.PatternPoints.Add(RecoilPoint);
         }
-
-        Pattern.RecoilStrength = 0.3f;
-        Pattern.RecoverySpeed = 2.0f;
-        Pattern.RandomDeviation = 0.05f;
-        Pattern.RecoveryDelay = 0.5f;
-        Pattern.SmoothRecoverySpeed = 2.0f;
-        Pattern.MinRecoilForRecovery = 0.1f;
 
         RecoilPattern = Pattern;
     }
@@ -257,7 +303,7 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
     FCameraRecoilPattern RecoilPattern;
 };
 
-// Desert Eagle specific configuration
+// Desert Eagle
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
 {
@@ -272,20 +318,38 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
         MaxAmmo = 7;
         ReloadTime = 1.5f;
 
-        // Настройка урона для Desert Eagle
+        // DAMAGE
         DamageConfig.BaseDamage = 45;
         DamageConfig.HeadMultiplier = 4.5f;
         DamageConfig.BodyMultiplier = 1.0f;
         DamageConfig.ArmsMultiplier = 0.8f;
         DamageConfig.LegsMultiplier = 0.75f;
 
+        // SPREAD
+        SpreadConfig.BaseSpread = 0.1f;
+        SpreadConfig.CrouchMoveSpreadMin = 0.3f;
+        SpreadConfig.CrouchMoveSpreadMax = 0.5f;
+        SpreadConfig.WalkSpreadMin = 0.8f;
+        SpreadConfig.WalkSpreadMax = 1.0f;
+        SpreadConfig.RunSpreadMin = 1.5f;
+        SpreadConfig.RunSpreadMax = 2.0f;
+        SpreadConfig.JumpSpreadMin = 4.0f;
+        SpreadConfig.JumpSpreadMax = 5.0f;
+        SpreadConfig.SpeedSpreadMultiplier = 1.1f;
+        SpreadConfig.CrouchSpreadMultiplier = 0.75f;
+        SpreadConfig.SpreadIncreasePerShot = 0.05f;
+        SpreadConfig.MaxSpreadIncrease = 3.0f;
+        SpreadConfig.SpreadRecoveryRate = 2.5f;
+        SpreadConfig.SpreadRecoveryDelay = 0.15f;
+        
         FCameraRecoilPattern Pattern;
 
+        // strong vertical recoil
         for (int32 i = 0; i < 5; ++i)
         {
             FVector2D RecoilPoint;
             RecoilPoint.Y = 3.0f;
-            RecoilPoint.X = FMath::RandRange(-0.5f, 0.5f);
+            RecoilPoint.X = FMath::RandRange(-2.5f, 2.5f);
             Pattern.PatternPoints.Add(RecoilPoint);
         }
 
@@ -319,4 +383,4 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
 
     UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Recoil")
     FCameraRecoilPattern RecoilPattern;
-};
+}; 

@@ -13,7 +13,6 @@
 #include "WeaponInterface.h"
 #include "WeaponSystem.generated.h"
 
-// Forward declarations
 class UBulletFireBehavior;
 
 // Damage Calculator Interface
@@ -130,7 +129,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
     virtual FVector GetAdjustedAimDirection() const;
 
-    // Moved to public for BulletFireBehavior access
     UFUNCTION(BlueprintCallable, Category = "Weapon|Utilities")
     virtual FTransform GetBulletSpawnTransform() const;
 
@@ -189,14 +187,11 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|UI")
     TSubclassOf<UAmmoWidget> AmmoWidgetClass;
 
-
-    //IWeaponInterface
+    // IWeaponInterface
     virtual const FBaseWeaponConfig& GetWeaponConfig() const override { return WeaponConfig; }
     virtual EWeaponType GetWeaponType() const override { return WeaponConfig.WeaponType; }
     virtual const FWeaponDamageConfig& GetDamageConfig() const override { return WeaponConfig.DamageConfig; }
 
-
-    
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;

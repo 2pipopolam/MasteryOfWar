@@ -30,18 +30,20 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Debug")
     bool IsDebugLineEnabled() const { return bShowDebugLine; }
 
-    // components getters
+    UFUNCTION(BlueprintCallable, Category = "Character|Movement")
+    bool IsWalking() const { return bIsWalking; }
+
+    // Components getters
     FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
     FORCEINLINE class USkeletalMeshComponent* GetFPSArms() const { return FPSArms; }
     FORCEINLINE class UStaticMeshComponent* GetWeaponMeshComponent() const { return WeaponMeshComponent; }
     FORCEINLINE class AWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
 
-
     UFUNCTION(BlueprintCallable, Category = "Arms Configuration")
     void SetArmsPosition(const FVector& NewPosition, const FRotator& NewRotation);
 
     UFUNCTION(BlueprintCallable, Category = "Arms Configuration")
-    static void SaveGlobalArmsPosition(const FVector& Position, const FRotator& Rotation);
+    static void SaveGlobalArmsPosition(const FVector& Position, const FRotator& NewRotation);
 
     UFUNCTION(BlueprintCallable, Category = "Arms Configuration")
     void LoadAndApplyGlobalArmsPosition();
@@ -54,7 +56,7 @@ protected:
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-    // func for weapons
+    // Functions for weapons
     void EquipWeaponForMode(EWeaponType WeaponType);
     void ApplyAnimationConfig(const FCharacterAnimConfig& AnimConfig);
     void SetupExistingWeapon();
@@ -65,6 +67,13 @@ protected:
     void StartFire();
     void StopFire();
     void OnReload();
+    void StartCrouch();
+    void StopCrouch();
+    void StartWalk();
+    void StopWalk();
+
+    virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+    virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 
     UPROPERTY(BlueprintReadOnly, Category = "Weapon")
     AWeapon* CurrentWeapon;
@@ -75,6 +84,7 @@ protected:
 
 private:
     bool bShowDebugLine = false;
+    bool bIsWalking = false;
     
     UFUNCTION()
     void ToggleDebugLine();
@@ -88,6 +98,13 @@ private:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
     UCameraComponent* FollowCamera;
+
+    // Movement settings
+    UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
+    float WalkSpeed = 200.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
+    float DefaultSpeed = 500.0f;
 
     // Input properties
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -107,4 +124,10 @@ private:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* ReloadAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* CrouchAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* WalkAction;
 };

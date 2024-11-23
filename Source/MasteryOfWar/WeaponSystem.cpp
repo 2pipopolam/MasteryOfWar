@@ -212,6 +212,7 @@ FVector2D UCameraRecoilComponent::GetNextPatternPoint() const
     return BasePoint + FVector2D(RandomX, RandomY);
 }
 
+// Weapon implementation
 AWeapon::AWeapon()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -238,6 +239,92 @@ AWeapon::AWeapon()
     SmokeLifetime = 1.0f;
     SmokeSpawnOffset = FVector::ZeroVector;
 }
+
+
+FTransform AWeapon::GetBulletSpawnTransform() const
+{
+    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+    {
+        if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
+        {
+            FVector CameraLocation = Camera->GetComponentLocation();
+            FRotator CameraRotation = Camera->GetComponentRotation();
+            
+            float SpreadX = 0.0f;
+            float SpreadY = 0.0f;
+            
+            bool bIsCrouching = Character->bIsCrouched;
+            bool bIsJumping = Character->GetMovementComponent()->IsFalling();
+            bool bIsMoving = !Character->GetVelocity().IsNearlyZero();
+            bool bIsWalking = false;
+            
+            if (AMasteryOfWarCharacter* MOWCharacter = Cast<AMasteryOfWarCharacter>(Character))
+            {
+                bIsWalking = MOWCharacter->IsWalking();
+            }
+
+            if (bIsJumping)
+            {
+                SpreadX = FMath::RandRange(-WeaponConfig.SpreadConfig.JumpSpreadMax, WeaponConfig.SpreadConfig.JumpSpreadMax);
+                SpreadY = FMath::RandRange(-WeaponConfig.SpreadConfig.JumpSpreadMax, WeaponConfig.SpreadConfig.JumpSpreadMax);
+            }
+            else if (bIsMoving)
+            {
+                if (bIsCrouching)
+                {
+                    SpreadX = FMath::RandRange(-WeaponConfig.SpreadConfig.CrouchMoveSpreadMax, WeaponConfig.SpreadConfig.CrouchMoveSpreadMax);
+                    SpreadY = FMath::RandRange(-WeaponConfig.SpreadConfig.CrouchMoveSpreadMax, WeaponConfig.SpreadConfig.CrouchMoveSpreadMax);
+                }
+                else if (bIsWalking)
+                {
+                    SpreadX = FMath::RandRange(-WeaponConfig.SpreadConfig.WalkSpreadMax, WeaponConfig.SpreadConfig.WalkSpreadMax);
+                    SpreadY = FMath::RandRange(-WeaponConfig.SpreadConfig.WalkSpreadMax, WeaponConfig.SpreadConfig.WalkSpreadMax);
+                }
+                else
+                {
+                    SpreadX = FMath::RandRange(-WeaponConfig.SpreadConfig.RunSpreadMax, WeaponConfig.SpreadConfig.RunSpreadMax);
+                    SpreadY = FMath::RandRange(-WeaponConfig.SpreadConfig.RunSpreadMax, WeaponConfig.SpreadConfig.RunSpreadMax);
+                }
+                
+                float SpeedFactor = (Character->GetVelocity().Size() / 500.0f) * WeaponConfig.SpreadConfig.SpeedSpreadMultiplier;
+                SpreadX *= (1.0f + SpeedFactor);
+                SpreadY *= (1.0f + SpeedFactor);
+            }
+            else if (bIsCrouching)
+            {
+                SpreadX = FMath::RandRange(-WeaponConfig.SpreadConfig.BaseSpread, WeaponConfig.SpreadConfig.BaseSpread) * 
+                         WeaponConfig.SpreadConfig.CrouchSpreadMultiplier;
+                SpreadY = FMath::RandRange(-WeaponConfig.SpreadConfig.BaseSpread, WeaponConfig.SpreadConfig.BaseSpread) * 
+                         WeaponConfig.SpreadConfig.CrouchSpreadMultiplier;
+            }
+            else
+            {
+                SpreadX = FMath::RandRange(-WeaponConfig.SpreadConfig.BaseSpread, WeaponConfig.SpreadConfig.BaseSpread);
+                SpreadY = FMath::RandRange(-WeaponConfig.SpreadConfig.BaseSpread, WeaponConfig.SpreadConfig.BaseSpread);
+            }
+            
+            if (CurrentSpread > 0.0f)
+            {
+                float AdditionalSpread = FMath::Min(CurrentSpread, WeaponConfig.SpreadConfig.MaxSpreadIncrease);
+                SpreadX += FMath::RandRange(-AdditionalSpread, AdditionalSpread);
+                SpreadY += FMath::RandRange(-AdditionalSpread, AdditionalSpread);
+            }
+            
+            // spread to shot direction
+            FRotator SpreadRotation = CameraRotation;
+            SpreadRotation.Pitch += SpreadY;
+            SpreadRotation.Yaw += SpreadX;
+            
+            FVector SpawnOffset = SpreadRotation.Vector() * 50.0f;
+            FVector SpawnLocation = CameraLocation + SpawnOffset;
+            
+            return FTransform(SpreadRotation, SpawnLocation);
+        }
+    }
+    
+    return GetMuzzleSocketTransform();
+}
+
 
 void AWeapon::BeginPlay()
 {
@@ -287,36 +374,6 @@ void AWeapon::Tick(float DeltaTime)
     UpdateRecoilState(DeltaTime);
 }
 
-FTransform AWeapon::GetBulletSpawnTransform() const
-{
-    if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
-    {
-        if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
-        {
-            FVector CameraLocation = Camera->GetComponentLocation();
-            FRotator CameraRotation = Camera->GetComponentRotation();
-            
-            FRotator SpreadRotation = CameraRotation;
-            if (CurrentSpread > 0.0f)
-            {
-                float HalfSpread = CurrentSpread * 0.5f;
-                float RandomX = FMath::RandRange(-HalfSpread, HalfSpread);
-                float RandomY = FMath::RandRange(-HalfSpread, HalfSpread);
-                
-                SpreadRotation.Pitch += RandomX;
-                SpreadRotation.Yaw += RandomY;
-            }
-            
-            FVector SpawnOffset = SpreadRotation.Vector() * 50.0f;
-            FVector SpawnLocation = CameraLocation + SpawnOffset;
-            
-            return FTransform(SpreadRotation, SpawnLocation);
-        }
-    }
-    
-    return GetMuzzleSocketTransform();
-}
-
 void AWeapon::Fire()
 {
     if (!CanFire()) 
@@ -344,7 +401,6 @@ void AWeapon::Fire()
                 SpawnTransform.GetRotation().Rotator(),
                 SpawnParams))
             {
-                // Используем фиксированный базовый урон вместо случайного
                 int32 Damage = WeaponConfig.DamageConfig.BaseDamage;
                 Bullet->InitializeBullet(Damage, ProjectileSpeed, WeaponConfig.Range);
             }
@@ -362,8 +418,6 @@ void AWeapon::Fire()
     ConsumeAmmo();
     UpdateAmmoWidget();
 }
-
-
 
 void AWeapon::HandleRecoil()
 {
@@ -565,19 +619,67 @@ FVector AWeapon::GetAdjustedAimDirection() const
     return GetActorForwardVector();
 }
 
+
 void AWeapon::UpdateSpread(float DeltaTime)
-{
+{   
     if (bIsFiring)
     {
-        CurrentSpread = FMath::Min(CurrentSpread + (WeaponConfig.BaseSpread * DeltaTime), 
-                                  WeaponConfig.MaxSpread);
+        CurrentSpread += WeaponConfig.SpreadConfig.SpreadIncreasePerShot * DeltaTime;
+        
+        if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+        {
+            bool bIsCrouching = Character->bIsCrouched;
+            bool bIsJumping = Character->GetMovementComponent()->IsFalling();
+            bool bIsMoving = !Character->GetVelocity().IsNearlyZero();
+            bool bIsWalking = false;
+            
+            if (AMasteryOfWarCharacter* MOWCharacter = Cast<AMasteryOfWarCharacter>(Character))
+            {
+                bIsWalking = MOWCharacter->IsWalking();
+            }
+            // spread depends on movement type
+            if (bIsJumping)
+            {
+                CurrentSpread = FMath::Min(CurrentSpread, WeaponConfig.SpreadConfig.JumpSpreadMax);
+            }
+            else if (bIsMoving)
+            {
+                if (bIsCrouching)
+                {
+                    CurrentSpread = FMath::Min(CurrentSpread, WeaponConfig.SpreadConfig.CrouchMoveSpreadMax);
+                }
+                else if (bIsWalking)
+                {
+                    CurrentSpread = FMath::Min(CurrentSpread, WeaponConfig.SpreadConfig.WalkSpreadMax);
+                }
+                else
+                {
+                    CurrentSpread = FMath::Min(CurrentSpread, WeaponConfig.SpreadConfig.RunSpreadMax);
+                }
+
+                // speed factor for shooting
+                float SpeedFactor = (Character->GetVelocity().Size() / 500.0f) * 
+                                   WeaponConfig.SpreadConfig.SpeedSpreadMultiplier;
+                CurrentSpread *= (1.0f + SpeedFactor);
+            }
+        }
+
+        // limit spread
+        CurrentSpread = FMath::Min(CurrentSpread, WeaponConfig.SpreadConfig.MaxSpreadIncrease);
     }
     else
     {
-        CurrentSpread = FMath::Max(CurrentSpread - (WeaponConfig.SpreadRecoveryRate * DeltaTime), 
-                                  0.0f);
+        // restore accur
+        CurrentSpread = FMath::Max(
+            CurrentSpread - (WeaponConfig.SpreadConfig.SpreadRecoveryRate * DeltaTime),
+            WeaponConfig.SpreadConfig.BaseSpread
+        );
     }
+
+    UE_LOG(LogTemp, VeryVerbose, TEXT("Weapon: %s, CurrentSpread: %f"), 
+        *GetName(), CurrentSpread);
 }
+
 
 bool AWeapon::IsCharacterMoving() const
 {
@@ -658,7 +760,6 @@ void AWeapon::PlayFireEffects()
         FVector EjectionDirection = WeaponMesh->GetRightVector() * ShellEjectOffset.X + 
                                   WeaponMesh->GetUpVector() * ShellEjectOffset.Y +
                                   WeaponMesh->GetForwardVector() * ShellEjectOffset.Z;
-        
         ShellTransform.SetLocation(ShellTransform.GetLocation() + EjectionDirection);
 
         UParticleSystemComponent* ShellEject = UGameplayStatics::SpawnEmitterAtLocation(
