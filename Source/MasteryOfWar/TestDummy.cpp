@@ -1,22 +1,23 @@
-// TestDummy.cpp
 #include "TestDummy.h"
 #include "DrawDebugHelpers.h"
 #include "Components/SphereComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "WeaponConfig.h"
+#include "WeaponSystem.h"
 
 ATestDummy::ATestDummy()
 {
     PrimaryActorTick.bCanEverTick = false;
 
-    // collisions 
+    // Create collision components for hit zones
     HeadCollision = CreateDefaultSubobject<USphereComponent>(TEXT("HeadCollision"));
     HeadCollision->SetupAttachment(GetRootComponent());
-    HeadCollision->SetSphereRadius(15.0f); // radius of head , probably changed in editor
-    HeadCollision->SetRelativeLocation(FVector(0.0f, 0.0f, 160.0f)); // position of head , probably changed in editor
+    HeadCollision->SetSphereRadius(15.0f);
+    HeadCollision->SetRelativeLocation(FVector(0.0f, 0.0f, 160.0f));
 
     BodyCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("BodyCollision"));
     BodyCollision->SetupAttachment(GetRootComponent());
-    BodyCollision->SetCapsuleSize(25.0f, 35.0f); // body size
+    BodyCollision->SetCapsuleSize(25.0f, 35.0f);
     BodyCollision->SetRelativeLocation(FVector(0.0f, 0.0f, 90.0f));
 
     LeftArmCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftArmCollision"));
@@ -39,7 +40,7 @@ ATestDummy::ATestDummy()
     RightLegCollision->SetCapsuleSize(12.5f, 22.5f);
     RightLegCollision->SetRelativeLocation(FVector(0.0f, 20.0f, 45.0f));
 
-    // add collisions to components
+    // Setup collision settings for all components
     TArray<UPrimitiveComponent*> AllCollisions = {
         HeadCollision, BodyCollision,
         LeftArmCollision, RightArmCollision,
@@ -55,17 +56,25 @@ ATestDummy::ATestDummy()
             Collision->SetGenerateOverlapEvents(true);
         }
     }
+
+    WeaponDamageConfig = FWeaponDamageConfig();
+
+    // Initialize health
+    CurrentHealth = MaxHealth;
 }
 
 void ATestDummy::BeginPlay()
 {
     Super::BeginPlay();
 
-    // draw message above dummy
+    // Save debug text for later reference
+    DebugText = TEXT("Test Dummy\nShoot me!");
+    
+    // Draw initial debug text above dummy
     DrawDebugString(
         GetWorld(),
         GetActorLocation() + FVector(0, 0, 200),
-        TEXT("Test Dummy\nShoot me!"),
+        *DebugText,
         nullptr,
         FColor::Green,
         -1.0f,
@@ -76,8 +85,24 @@ void ATestDummy::BeginPlay()
     UE_LOG(LogTemp, Error, TEXT("TestDummy spawned: %s"), *GetName());
 }
 
+void ATestDummy::ClearDebugText()
+{
+    // Clear persistent debug text by drawing empty string
+    DrawDebugString(
+        GetWorld(),
+        GetActorLocation() + FVector(0, 0, 200),
+        TEXT(""),
+        nullptr,
+        FColor::Green,
+        0.0f,
+        true,
+        1.0f
+    );
+}
+
 EHitZone ATestDummy::GetHitZoneFromComponent(UPrimitiveComponent* HitComponent) const
 {
+    // Determine hit zone based on which collision component was hit
     if (HitComponent == HeadCollision)
         return EHitZone::Head;
     else if (HitComponent == LeftLegCollision || HitComponent == RightLegCollision)
@@ -87,75 +112,139 @@ EHitZone ATestDummy::GetHitZoneFromComponent(UPrimitiveComponent* HitComponent) 
     else if (HitComponent == BodyCollision)
         return EHitZone::Body;
         
-    return EHitZone::Body; // by default
+    return EHitZone::Body; // Default to body damage if unknown component
 }
 
-float ATestDummy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
-                            AController* EventInstigator, AActor* DamageCauser)
+
+
+float ATestDummy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+    // Initialize base damage
     int32 ActualDamage = FMath::RoundToInt(DamageAmount);
 
+    // Log initial damage and health values
     UE_LOG(LogTemp, Error, TEXT("===== DUMMY TAKING BASE DAMAGE: %d ====="), ActualDamage);
+    UE_LOG(LogTemp, Error, TEXT("Current Health before damage: %.1f"), CurrentHealth);
 
+    // Check if it's point damage
     if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
     {
         const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
         if (PointDamageEvent)
         {
             UPrimitiveComponent* HitComponent = PointDamageEvent->HitInfo.Component.Get();
-            if (HitComponent)
+            if (HitComponent && DamageCauser)
             {
-                EHitZone HitZone = GetHitZoneFromComponent(HitComponent);
-                
-                float Multiplier = 1.0f;
-                FString HitZoneString;
-                
-                switch (HitZone)
+                // Get weapon interface from damage causer
+                if (IWeaponInterface* WeaponInterface = Cast<IWeaponInterface>(DamageCauser))
                 {
-                    case EHitZone::Head: 
-                        Multiplier = HitZoneMultipliers.HeadMultiplier;
-                        HitZoneString = TEXT("Head");
-                        break;
-                    case EHitZone::Body: 
-                        Multiplier = HitZoneMultipliers.BodyMultiplier;
-                        HitZoneString = TEXT("Body");
-                        break;
-                    case EHitZone::Arms: 
-                        Multiplier = HitZoneMultipliers.ArmsMultiplier;
-                        HitZoneString = TEXT("Arms");
-                        break;
-                    case EHitZone::Legs: 
-                        Multiplier = HitZoneMultipliers.LegsMultiplier;
-                        HitZoneString = TEXT("Legs");
-                        break;
-                }
+                    // Get weapon-specific damage config and type
+                    const FWeaponDamageConfig& DamageConfig = WeaponInterface->GetDamageConfig();
+                    EWeaponType WeaponType = WeaponInterface->GetWeaponType();
 
-                ActualDamage = FMath::RoundToInt(static_cast<float>(ActualDamage) * Multiplier);
-                
-                UE_LOG(LogTemp, Error, TEXT("Hit Zone: %s"), *HitZoneString);
-                UE_LOG(LogTemp, Error, TEXT("Damage Multiplier: %f"), Multiplier);
-                UE_LOG(LogTemp, Error, TEXT("Final Damage: %d"), ActualDamage);
-                
-                // SHOW DAMAGE
-                FString DamageText = FString::Printf(TEXT("%d (x%.1f)"), ActualDamage, Multiplier);
-                DrawDebugString(
-                    GetWorld(),
-                    PointDamageEvent->HitInfo.ImpactPoint,
-                    DamageText,
-                    nullptr,
-                    FColor::Yellow,
-                    2.0f,
-                    true,
-                    1.5f
-                );
+                    // Log weapon type for debugging
+                    UE_LOG(LogTemp, Error, TEXT("Weapon Type: %s"), *UEnum::GetValueAsString(WeaponType));
+                    
+                    // Get base damage and determine hit zone
+                    int32 BaseDamage = DamageConfig.BaseDamage;
+                    EHitZone HitZone = GetHitZoneFromComponent(HitComponent);
+                    
+                    // Calculate damage multiplier based on hit zone
+                    float Multiplier = 1.0f;
+                    switch (HitZone)
+                    {
+                        case EHitZone::Head:
+                            Multiplier = DamageConfig.HeadMultiplier;
+                            break;
+                        case EHitZone::Body:
+                            Multiplier = DamageConfig.BodyMultiplier;
+                            break;
+                        case EHitZone::Arms:
+                            Multiplier = DamageConfig.ArmsMultiplier;
+                            break;
+                        case EHitZone::Legs:
+                            Multiplier = DamageConfig.LegsMultiplier;
+                            break;
+                    }
+
+                    // Calculate final damage
+                    ActualDamage = FMath::RoundToInt(static_cast<float>(BaseDamage) * Multiplier);
+
+                    // Log damage calculation details
+                    UE_LOG(LogTemp, Error, TEXT("Base Damage: %d"), BaseDamage);
+                    UE_LOG(LogTemp, Error, TEXT("Hit Zone: %s"), *UEnum::GetValueAsString(HitZone));
+                    UE_LOG(LogTemp, Error, TEXT("Damage Multiplier: %.2f"), Multiplier);
+                    UE_LOG(LogTemp, Error, TEXT("Final Damage: %d"), ActualDamage);
+
+                    // Apply damage to health
+                    CurrentHealth = FMath::Max(0.0f, CurrentHealth - ActualDamage);
+
+                    // Display damage information above impact point
+                    FString DamageText = FString::Printf(TEXT("%d (x%.1f)\nHP: %.0f"),
+                        ActualDamage, Multiplier, CurrentHealth);
+                    DrawDebugString(
+                        GetWorld(),
+                        PointDamageEvent->HitInfo.ImpactPoint,
+                        DamageText,
+                        nullptr,
+                        FColor::Yellow,
+                        2.0f,
+                        true,
+                        1.5f
+                    );
+
+                    UE_LOG(LogTemp, Error, TEXT("Health Remaining: %.1f"), CurrentHealth);
+
+                    // Check if dummy is destroyed
+                    if (CurrentHealth <= 0.0f)
+                    {
+                        UE_LOG(LogTemp, Error, TEXT("Dummy destroyed!"));
+
+                        // Clear existing debug text
+                        ClearDebugText();
+
+                        // Display destruction message
+                        DrawDebugString(
+                            GetWorld(),
+                            GetActorLocation() + FVector(0, 0, 200),
+                            TEXT("DESTROYED!"),
+                            nullptr,
+                            FColor::Red,
+                            2.0f,
+                            true,
+                            2.0f
+                        );
+
+                        // Visual effect for destruction
+                        DrawDebugSphere(
+                            GetWorld(),
+                            GetActorLocation(),
+                            100.0f,
+                            12,
+                            FColor::Red,
+                            false,
+                            2.0f,
+                            0,
+                            2.0f
+                        );
+
+                        // Destroy with delay
+                        FTimerHandle TimerHandle;
+                        GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+                        {
+                            Destroy();
+                        }, 0.2f, false);
+                    }
+                }
             }
         }
     }
 
+    // Update damage statistics
     TotalDamageReceived += ActualDamage;
     LastDamageReceived = ActualDamage;
     HitCount++;
 
-    Super::TakeDamage(static_cast<float>(ActualDamage), DamageEvent, EventInstigator, DamageCauser);
-    return static_cast<float>(ActualDamage);
+    // Call parent implementation
+    return Super::TakeDamage(static_cast<float>(ActualDamage), DamageEvent, EventInstigator, DamageCauser);
 }

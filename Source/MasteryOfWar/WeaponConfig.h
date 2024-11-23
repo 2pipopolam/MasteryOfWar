@@ -189,8 +189,8 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         DamageConfig.BaseDamage = 35;
         DamageConfig.HeadMultiplier = 4.0f;
         DamageConfig.BodyMultiplier = 1.0f;
-        DamageConfig.ArmsMultiplier = 0.75f;
-        DamageConfig.LegsMultiplier = 0.5f;
+        DamageConfig.ArmsMultiplier = 0.7f;
+        DamageConfig.LegsMultiplier = 0.6f;
         
         FCameraRecoilPattern Pattern;
 
@@ -273,11 +273,11 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
         ReloadTime = 1.5f;
 
         // Настройка урона для Desert Eagle
-        DamageConfig.BaseDamage = 55;
+        DamageConfig.BaseDamage = 45;
         DamageConfig.HeadMultiplier = 4.5f;
         DamageConfig.BodyMultiplier = 1.0f;
         DamageConfig.ArmsMultiplier = 0.8f;
-        DamageConfig.LegsMultiplier = 0.6f;
+        DamageConfig.LegsMultiplier = 0.75f;
 
         FCameraRecoilPattern Pattern;
 

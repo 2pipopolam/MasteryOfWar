@@ -3,12 +3,13 @@
 #include "CoreMinimal.h"
 #include "WeaponSystem.h"
 #include "WeaponConfig.h"
+#include "WeaponInterface.h"
 #include "DesertEagle.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDesertEagleReloadComplete);
 
 UCLASS()
-class MASTERYOFWAR_API ADesertEagle : public AWeapon
+class MASTERYOFWAR_API ADesertEagle : public AWeapon 
 {
 	GENERATED_BODY()
 
@@ -24,6 +25,11 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Weapon|Events")
 	FOnDesertEagleReloadComplete OnReloadComplete;
 
+	// override AWeapon's methods (with inherits IWeaponInterface)
+	virtual const FBaseWeaponConfig& GetWeaponConfig() const override { return DesertEagleConfig; }
+	virtual EWeaponType GetWeaponType() const override { return EWeaponType::DesertEagle; }
+	virtual const FWeaponDamageConfig& GetDamageConfig() const override { return DesertEagleConfig.DamageConfig; }
+    
 protected:
 	virtual void BeginPlay() override;
 	virtual void PlayFireEffects() override;

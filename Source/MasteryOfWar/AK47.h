@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "WeaponSystem.h"
 #include "WeaponConfig.h"
+#include "WeaponInterface.h"
 #include "AK47.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReloadComplete);
@@ -23,6 +24,11 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Weapon|Events")
 	FOnReloadComplete OnReloadComplete;
+
+	// override AWeapon's methods (with inherits IWeaponInterface)
+	virtual const FBaseWeaponConfig& GetWeaponConfig() const override { return AK47Config; }
+	virtual EWeaponType GetWeaponType() const override { return EWeaponType::AK47; }
+	virtual const FWeaponDamageConfig& GetDamageConfig() const override { return AK47Config.DamageConfig; }
 
 protected:
 	virtual void BeginPlay() override;

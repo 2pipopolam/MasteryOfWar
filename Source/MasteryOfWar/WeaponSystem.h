@@ -10,6 +10,7 @@
 #include "AmmoWidget.h"
 #include "Bullet.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "WeaponInterface.h"
 #include "WeaponSystem.generated.h"
 
 // Forward declarations
@@ -83,7 +84,7 @@ private:
 
 // Base Weapon Class
 UCLASS(Abstract, BlueprintType, Blueprintable)
-class MASTERYOFWAR_API AWeapon : public AActor
+class MASTERYOFWAR_API AWeapon : public AActor, public IWeaponInterface
 {
     GENERATED_BODY()
 
@@ -188,6 +189,14 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|UI")
     TSubclassOf<UAmmoWidget> AmmoWidgetClass;
 
+
+    //IWeaponInterface
+    virtual const FBaseWeaponConfig& GetWeaponConfig() const override { return WeaponConfig; }
+    virtual EWeaponType GetWeaponType() const override { return WeaponConfig.WeaponType; }
+    virtual const FWeaponDamageConfig& GetDamageConfig() const override { return WeaponConfig.DamageConfig; }
+
+
+    
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
@@ -277,7 +286,7 @@ protected:
 
     UFUNCTION(BlueprintCallable, Category = "Weapon|UI")
     virtual void UpdateAmmoWidget();
-
+    
 private:
     UPROPERTY()
     UAmmoWidget* AmmoWidget;

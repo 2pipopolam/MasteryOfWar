@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "Engine/DamageEvents.h" 
 #include "DamageConfig.h"
+#include "WeaponConfig.h"
 #include "TestDummy.generated.h"
 
 UCLASS()
@@ -53,4 +54,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
 	FHitZoneMultipliers HitZoneMultipliers;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health")
+	float MaxHealth = 100.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
+	float CurrentHealth = 100.0f;
+
+	UPROPERTY()
+	FString DebugText;  
+
+	void ClearDebugText();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	FWeaponDamageConfig WeaponDamageConfig;
 };

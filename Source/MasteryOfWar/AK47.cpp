@@ -18,10 +18,14 @@ AAK47::AAK47()
     LoadWeaponAssets();
 }
 
+
 void AAK47::InitializeWeaponConfig()
 {
-    AK47Config = FAK47Config(); // This will set all the default values
-    WeaponConfig = AK47Config; // Initialize base weapon config
+    AK47Config = FAK47Config();
+    WeaponConfig = AK47Config;
+    
+    UE_LOG(LogTemp, Error, TEXT("AK47 Config Initialized - Base Damage: %d"), 
+           AK47Config.DamageConfig.BaseDamage);
 }
 
 void AAK47::LoadWeaponAssets()
@@ -146,6 +150,7 @@ void AAK47::Fire()
 
     Super::Fire();
 }
+
 
 void AAK47::PlayFireEffects()
 {
