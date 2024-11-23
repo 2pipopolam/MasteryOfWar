@@ -1,13 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "Engine/DamageEvents.h" 
 #include "DamageConfig.h"
 #include "TestDummy.generated.h"
 
 UCLASS()
-class MASTERYOFWAR_API ATestDummy : public AActor
+class MASTERYOFWAR_API ATestDummy : public ACharacter
 {
 	GENERATED_BODY()
     
@@ -20,36 +20,31 @@ protected:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, 
 							class AController* EventInstigator, AActor* DamageCauser) override;
 
-	// components for body parts
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* HeadMesh;
-    
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* BodyMesh;
-    
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* LeftArmMesh;
-    
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* RightArmMesh;
-    
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* LeftLegMesh;
-    
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* RightLegMesh;
+	// collision components for different parts of body
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Zones")
+	class USphereComponent* HeadCollision;
 
-	UPROPERTY(VisibleAnywhere)
-	USceneComponent* RootSceneComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Zones")
+	class UCapsuleComponent* BodyCollision;
 
-	// to know zone of collision
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Zones")
+	class UCapsuleComponent* LeftArmCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Zones")
+	class UCapsuleComponent* RightArmCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Zones")
+	class UCapsuleComponent* LeftLegCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Zones")
+	class UCapsuleComponent* RightLegCollision;
+
 	EHitZone GetHitZoneFromComponent(UPrimitiveComponent* HitComponent) const;
 
-	// total damage
+	// DAMAGE
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage")
 	float TotalDamageReceived = 0.0f;
 
-	// amount of hits
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Damage")
 	int32 HitCount = 0;
 

@@ -5,7 +5,12 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/DamageType.h"
+#include "TestDummy.h"
 #include "Bullet.generated.h"
+
+class UProjectileMovementComponent;
+class UStaticMeshComponent;
+class ATestDummy;
 
 UCLASS()
 class MASTERYOFWAR_API ABullet : public AActor
