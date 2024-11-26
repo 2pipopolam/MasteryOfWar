@@ -38,13 +38,13 @@ void ADesertEagle::LoadWeaponAssets()
     {
         MuzzleFlashTemplate = MuzzleFlashFX.Object;
     }
-
+/*
     static ConstructorHelpers::FObjectFinder<UParticleSystem> ShellEjectFX(TEXT("/Game/Effects/Particles/P_ShellEject_DesertEagle"));
     if (ShellEjectFX.Succeeded())
     {
         EjectedShellEffect = ShellEjectFX.Object;
     }
-
+*/
     // Sounds
     static ConstructorHelpers::FObjectFinder<USoundBase> FireSFX(TEXT("/Game/Weapons/Sounds/desert_eagle_shooting"));
     if (FireSFX.Succeeded())
@@ -65,6 +65,7 @@ void ADesertEagle::LoadWeaponAssets()
     }
 
     // Animations
+    /*
     static ConstructorHelpers::FObjectFinder<UAnimMontage> ReloadAnim(TEXT("/Game/Animations/AM_DesertEagle_Reload"));
     if (ReloadAnim.Succeeded())
     {
@@ -76,6 +77,7 @@ void ADesertEagle::LoadWeaponAssets()
     {
         FireAnimation = FireAnim.Object;
     }
+    */
 
     // Bullet
     static ConstructorHelpers::FClassFinder<ABullet> BulletBPClass(TEXT("/Game/Weapons/Blueprints/BP_Bullet"));

@@ -281,8 +281,8 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         RecoilPattern = Pattern;
     }
 
-    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
-    FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
+   // UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    //FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
 
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath FireSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/single_shoot_ak47"));
@@ -293,11 +293,11 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     FSoftObjectPath EmptyMagSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/empty_mag_sound"));
 
-    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
-    FSoftObjectPath FireAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_AK47_Fire"));
+    //UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    //FSoftObjectPath FireAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_AK47_Fire"));
 
-    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
-    FSoftObjectPath ReloadAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_AK47_Reload"));
+    //UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    //FSoftObjectPath ReloadAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_AK47_Reload"));
 
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Recoil")
     FCameraRecoilPattern RecoilPattern;
@@ -363,8 +363,8 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
         RecoilPattern = Pattern;
     }
 
-    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
-    FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_DesertEagle"));
+    //UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    //FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_DesertEagle"));
 
     UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
     FSoftObjectPath FireSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/single_shoot_deagle"));
@@ -375,11 +375,11 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
     UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
     FSoftObjectPath EmptyMagSoundPath = FSoftObjectPath(TEXT("/Game/Weapons/Sounds/empty_mag_sound"));
 
-    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
-    FSoftObjectPath FireAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_DesertEagle_Fire"));
+    //UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    //FSoftObjectPath FireAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_DesertEagle_Fire"));
 
-    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
-    FSoftObjectPath ReloadAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_DesertEagle_Reload"));
+    //UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    //FSoftObjectPath ReloadAnimationPath = FSoftObjectPath(TEXT("/Game/Animations/AM_DesertEagle_Reload"));
 
     UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Recoil")
     FCameraRecoilPattern RecoilPattern;

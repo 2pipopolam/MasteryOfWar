@@ -33,7 +33,7 @@ void UOptionsMenuWidget::NativeConstruct()
     }
     if (MultiplayerButton)
     {
-        MultiplayerButton->OnClicked.AddDynamic(this, &UOptionsMenuWidget::OnMultiplayerClicked);
+        //MultiplayerButton->OnClicked.AddDynamic(this, &UOptionsMenuWidget::OnMultiplayerClicked);
     }
 }
 
@@ -69,5 +69,5 @@ void UOptionsMenuWidget::OnInputClicked()
 
 void UOptionsMenuWidget::OnMultiplayerClicked()
 {
-    UGameplayStatics::OpenLevel(GetWorld(), FName("MultiplayerSettings"));
+    //UGameplayStatics::OpenLevel(GetWorld(), FName("MultiplayerSettings"));
 }

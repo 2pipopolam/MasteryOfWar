@@ -5,7 +5,6 @@
 #include "GameModeConfig.h"
 #include "GameHUD.h"
 #include "GameModesData.h"
-#include "UserProfileWidget.h"
 #include "MasteryOfWarGameMode.generated.h"
 
 UCLASS(minimalapi)
@@ -52,8 +51,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "HUD")
 	TSubclassOf<class AGameHUD> GameHUDClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<class UUserProfileWidget> UserProfileWidgetClass;
+	//UPROPERTY(EditDefaultsOnly, Category = "UI")
+	//TSubclassOf<class UUserProfileWidget> UserProfileWidgetClass;
 
 private:
 	// current GM

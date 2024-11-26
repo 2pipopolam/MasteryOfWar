@@ -1,9 +1,10 @@
 /.git
 /Content
-/DB
 /ThirdParty
 /.vscode
 /.idea
-/DerivedDataCache
+/Server
+/.ccls-cache
+/DB
 /Saved
 /Intermediate

@@ -43,13 +43,13 @@ void AAK47::LoadWeaponAssets()
     {
         MuzzleFlashTemplate = MuzzleFlashFX.Object;
     }
-
+/*
     static ConstructorHelpers::FObjectFinder<UParticleSystem> ShellEjectFX(TEXT("/Game/Weapons/Particles/P_ShellEject_AK47"));
     if (ShellEjectFX.Succeeded())
     {
         EjectedShellEffect = ShellEjectFX.Object;
     }
-
+*/
     // sounds
     static ConstructorHelpers::FObjectFinder<USoundBase> FireSFX(TEXT("/Game/Weapons/Sounds/single_shoot_ak47"));
     if (FireSFX.Succeeded())
@@ -70,6 +70,7 @@ void AAK47::LoadWeaponAssets()
     }
 
     // animations
+    /*
     static ConstructorHelpers::FObjectFinder<UAnimMontage> ReloadAnim(TEXT("/Game/Animations/AM_AK47_Reload"));
     if (ReloadAnim.Succeeded())
     {
@@ -81,6 +82,7 @@ void AAK47::LoadWeaponAssets()
     {
         FireAnimation = FireAnim.Object;
     }
+    */
 
     // bullet
     static ConstructorHelpers::FClassFinder<ABullet> BulletBPClass(TEXT("/Game/Weapons/Blueprints/BP_Bullet"));
