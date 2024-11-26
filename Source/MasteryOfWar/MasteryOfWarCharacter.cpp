@@ -158,6 +158,9 @@ void AMasteryOfWarCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
         EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Started, this, &AMasteryOfWarCharacter::StartWalk);
         EnhancedInputComponent->BindAction(WalkAction, ETriggerEvent::Completed, this, &AMasteryOfWarCharacter::StopWalk);
 
+        //esc
+        PlayerInputComponent->BindKey(EKeys::B, IE_Pressed, this, &AMasteryOfWarCharacter::OnBPressed);
+        
         // Debug
         if (PlayerInputComponent)
         {
@@ -503,6 +506,16 @@ bool AMasteryOfWarCharacter::GetSavedArmsPosition(FVector& OutPosition, FRotator
     }
     return false;
 }
+
+
+void AMasteryOfWarCharacter::OnBPressed()
+{
+    if (UWorld* World = GetWorld())
+    {
+        UGameplayStatics::OpenLevel(World, FName("ModeSelectionMap"));
+    }
+}
+
 
 void AMasteryOfWarCharacter::ToggleDebugLine()
 {

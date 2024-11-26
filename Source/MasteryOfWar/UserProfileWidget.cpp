@@ -39,9 +39,17 @@ void UUserProfileWidget::NativeConstruct()
         return;
     }
 
+    
+    if (!BackButton)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("BackButton is null"));
+        return;
+    }
+
     // handle events
     ChangeAvatarButton->OnClicked.AddDynamic(this, &UUserProfileWidget::OnChangeAvatarClicked);
     SaveNicknameButton->OnClicked.AddDynamic(this, &UUserProfileWidget::OnSaveNicknameClicked);
+    BackButton->OnClicked.AddDynamic(this, &UUserProfileWidget::OnBackClicked);
     
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Buttons bound successfully"));
 
@@ -259,4 +267,10 @@ void UUserProfileWidget::UpdateAvatarImage(const FString& ImagePath)
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to update avatar image"));
     }
+}
+
+
+void UUserProfileWidget::OnBackClicked()
+{
+    UGameplayStatics::OpenLevel(GetWorld(), FName("OptionsMenuMap"));
 }

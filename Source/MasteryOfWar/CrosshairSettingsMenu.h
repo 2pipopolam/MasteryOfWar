@@ -53,6 +53,9 @@ public:
     UPROPERTY(meta = (BindWidget))
     class UButton* ResetButton;
 
+    UPROPERTY(meta = (BindWidget))
+    class UButton* BackButton;
+
     // Preview Widget
     UPROPERTY(meta = (BindWidget))
     UCrosshair* PreviewCrosshair;
@@ -95,6 +98,9 @@ protected:
 
     UFUNCTION()
     void OnResetSettings();
+
+    UFUNCTION()
+    void OnBackClicked();
 
     // Utility Functions
     void LoadSavedSettings();

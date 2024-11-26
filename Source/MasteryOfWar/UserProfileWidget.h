@@ -28,11 +28,17 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* SaveNicknameButton;
 
+	UPROPERTY(meta = (BindWidget))
+	UButton* BackButton;
+
 	UFUNCTION()
 	void OnChangeAvatarClicked();
 
 	UFUNCTION()
 	void OnSaveNicknameClicked();
+
+	UFUNCTION()
+	void OnBackClicked();
 
 private:
 	void LoadCurrentUserData();

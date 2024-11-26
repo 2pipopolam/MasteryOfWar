@@ -53,6 +53,10 @@ void UArmsPositionConfigWidget::NativeConstruct()
     {
         DesertEagleButton->OnClicked.AddDynamic(this, &UArmsPositionConfigWidget::OnDesertEagleButtonClicked);
     }
+    if (BackButton)
+    {
+        BackButton->OnClicked.AddDynamic(this, &UArmsPositionConfigWidget::OnBackClicked);
+    }
 
     // Hide initial character mesh
     if (AMasteryOfWarCharacter* Character = Cast<AMasteryOfWarCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
@@ -225,4 +229,11 @@ void UArmsPositionConfigWidget::OnRotationRollChanged(float Value)
 {
     CurrentRotation.Roll = Value;
     UpdateArmsPosition();
+}
+
+
+
+void UArmsPositionConfigWidget::OnBackClicked()
+{
+    UGameplayStatics::OpenLevel(GetWorld(), FName("OptionsMenuMap"));
 }

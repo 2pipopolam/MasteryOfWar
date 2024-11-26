@@ -46,6 +46,10 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UButton* DesertEagleButton;
 
+    UPROPERTY(meta = (BindWidget))
+    UButton* BackButton;
+
+
     // Slider event handlers
     UFUNCTION()
     void OnPositionXChanged(float Value);
@@ -74,6 +78,10 @@ protected:
 
     UFUNCTION()
     void OnDesertEagleButtonClicked();
+
+    
+    UFUNCTION()
+    void OnBackClicked();
 
 private:
     void InitializeSliders();

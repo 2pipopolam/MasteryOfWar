@@ -34,6 +34,8 @@ void UCrosshairSettingsMenu::NativeConstruct()
         SaveButton->OnClicked.AddDynamic(this, &UCrosshairSettingsMenu::OnSaveSettings);
     if (ResetButton)
         ResetButton->OnClicked.AddDynamic(this, &UCrosshairSettingsMenu::OnResetSettings);
+    if (BackButton)
+        BackButton->OnClicked.AddDynamic(this, &UCrosshairSettingsMenu::OnBackClicked);
 
     // Load saved settings when menu is constructed
     LoadSavedSettings();
@@ -196,4 +198,10 @@ void UCrosshairSettingsMenu::OnResetSettings()
     
     // Apply to game crosshair if we're in game
     ApplySettingsToGameCrosshair();
+}
+
+
+void UCrosshairSettingsMenu::OnBackClicked()
+{
+    UGameplayStatics::OpenLevel(GetWorld(), FName("OptionsMenuMap"));
 }
