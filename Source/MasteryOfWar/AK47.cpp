@@ -24,8 +24,8 @@ void AAK47::InitializeWeaponConfig()
     AK47Config = FAK47Config();
     WeaponConfig = AK47Config;
     
-    UE_LOG(LogTemp, Error, TEXT("AK47 Config Initialized - Base Damage: %d"), 
-           AK47Config.DamageConfig.BaseDamage);
+    //UE_LOG(LogTemp, Warning, TEXT("AK47 Config Initialized - Base Damage: %d"), 
+           //AK47Config.DamageConfig.BaseDamage);
 }
 
 void AAK47::LoadWeaponAssets()
@@ -118,19 +118,21 @@ void AAK47::BeginPlay()
         {
             if (APlayerController* PC = Cast<APlayerController>(OwnerPawn->GetController()))
             {
-                UE_LOG(LogTemp, Warning, TEXT("Found valid controller for recoil"));
+                //UE_LOG(LogTemp, Warning, TEXT("Found valid controller for recoil"));
                 
                 if (UCameraComponent* Camera = OwnerPawn->FindComponentByClass<UCameraComponent>())
                 {
                     CameraRecoilComponent->SetTargetCamera(Camera);
-                    UE_LOG(LogTemp, Warning, TEXT("Camera set for recoil"));
+                    //UE_LOG(LogTemp, Warning, TEXT("Camera set for recoil"));
                 }
             }
         }
-        
+
+        /*
         UE_LOG(LogTemp, Warning, TEXT("Recoil pattern set with %d points, strength: %f"), 
             AK47Config.RecoilPattern.PatternPoints.Num(),
             AK47Config.RecoilPattern.RecoilStrength);
+        */
     }
     else
     {

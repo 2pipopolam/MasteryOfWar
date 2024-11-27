@@ -82,7 +82,7 @@ void ATestDummy::BeginPlay()
         1.0f
     );
 
-    UE_LOG(LogTemp, Error, TEXT("TestDummy spawned: %s"), *GetName());
+    //UE_LOG(LogTemp, Warning, TEXT("TestDummy spawned: %s"), *GetName());
 }
 
 void ATestDummy::ClearDebugText()
@@ -123,8 +123,8 @@ float ATestDummy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
     int32 ActualDamage = FMath::RoundToInt(DamageAmount);
 
     // Log initial damage and health values
-    UE_LOG(LogTemp, Error, TEXT("===== DUMMY TAKING BASE DAMAGE: %d ====="), ActualDamage);
-    UE_LOG(LogTemp, Error, TEXT("Current Health before damage: %.1f"), CurrentHealth);
+    //UE_LOG(LogTemp, Warning, TEXT("===== DUMMY TAKING BASE DAMAGE: %d ====="), ActualDamage);
+    //UE_LOG(LogTemp, Warning, TEXT("Current Health before damage: %.1f"), CurrentHealth);
 
     // Check if it's point damage
     if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
@@ -143,7 +143,7 @@ float ATestDummy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
                     EWeaponType WeaponType = WeaponInterface->GetWeaponType();
 
                     // Log weapon type for debugging
-                    UE_LOG(LogTemp, Error, TEXT("Weapon Type: %s"), *UEnum::GetValueAsString(WeaponType));
+                    //UE_LOG(LogTemp, Warning, TEXT("Weapon Type: %s"), *UEnum::GetValueAsString(WeaponType));
                     
                     // Get base damage and determine hit zone
                     int32 BaseDamage = DamageConfig.BaseDamage;
@@ -171,10 +171,10 @@ float ATestDummy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
                     ActualDamage = FMath::RoundToInt(static_cast<float>(BaseDamage) * Multiplier);
 
                     // Log damage calculation details
-                    UE_LOG(LogTemp, Error, TEXT("Base Damage: %d"), BaseDamage);
-                    UE_LOG(LogTemp, Error, TEXT("Hit Zone: %s"), *UEnum::GetValueAsString(HitZone));
-                    UE_LOG(LogTemp, Error, TEXT("Damage Multiplier: %.2f"), Multiplier);
-                    UE_LOG(LogTemp, Error, TEXT("Final Damage: %d"), ActualDamage);
+                    //UE_LOG(LogTemp, Warning, TEXT("Base Damage: %d"), BaseDamage);
+                    //UE_LOG(LogTemp, Warning, TEXT("Hit Zone: %s"), *UEnum::GetValueAsString(HitZone));
+                    //UE_LOG(LogTemp, Warning, TEXT("Damage Multiplier: %.2f"), Multiplier);
+                    //UE_LOG(LogTemp, Warning, TEXT("Final Damage: %d"), ActualDamage);
 
                     // Apply damage to health
                     CurrentHealth = FMath::Max(0.0f, CurrentHealth - ActualDamage);
@@ -193,12 +193,12 @@ float ATestDummy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
                         1.5f
                     );
 
-                    UE_LOG(LogTemp, Error, TEXT("Health Remaining: %.1f"), CurrentHealth);
+                    //UE_LOG(LogTemp, Warning, TEXT("Health Remaining: %.1f"), CurrentHealth);
 
                     // Check if dummy is destroyed
                     if (CurrentHealth <= 0.0f)
                     {
-                        UE_LOG(LogTemp, Error, TEXT("Dummy destroyed!"));
+                        //UE_LOG(LogTemp, Warning, TEXT("Dummy destroyed!"));
 
                         // Clear existing debug text
                         ClearDebugText();

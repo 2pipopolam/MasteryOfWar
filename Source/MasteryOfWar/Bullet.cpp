@@ -46,9 +46,9 @@ void ABullet::BeginPlay()
     StartLocation = GetActorLocation();
     WeaponOwner = GetOwner();
     
-    UE_LOG(LogTemp, Warning, TEXT("Bullet spawned at location: %s with rotation: %s"), 
-           *GetActorLocation().ToString(), *GetActorRotation().ToString());
-    
+    //UE_LOG(LogTemp, Warning, TEXT("Bullet spawned at location: %s with rotation: %s"), 
+           //*GetActorLocation().ToString(), *GetActorRotation().ToString());
+    /*
     if (BulletMesh)
     {
         UE_LOG(LogTemp, Warning, TEXT("Bullet mesh is valid. Scale: %s"), 
@@ -64,6 +64,7 @@ void ABullet::BeginPlay()
     {
         UE_LOG(LogTemp, Error, TEXT("Bullet has no owner!"));
     }
+    */
 }
 
 void ABullet::InitializeBullet(float Damage, float Speed, float MaxRange)
@@ -76,8 +77,8 @@ void ABullet::InitializeBullet(float Damage, float Speed, float MaxRange)
     MaxTravelDistance = MaxRange;
     StartLocation = GetActorLocation();
     
-    UE_LOG(LogTemp, Error, TEXT("Bullet initialized with Damage: %d, Speed: %f, MaxRange: %f, WeaponOwner: %s"),
-           WeaponDamage, Speed, MaxRange, *GetNameSafe(WeaponOwner));
+    //UE_LOG(LogTemp, Warning, TEXT("Bullet initialized with Damage: %d, Speed: %f, MaxRange: %f, WeaponOwner: %s"),
+           //WeaponDamage, Speed, MaxRange, *GetNameSafe(WeaponOwner));
 }
 
 void ABullet::Tick(float DeltaTime)
@@ -96,19 +97,19 @@ void ABullet::Tick(float DeltaTime)
     {
         if (HitResult.GetActor())
         {
-            UE_LOG(LogTemp, Warning, TEXT("Line trace hit: %s at distance %f"), 
-                   *HitResult.GetActor()->GetName(), HitResult.Distance);
+            //UE_LOG(LogTemp, Warning, TEXT("Line trace hit: %s at distance %f"), 
+                   //*HitResult.GetActor()->GetName(), HitResult.Distance);
 
             if (ATestDummy* Dummy = Cast<ATestDummy>(HitResult.GetActor()))
             {
-                UE_LOG(LogTemp, Error, TEXT("Hit TestDummy!"));
+                //UE_LOG(LogTemp, Warning, TEXT("Hit TestDummy!"));
                 
                 FPointDamageEvent DamageEvent(static_cast<float>(WeaponDamage), HitResult, GetActorForwardVector(), nullptr);
                 float AppliedDamage = HitResult.GetActor()->TakeDamage(WeaponDamage, DamageEvent, 
                                                                       GetInstigatorController(), WeaponOwner);
                 
-                UE_LOG(LogTemp, Error, TEXT("Hit Test Dummy! Base Damage: %d, Applied Damage: %f, WeaponOwner: %s"), 
-                       WeaponDamage, AppliedDamage, *GetNameSafe(WeaponOwner));
+                //UE_LOG(LogTemp, Warning, TEXT("Hit Test Dummy! Base Damage: %d, Applied Damage: %f, WeaponOwner: %s"), 
+                       //WeaponDamage, AppliedDamage, *GetNameSafe(WeaponOwner));
 
                 Destroy();
             }
@@ -126,23 +127,23 @@ void ABullet::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
                          UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
                          const FHitResult& Hit)
 {
-    UE_LOG(LogTemp, Error, TEXT("OnBulletHit CALLED!"));
+    //UE_LOG(LogTemp, Warning, TEXT("OnBulletHit CALLED!"));
 
     if (OtherActor && OtherActor != WeaponOwner)
     {
-        UE_LOG(LogTemp, Error, TEXT("Hit Actor: %s, WeaponOwner: %s"), 
-               *OtherActor->GetName(), *GetNameSafe(WeaponOwner));
+       // UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s, WeaponOwner: %s"), 
+               //*OtherActor->GetName(), *GetNameSafe(WeaponOwner));
         
         if (ATestDummy* Dummy = Cast<ATestDummy>(OtherActor))
         {
-            UE_LOG(LogTemp, Error, TEXT("Hit TestDummy in OnBulletHit!"));
+            //UE_LOG(LogTemp, Warning, TEXT("Hit TestDummy in OnBulletHit!"));
 
             FPointDamageEvent DamageEvent(WeaponDamage, Hit, Hit.ImpactNormal, nullptr);
             float AppliedDamage = OtherActor->TakeDamage(WeaponDamage, DamageEvent, 
                                                         GetInstigatorController(), WeaponOwner);
             
-            UE_LOG(LogTemp, Error, TEXT("Applied Hit Damage: %f, WeaponOwner: %s"), 
-                   AppliedDamage, *GetNameSafe(WeaponOwner));
+            //UE_LOG(LogTemp, Warning, TEXT("Applied Hit Damage: %f, WeaponOwner: %s"), 
+                   //AppliedDamage, *GetNameSafe(WeaponOwner));
         }
     }
 

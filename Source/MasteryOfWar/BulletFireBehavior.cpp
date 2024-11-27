@@ -24,8 +24,8 @@ void UBulletFireBehavior::Fire(AWeapon* Weapon)
 			int32 Damage = Weapon->GetDamageConfig().BaseDamage;
 			Bullet->InitializeBullet(Damage, Weapon->ProjectileSpeed, Weapon->GetRange());
             
-			UE_LOG(LogTemp, Error, TEXT("BulletFireBehavior - Weapon: %s, Damage: %d"), 
-				   *Weapon->GetName(), Damage);
+			//UE_LOG(LogTemp, Error, TEXT("BulletFireBehavior - Weapon: %s, Damage: %d"), 
+				   //*Weapon->GetName(), Damage);
 		}
 	}
 }

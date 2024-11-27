@@ -29,8 +29,8 @@ void UCameraRecoilComponent::BeginPlay()
     if (!TargetCamera)
     {
         TargetCamera = GetCharacterCamera();
-        UE_LOG(LogTemp, Warning, TEXT("CameraRecoilComponent BeginPlay, Camera found: %s"), 
-            TargetCamera ? TEXT("Yes") : TEXT("No"));
+        //UE_LOG(LogTemp, Warning, TEXT("CameraRecoilComponent BeginPlay, Camera found: %s"), 
+            //TargetCamera ? TEXT("Yes") : TEXT("No"));
     }
 }
 
@@ -118,7 +118,7 @@ void UCameraRecoilComponent::ApplyRecoil()
 
     if (!CurrentPattern.PatternPoints.Num())
     {
-        UE_LOG(LogTemp, Error, TEXT("No recoil pattern points!"));
+        //UE_LOG(LogTemp, Error, TEXT("No recoil pattern points!"));
         return;
     }
 
@@ -140,8 +140,8 @@ void UCameraRecoilComponent::ApplyRecoil()
             
             TotalRecoilOffset += FVector2D(YawInput, PitchInput);
             
-            UE_LOG(LogTemp, Warning, TEXT("Applied recoil - PitchInput: %f, YawInput: %f"), 
-                PitchInput, YawInput);
+            //UE_LOG(LogTemp, Warning, TEXT("Applied recoil - PitchInput: %f, YawInput: %f"), 
+                //PitchInput, YawInput);
         }
     }
 
@@ -150,7 +150,7 @@ void UCameraRecoilComponent::ApplyRecoil()
 
 void UCameraRecoilComponent::ResetRecoil()
 {
-    UE_LOG(LogTemp, Warning, TEXT("ResetRecoil called"));
+    //UE_LOG(LogTemp, Warning, TEXT("ResetRecoil called"));
     bIsRecoilActive = false;
     bIsInSmoothRecovery = false;
     CurrentPatternIndex = 0;
@@ -159,7 +159,7 @@ void UCameraRecoilComponent::ResetRecoil()
 
 void UCameraRecoilComponent::SetRecoilPattern(const FCameraRecoilPattern& NewPattern)
 {
-    UE_LOG(LogTemp, Warning, TEXT("SetRecoilPattern called. Points: %d"), NewPattern.PatternPoints.Num());
+    //UE_LOG(LogTemp, Warning, TEXT("SetRecoilPattern called. Points: %d"), NewPattern.PatternPoints.Num());
     CurrentPattern = NewPattern;
     ResetRecoil();
 }
@@ -676,8 +676,8 @@ void AWeapon::UpdateSpread(float DeltaTime)
         );
     }
 
-    UE_LOG(LogTemp, VeryVerbose, TEXT("Weapon: %s, CurrentSpread: %f"), 
-        *GetName(), CurrentSpread);
+    //UE_LOG(LogTemp, VeryVerbose, TEXT("Weapon: %s, CurrentSpread: %f"), 
+        //*GetName(), CurrentSpread);
 }
 
 

@@ -54,17 +54,17 @@ void UOptionsMenuWidget::OnViewmodelClicked()
 
 void UOptionsMenuWidget::OnVideoClicked()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Video settings not implemented yet"));
+    //UE_LOG(LogTemp, Warning, TEXT("Video settings not implemented yet"));
 }
 
 void UOptionsMenuWidget::OnSoundClicked()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Sound settings not implemented yet"));
+    //UE_LOG(LogTemp, Warning, TEXT("Sound settings not implemented yet"));
 }
 
 void UOptionsMenuWidget::OnInputClicked()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Input settings not implemented yet"));
+    //UE_LOG(LogTemp, Warning, TEXT("Input settings not implemented yet"));
 }
 
 void UOptionsMenuWidget::OnMultiplayerClicked()

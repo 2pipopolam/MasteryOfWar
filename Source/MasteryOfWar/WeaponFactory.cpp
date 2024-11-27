@@ -7,16 +7,16 @@ AWeapon* UWeaponFactory::CreateWeapon(UWorld* World, EWeaponType WeaponType, con
 {
 	if (!World)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CreateWeapon: World is null!"));
+		//UE_LOG(LogTemp, Error, TEXT("CreateWeapon: World is null!"));
 		return nullptr;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("CreateWeapon: Creating weapon of type %d"), (int32)WeaponType);
+	//UE_LOG(LogTemp, Warning, TEXT("CreateWeapon: Creating weapon of type %d"), (int32)WeaponType);
 
 	TSubclassOf<AWeapon> WeaponClass = GetWeaponClass(WeaponType);
 	if (!WeaponClass)
 	{
-		UE_LOG(LogTemp, Error, TEXT("CreateWeapon: Failed to get weapon class!"));
+		//UE_LOG(LogTemp, Error, TEXT("CreateWeapon: Failed to get weapon class!"));
 		return nullptr;
 	}
 
@@ -24,15 +24,16 @@ AWeapon* UWeaponFactory::CreateWeapon(UWorld* World, EWeaponType WeaponType, con
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	AWeapon* Weapon = World->SpawnActor<AWeapon>(WeaponClass, SpawnTransform, SpawnParams);
+	/*
 	if (Weapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CreateWeapon: Successfully created weapon"));
+		//UE_LOG(LogTemp, Warning, TEXT("CreateWeapon: Successfully created weapon"));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("CreateWeapon: Failed to spawn weapon actor!"));
+		//UE_LOG(LogTemp, Error, TEXT("CreateWeapon: Failed to spawn weapon actor!"));
 	}
-
+	*/
 	return Weapon;
 }
 

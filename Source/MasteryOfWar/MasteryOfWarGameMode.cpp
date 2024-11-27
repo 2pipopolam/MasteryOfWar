@@ -37,8 +37,8 @@ AMasteryOfWarGameMode::AMasteryOfWarGameMode()
         if (DefaultConfig.CharacterClass)
         {
             DefaultPawnClass = DefaultConfig.CharacterClass;
-            UE_LOG(LogTemp, Warning, TEXT("Default character class set to: %s"), 
-                *DefaultConfig.CharacterClass->GetName());
+            //UE_LOG(LogTemp, Warning, TEXT("Default character class set to: %s"), 
+                //*DefaultConfig.CharacterClass->GetName());
         }
     }
 }
@@ -59,8 +59,8 @@ void AMasteryOfWarGameMode::InitGame(const FString& MapName, const FString& Opti
         if (NewConfig.CharacterClass)
         {
             DefaultPawnClass = NewConfig.CharacterClass;
-            UE_LOG(LogTemp, Warning, TEXT("Set character class from config: %s"), 
-                *NewConfig.CharacterClass->GetName());
+            //UE_LOG(LogTemp, Warning, TEXT("Set character class from config: %s"), 
+             //   *NewConfig.CharacterClass->GetName());
         }
     }
 }
@@ -88,16 +88,16 @@ EGameModeType AMasteryOfWarGameMode::DetermineGameModeFromMap(const FString& Map
     // Define mode by card name
     if (MapName.Contains(TEXT("PistolMap")))
     {
-        UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Found PistolMode map"));
+        //UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Found PistolMode map"));
         return EGameModeType::PistolMode;
     }
     else if (MapName.Contains(TEXT("ThirdPerson")))
     {
-        UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Found ThirdPerson map, using RifleMode"));
+        //UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Found ThirdPerson map, using RifleMode"));
         return EGameModeType::RifleMode;
     }
     
-    UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Default to RifleMode"));
+    //UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Default to RifleMode"));
     return EGameModeType::RifleMode;
 }
 

@@ -65,35 +65,37 @@ void AMasteryOfWarCharacter::BeginPlay()
 
     if (!FollowCamera)
     {
-        UE_LOG(LogTemp, Error, TEXT("BeginPlay: FollowCamera is null!"));
+        //UE_LOG(LogTemp, Error, TEXT("BeginPlay: FollowCamera is null!"));
         return;
     }
 
     if (!FPSArms)
     {
-        UE_LOG(LogTemp, Error, TEXT("BeginPlay: FPSArms is null!"));
+        //UE_LOG(LogTemp, Error, TEXT("BeginPlay: FPSArms is null!"));
         return;
     }
 
     if (!WeaponMeshComponent)
     {
-        UE_LOG(LogTemp, Error, TEXT("BeginPlay: WeaponMeshComponent is null!"));
+        //UE_LOG(LogTemp, Error, TEXT("BeginPlay: WeaponMeshComponent is null!"));
         return;
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("Component hierarchy: FollowCamera -> FPSArms -> WeaponMeshComponent verified"));
+    //UE_LOG(LogTemp, Warning, TEXT("Component hierarchy: FollowCamera -> FPSArms -> WeaponMeshComponent verified"));
     
     // Initialize movement settings
     GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
     bIsWalking = false;
-    
+
+    /*
     if (WeaponMeshComponent->GetAttachParent() != FPSArms)
     {
         UE_LOG(LogTemp, Error, TEXT("WeaponMeshComponent is not attached to FPSArms!"));
     }
-
+    */
+    
     FName SocketName = WeaponMeshComponent->GetAttachSocketName();
-    UE_LOG(LogTemp, Warning, TEXT("WeaponMeshComponent attached to socket: %s"), *SocketName.ToString());
+    //UE_LOG(LogTemp, Warning, TEXT("WeaponMeshComponent attached to socket: %s"), *SocketName.ToString());
 
     // Add Input Mapping Context
     if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -114,7 +116,7 @@ void AMasteryOfWarCharacter::BeginPlay()
         {
             CurrentWeapon->WeaponMesh->SetOnlyOwnerSee(true);
         }
-        UE_LOG(LogTemp, Warning, TEXT("Local player visibility set"));
+        //UE_LOG(LogTemp, Warning, TEXT("Local player visibility set"));
     }
     else
     {
@@ -124,7 +126,7 @@ void AMasteryOfWarCharacter::BeginPlay()
         {
             CurrentWeapon->WeaponMesh->SetOwnerNoSee(true);
         }
-        UE_LOG(LogTemp, Warning, TEXT("Remote player visibility set"));
+        //UE_LOG(LogTemp, Warning, TEXT("Remote player visibility set"));
     }
 
     // Set up Blueprint weapon
@@ -132,9 +134,12 @@ void AMasteryOfWarCharacter::BeginPlay()
     LoadAndApplyGlobalArmsPosition();
 
     GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
-    GetCharacterMovement()->CrouchedHalfHeight = 90.0f;
+    //GetCharacterMovement()->CrouchedHalfHeight = 90.0f; //DEPRECATED
 
-    GetCharacterMovement()->MaxWalkSpeedCrouched = 200.0f;
+    //GetCharacterMovement()->SetCrouchedHalfHeight(90.0f);    
+
+    GetCharacterMovement()->SetCrouchedHalfHeight(70.0f);
+    GetCharacterMovement()->MaxWalkSpeedCrouched = 120.0f;
 }
 
 void AMasteryOfWarCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -239,23 +244,19 @@ void AMasteryOfWarCharacter::StopCrouch()
 }
 
 
+
+
 void AMasteryOfWarCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
     Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
     
     if (FollowCamera)
     {
-        // smoothly change the camera position
         FVector TargetLocation = FollowCamera->GetRelativeLocation();
-        TargetLocation.Z = CrouchedEyeHeight; // CrouchedEyeHeight is default value of Character
-
-        //interpolation for smoothness 
+        TargetLocation.Z = CrouchedEyeHeight - 30.0f;
         FollowCamera->SetRelativeLocation(TargetLocation);
-        
-        UE_LOG(LogTemp, Warning, TEXT("Camera crouch adjustment: %f"), HalfHeightAdjust);
     }   
 }
-
 
 void AMasteryOfWarCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
@@ -263,29 +264,29 @@ void AMasteryOfWarCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHal
     
     if (FollowCamera)
     {
-        // smoothly return the camera position
         FVector TargetLocation = FollowCamera->GetRelativeLocation();
         TargetLocation.Z = BaseEyeHeight;
-        
         FollowCamera->SetRelativeLocation(TargetLocation);
-        
-        UE_LOG(LogTemp, Warning, TEXT("Camera uncrouch adjustment: %f"), HalfHeightAdjust);
     }
 }
+
+
+
 
 void AMasteryOfWarCharacter::StartWalk()
 {
     bIsWalking = true;
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-    UE_LOG(LogTemp, Verbose, TEXT("Walking started. Speed set to: %f"), WalkSpeed);
+    //UE_LOG(LogTemp, Verbose, TEXT("Walking started. Speed set to: %f"), WalkSpeed);
 }
 
 void AMasteryOfWarCharacter::StopWalk()
 {
     bIsWalking = false;
     GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
-    UE_LOG(LogTemp, Verbose, TEXT("Walking stopped. Speed reset to: %f"), DefaultSpeed);
+    //UE_LOG(LogTemp, Verbose, TEXT("Walking stopped. Speed reset to: %f"), DefaultSpeed);
 }
+
 
 void AMasteryOfWarCharacter::Tick(float DeltaTime)
 {
@@ -294,27 +295,29 @@ void AMasteryOfWarCharacter::Tick(float DeltaTime)
     if (CurrentWeapon && !CurrentWeapon->IsValidLowLevel())
     {
         CurrentWeapon = nullptr;
-        UE_LOG(LogTemp, Warning, TEXT("Invalid weapon reference detected and cleared"));
     }
 
     if (FollowCamera)
     {
-        float TargetHeight = bIsCrouched ? CrouchedEyeHeight : BaseEyeHeight;
+        float TargetHeight = bIsCrouched ? (CrouchedEyeHeight - 30.0f) : BaseEyeHeight;
         FVector CurrentLocation = FollowCamera->GetRelativeLocation();
-        float NewZ = FMath::FInterpTo(CurrentLocation.Z, TargetHeight, DeltaTime, 10.0f);
+        
+        float NewZ = FMath::FInterpTo(CurrentLocation.Z, TargetHeight, DeltaTime, 5.0f);
         
         FollowCamera->SetRelativeLocation(FVector(CurrentLocation.X, CurrentLocation.Y, NewZ));
     }
 }
 
+
+
 void AMasteryOfWarCharacter::EquipWeaponForMode(EWeaponType WeaponType)
 {
     if (CurrentWeapon)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Weapon already exists from Blueprint, skipping weapon creation"));
+        //UE_LOG(LogTemp, Warning, TEXT("Weapon already exists from Blueprint, skipping weapon creation"));
         return;
     }
-
+    /*
     if (!FPSArms)
     {
         UE_LOG(LogTemp, Error, TEXT("EquipWeaponForMode: FPSArms is null!"));
@@ -326,6 +329,7 @@ void AMasteryOfWarCharacter::EquipWeaponForMode(EWeaponType WeaponType)
         UE_LOG(LogTemp, Error, TEXT("EquipWeaponForMode: WeaponMeshComponent is null!"));
         return;
     }
+    */
 
     if (UWorld* World = GetWorld())
     {
@@ -333,7 +337,7 @@ void AMasteryOfWarCharacter::EquipWeaponForMode(EWeaponType WeaponType)
         
         if (AWeapon* NewWeapon = UWeaponFactory::CreateWeapon(World, WeaponType, SpawnTransform))
         {
-            UE_LOG(LogTemp, Warning, TEXT("New weapon created"));
+            //UE_LOG(LogTemp, Warning, TEXT("New weapon created"));
             CurrentWeapon = NewWeapon;
             
             FAttachmentTransformRules AttachRules(
@@ -363,12 +367,13 @@ void AMasteryOfWarCharacter::EquipWeaponForMode(EWeaponType WeaponType)
                 RecoilComp->SetTargetCamera(FollowCamera);
             }
             
-            UE_LOG(LogTemp, Warning, TEXT("Weapon attached to FPSArms at WeaponMeshComponent position"));
+            //UE_LOG(LogTemp, Warning, TEXT("Weapon attached to FPSArms at WeaponMeshComponent position"));
         }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("Failed to create weapon!"));
-        }
+        
+        //else
+        //{
+            //UE_LOG(LogTemp, Error, TEXT("Failed to create weapon!"));
+        //}
     }
 }
 
@@ -403,7 +408,7 @@ void AMasteryOfWarCharacter::SetupExistingWeapon()
             
             CurrentWeapon->SetOwner(this);
             
-            UE_LOG(LogTemp, Warning, TEXT("Found and set up existing weapon from Blueprint"));
+            //UE_LOG(LogTemp, Warning, TEXT("Found and set up existing weapon from Blueprint"));
             break;
         }
     }
@@ -411,7 +416,7 @@ void AMasteryOfWarCharacter::SetupExistingWeapon()
 
 void AMasteryOfWarCharacter::InitializeForGameMode(const FGameModeConfig& ModeConfig)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Initializing character for game mode: %d"), (int32)ModeConfig.ModeType);
+    //UE_LOG(LogTemp, Warning, TEXT("Initializing character for game mode: %d"), (int32)ModeConfig.ModeType);
 
     CurrentModeConfig = ModeConfig;
     EquipWeaponForMode(ModeConfig.WeaponType);
@@ -434,7 +439,7 @@ void AMasteryOfWarCharacter::InitializeForGameMode(const FGameModeConfig& ModeCo
         }
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("Character initialization complete"));
+    //UE_LOG(LogTemp, Warning, TEXT("Character initialization complete"));
 }
 
 void AMasteryOfWarCharacter::ApplyAnimationConfig(const FCharacterAnimConfig& AnimConfig)
@@ -464,8 +469,8 @@ void AMasteryOfWarCharacter::SetArmsPosition(const FVector& NewPosition, const F
     {
         FPSArms->SetRelativeLocation(NewPosition);
         FPSArms->SetRelativeRotation(NewRotation);
-        UE_LOG(LogTemp, Warning, TEXT("Arms position updated - Position: %s, Rotation: %s"), 
-            *NewPosition.ToString(), *NewRotation.ToString());
+        //UE_LOG(LogTemp, Warning, TEXT("Arms position updated - Position: %s, Rotation: %s"), 
+            //*NewPosition.ToString(), *NewRotation.ToString());
     }
 }
 
@@ -479,7 +484,7 @@ void AMasteryOfWarCharacter::SaveGlobalArmsPosition(const FVector& Position, con
     
     if (UGameplayStatics::SaveGameToSlot(Config, "GlobalArmsConfig", 0))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Global arms position saved"));
+        //UE_LOG(LogTemp, Warning, TEXT("Global arms position saved"));
     }
 }
 
@@ -491,7 +496,7 @@ void AMasteryOfWarCharacter::LoadAndApplyGlobalArmsPosition()
     if (GetSavedArmsPosition(Position, Rotation))
     {
         SetArmsPosition(Position, Rotation);
-        UE_LOG(LogTemp, Warning, TEXT("Global arms position loaded and applied"));
+        //UE_LOG(LogTemp, Warning, TEXT("Global arms position loaded and applied"));
     }
 }
 
@@ -520,5 +525,5 @@ void AMasteryOfWarCharacter::OnBPressed()
 void AMasteryOfWarCharacter::ToggleDebugLine()
 {
     bShowDebugLine = !bShowDebugLine;
-    UE_LOG(LogTemp, Warning, TEXT("Debug line toggled: %s"), bShowDebugLine ? TEXT("On") : TEXT("Off"));
+    //UE_LOG(LogTemp, Warning, TEXT("Debug line toggled: %s"), bShowDebugLine ? TEXT("On") : TEXT("Off"));
 }
