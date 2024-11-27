@@ -1,4 +1,3 @@
-// ArmsPositionConfigWidget.cpp
 #include "ArmsPositionConfigWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"

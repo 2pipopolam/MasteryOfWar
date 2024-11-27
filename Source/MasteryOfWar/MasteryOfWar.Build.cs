@@ -20,8 +20,8 @@ public class MasteryOfWar : ModuleRules
 			"Slate",
 			"SlateCore"});
 
-
-	if (Target.Platform == UnrealTargetPlatform.Linux)
+		/*
+		if (Target.Platform == UnrealTargetPlatform.Linux)
         {
             // headers
             PublicIncludePaths.Add("/usr/include");
@@ -39,5 +39,6 @@ public class MasteryOfWar : ModuleRules
         
         // SQLite
         PublicDefinitions.Add("WITH_SQLITE=1");
+	*/
     }
 }
