@@ -4,6 +4,7 @@
 #include "UObject/NoExportTypes.h"
 #include "WeaponConfig.h"
 #include "WeaponSystem.h"
+#include "Grenade.h"
 #include "WeaponFactory.generated.h"
 
 UCLASS(Blueprintable)

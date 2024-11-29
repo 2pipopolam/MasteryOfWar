@@ -374,6 +374,7 @@ void AWeapon::Tick(float DeltaTime)
     UpdateRecoilState(DeltaTime);
 }
 
+
 void AWeapon::Fire()
 {
     if (!CanFire()) 
@@ -389,22 +390,64 @@ void AWeapon::Fire()
     
     if (UWorld* World = GetWorld())
     {
-        if (BulletClass)
-        {
-            FActorSpawnParameters SpawnParams;
-            SpawnParams.Owner = this;
-            SpawnParams.Instigator = Cast<APawn>(GetOwner());
+        FHitResult HitResult;
+        FVector StartLocation = SpawnTransform.GetLocation();
+        FVector EndLocation = StartLocation + SpawnTransform.GetRotation().Vector() * WeaponConfig.Range;
+        
+        FCollisionQueryParams QueryParams;
+        QueryParams.AddIgnoredActor(this);
+        QueryParams.AddIgnoredActor(GetOwner());
+        QueryParams.bTraceComplex = true;
+        
+        bool bHit = World->LineTraceSingleByChannel(
+            HitResult,
+            StartLocation,
+            EndLocation,
+            ECC_Visibility,
+            QueryParams
+        );
 
-            if (ABullet* Bullet = World->SpawnActor<ABullet>(
-                BulletClass, 
-                SpawnTransform.GetLocation(),
-                SpawnTransform.GetRotation().Rotator(),
-                SpawnParams))
-            {
-                int32 Damage = WeaponConfig.DamageConfig.BaseDamage;
-                Bullet->InitializeBullet(Damage, ProjectileSpeed, WeaponConfig.Range);
-            }
+        if (bHit)
+        {
+            // Calculate damage with falloff
+            float Distance = (HitResult.Location - StartLocation).Size();
+            float DamageFalloff = FMath::GetMappedRangeValueClamped(
+                FVector2D(0, WeaponConfig.Range),
+                FVector2D(1.0f, 0.5f),
+                Distance
+            );
+            
+            int32 BaseDamage = FMath::RoundToInt(WeaponConfig.DamageConfig.BaseDamage * DamageFalloff);
+            
+            // Apply point damage with hit information
+            FPointDamageEvent DamageEvent(
+                BaseDamage,
+                HitResult,
+                (EndLocation - StartLocation).GetSafeNormal(),
+                UDamageType::StaticClass()
+            );
+            
+            HitResult.GetActor()->TakeDamage(
+                BaseDamage,
+                DamageEvent,
+                GetInstigatorController(),
+                this
+            );
         }
+
+        // Draw debug line if needed
+        #if WITH_EDITOR
+            DrawDebugLine(
+                World,
+                StartLocation,
+                bHit ? HitResult.Location : EndLocation,
+                FColor::Red,
+                false,
+                2.0f,
+                0,
+                1.0f
+            );
+        #endif
     }
 
     HandleRecoil();
@@ -418,6 +461,9 @@ void AWeapon::Fire()
     ConsumeAmmo();
     UpdateAmmoWidget();
 }
+
+
+
 
 void AWeapon::HandleRecoil()
 {

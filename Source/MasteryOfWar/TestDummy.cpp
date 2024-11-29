@@ -4,6 +4,7 @@
 #include "Components/CapsuleComponent.h"
 #include "WeaponConfig.h"
 #include "WeaponSystem.h"
+#include "GrenadeProjectile.h"
 
 ATestDummy::ATestDummy()
 {
@@ -116,135 +117,166 @@ EHitZone ATestDummy::GetHitZoneFromComponent(UPrimitiveComponent* HitComponent) 
 }
 
 
+EHitZone ATestDummy::GetHitZone(UPrimitiveComponent* HitComponent) const
+{
+    if (HitComponent == HeadCollision)
+        return EHitZone::Head;
+    else if (HitComponent == LeftLegCollision || HitComponent == RightLegCollision)
+        return EHitZone::Legs;
+    else if (HitComponent == LeftArmCollision || HitComponent == RightArmCollision)
+        return EHitZone::Arms;
+    else if (HitComponent == BodyCollision)
+        return EHitZone::Body;
+        
+    return EHitZone::Body;
+}
+
+
 
 float ATestDummy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
     // Initialize base damage
     int32 ActualDamage = FMath::RoundToInt(DamageAmount);
+    
+    // Store initial health for change calculation
+    float InitialHealth = CurrentHealth;
 
-    // Log initial damage and health values
-    //UE_LOG(LogTemp, Warning, TEXT("===== DUMMY TAKING BASE DAMAGE: %d ====="), ActualDamage);
-    //UE_LOG(LogTemp, Warning, TEXT("Current Health before damage: %.1f"), CurrentHealth);
-
-    // Check if it's point damage
+    // Handle point damage events
     if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
     {
         const FPointDamageEvent* PointDamageEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
-        if (PointDamageEvent)
+        if (PointDamageEvent && PointDamageEvent->HitInfo.Component.IsValid())
         {
             UPrimitiveComponent* HitComponent = PointDamageEvent->HitInfo.Component.Get();
-            if (HitComponent && DamageCauser)
+            
+            // Get hit zone from component
+            EHitZone HitZone = GetHitZoneFromComponent(HitComponent);
+            float Multiplier = 1.0f;
+            const FWeaponDamageConfig* DamageConfig = nullptr;
+            
+            // Determine damage source and configure multipliers
+            if (IWeaponInterface* WeaponInterface = Cast<IWeaponInterface>(DamageCauser))
             {
-                // Get weapon interface from damage causer
-                if (IWeaponInterface* WeaponInterface = Cast<IWeaponInterface>(DamageCauser))
+                // Get weapon-specific damage configuration
+                DamageConfig = &WeaponInterface->GetDamageConfig();
+                
+                // Apply weapon-specific multipliers
+                switch (HitZone)
                 {
-                    // Get weapon-specific damage config and type
-                    const FWeaponDamageConfig& DamageConfig = WeaponInterface->GetDamageConfig();
-                    EWeaponType WeaponType = WeaponInterface->GetWeaponType();
+                    case EHitZone::Head:
+                        Multiplier = DamageConfig->HeadMultiplier;
+                        break;
+                    case EHitZone::Body:
+                        Multiplier = DamageConfig->BodyMultiplier;
+                        break;
+                    case EHitZone::Arms:
+                        Multiplier = DamageConfig->ArmsMultiplier;
+                        break;
+                    case EHitZone::Legs:
+                        Multiplier = DamageConfig->LegsMultiplier;
+                        break;
+                }
+                
+                ActualDamage = FMath::RoundToInt(DamageConfig->BaseDamage * Multiplier);
+            }
+            else if (AGrenadeProjectile* Grenade = Cast<AGrenadeProjectile>(DamageCauser))
+            {
+                // Use grenade's damage configuration
+                DamageConfig = &Grenade->GetGrenadeConfig().DamageConfig;
+                
+                // Apply grenade-specific multipliers
+                switch (HitZone)
+                {
+                    case EHitZone::Head:
+                        Multiplier = DamageConfig->HeadMultiplier;
+                        break;
+                    case EHitZone::Body:
+                        Multiplier = DamageConfig->BodyMultiplier;
+                        break;
+                    case EHitZone::Arms:
+                        Multiplier = DamageConfig->ArmsMultiplier;
+                        break;
+                    case EHitZone::Legs:
+                        Multiplier = DamageConfig->LegsMultiplier;
+                        break;
+                }
+                
+                ActualDamage = FMath::RoundToInt(DamageAmount * Multiplier);
+            }
 
-                    // Log weapon type for debugging
-                    //UE_LOG(LogTemp, Warning, TEXT("Weapon Type: %s"), *UEnum::GetValueAsString(WeaponType));
-                    
-                    // Get base damage and determine hit zone
-                    int32 BaseDamage = DamageConfig.BaseDamage;
-                    EHitZone HitZone = GetHitZoneFromComponent(HitComponent);
-                    
-                    // Calculate damage multiplier based on hit zone
-                    float Multiplier = 1.0f;
-                    switch (HitZone)
-                    {
-                        case EHitZone::Head:
-                            Multiplier = DamageConfig.HeadMultiplier;
-                            break;
-                        case EHitZone::Body:
-                            Multiplier = DamageConfig.BodyMultiplier;
-                            break;
-                        case EHitZone::Arms:
-                            Multiplier = DamageConfig.ArmsMultiplier;
-                            break;
-                        case EHitZone::Legs:
-                            Multiplier = DamageConfig.LegsMultiplier;
-                            break;
-                    }
+            // Apply damage to health
+            CurrentHealth = FMath::Max(0.0f, CurrentHealth - ActualDamage);
+            float HealthChange = InitialHealth - CurrentHealth;
 
-                    // Calculate final damage
-                    ActualDamage = FMath::RoundToInt(static_cast<float>(BaseDamage) * Multiplier);
+            // Display damage information
+            if (HealthChange > 0.0f)
+            {
+                FString DamageText = FString::Printf(
+                    TEXT("%d (x%.1f)\nHP: %.0f"),
+                    ActualDamage,
+                    Multiplier,
+                    CurrentHealth
+                );
 
-                    // Log damage calculation details
-                    //UE_LOG(LogTemp, Warning, TEXT("Base Damage: %d"), BaseDamage);
-                    //UE_LOG(LogTemp, Warning, TEXT("Hit Zone: %s"), *UEnum::GetValueAsString(HitZone));
-                    //UE_LOG(LogTemp, Warning, TEXT("Damage Multiplier: %.2f"), Multiplier);
-                    //UE_LOG(LogTemp, Warning, TEXT("Final Damage: %d"), ActualDamage);
+                DrawDebugString(
+                    GetWorld(),
+                    PointDamageEvent->HitInfo.ImpactPoint,
+                    DamageText,
+                    nullptr,
+                    FColor::Yellow,
+                    2.0f,
+                    true,
+                    1.5f
+                );
 
-                    // Apply damage to health
-                    CurrentHealth = FMath::Max(0.0f, CurrentHealth - ActualDamage);
+                // Update damage statistics
+                TotalDamageReceived += ActualDamage;
+                LastDamageReceived = ActualDamage;
+                HitCount++;
 
-                    // Display damage information above impact point
-                    FString DamageText = FString::Printf(TEXT("%d (x%.1f)\nHP: %.0f"),
-                        ActualDamage, Multiplier, CurrentHealth);
+                // Check for destruction
+                if (CurrentHealth <= 0.0f)
+                {
+                    // Clear existing debug text
+                    ClearDebugText();
+
+                    // Display destruction message
                     DrawDebugString(
                         GetWorld(),
-                        PointDamageEvent->HitInfo.ImpactPoint,
-                        DamageText,
+                        GetActorLocation() + FVector(0, 0, 200),
+                        TEXT("DESTROYED!"),
                         nullptr,
-                        FColor::Yellow,
+                        FColor::Red,
                         2.0f,
                         true,
-                        1.5f
+                        2.0f
                     );
 
-                    //UE_LOG(LogTemp, Warning, TEXT("Health Remaining: %.1f"), CurrentHealth);
+                    // Visual effect for destruction
+                    DrawDebugSphere(
+                        GetWorld(),
+                        GetActorLocation(),
+                        100.0f,
+                        12,
+                        FColor::Red,
+                        false,
+                        2.0f,
+                        0,
+                        2.0f
+                    );
 
-                    // Check if dummy is destroyed
-                    if (CurrentHealth <= 0.0f)
-                    {
-                        //UE_LOG(LogTemp, Warning, TEXT("Dummy destroyed!"));
-
-                        // Clear existing debug text
-                        ClearDebugText();
-
-                        // Display destruction message
-                        DrawDebugString(
-                            GetWorld(),
-                            GetActorLocation() + FVector(0, 0, 200),
-                            TEXT("DESTROYED!"),
-                            nullptr,
-                            FColor::Red,
-                            2.0f,
-                            true,
-                            2.0f
-                        );
-
-                        // Visual effect for destruction
-                        DrawDebugSphere(
-                            GetWorld(),
-                            GetActorLocation(),
-                            100.0f,
-                            12,
-                            FColor::Red,
-                            false,
-                            2.0f,
-                            0,
-                            2.0f
-                        );
-
-                        // Destroy with delay
-                        FTimerHandle TimerHandle;
-                        GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
-                        {
-                            Destroy();
-                        }, 0.2f, false);
-                    }
+                    // Destroy with delay
+                    FTimerHandle TimerHandle;
+                    GetWorld()->GetTimerManager().SetTimer(
+                        TimerHandle,
+                        [this]() { Destroy(); },
+                        0.2f,
+                        false
+                    );
                 }
             }
         }
     }
 
-    // Update damage statistics
-    TotalDamageReceived += ActualDamage;
-    LastDamageReceived = ActualDamage;
-    HitCount++;
-
-    // Call parent implementation
     return Super::TakeDamage(static_cast<float>(ActualDamage), DamageEvent, EventInstigator, DamageCauser);
 }

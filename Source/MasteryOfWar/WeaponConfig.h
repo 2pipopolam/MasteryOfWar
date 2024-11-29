@@ -1,6 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystem.h"
+#include "Animation/AnimMontage.h"
 #include "WeaponConfig.generated.h"
 
 // structure for spread
@@ -143,6 +146,7 @@ enum class EWeaponType : uint8
     AK47            UMETA(DisplayName = "AK-47"),
     DesertEagle     UMETA(DisplayName = "Desert Eagle"),
     AWP             UMETA(DisplayName = "AWP"),
+    Grenade         UMETA(DisplayName = "Grenade"),
     None            UMETA(DisplayName = "None")
 };
 
@@ -281,6 +285,7 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
         RecoilPattern = Pattern;
     }
 
+    /*
    // UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
     //FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_AK47"));
 
@@ -301,6 +306,29 @@ struct MASTERYOFWAR_API FAK47Config : public FBaseWeaponConfig
 
     UPROPERTY(EditDefaultsOnly, Category = "AK47|Recoil")
     FCameraRecoilPattern RecoilPattern;
+    */
+
+    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    TObjectPtr<UParticleSystem> ShellEject;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    TObjectPtr<USoundCue> FireSound;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    TObjectPtr<USoundCue> ReloadSound;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    TObjectPtr<USoundCue> EmptyMagSound;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    TObjectPtr<UAnimMontage> FireAnimation;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AK47|Assets")
+    TObjectPtr<UAnimMontage> ReloadAnimation;
+
+    UPROPERTY(EditDefaultsOnly, Category = "AK47|Recoil")
+    FCameraRecoilPattern RecoilPattern;
+    
 };
 
 // Desert Eagle
@@ -363,6 +391,7 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
         RecoilPattern = Pattern;
     }
 
+    /*
     //UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
     //FSoftObjectPath ShellEjectPath = FSoftObjectPath(TEXT("/Game/Effects/Particles/P_ShellEject_DesertEagle"));
 
@@ -383,4 +412,102 @@ struct MASTERYOFWAR_API FDesertEagleConfig : public FBaseWeaponConfig
 
     UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Recoil")
     FCameraRecoilPattern RecoilPattern;
-}; 
+    */
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    TObjectPtr<UParticleSystem> ShellEject;
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    TObjectPtr<USoundCue> FireSound;
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    TObjectPtr<USoundCue> ReloadSound;
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    TObjectPtr<USoundCue> EmptyMagSound;
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    TObjectPtr<UAnimMontage> FireAnimation;
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Assets")
+    TObjectPtr<UAnimMontage> ReloadAnimation;
+
+    UPROPERTY(EditDefaultsOnly, Category = "DesertEagle|Recoil")
+    FCameraRecoilPattern RecoilPattern; 
+};
+
+
+
+USTRUCT(BlueprintType)
+struct MASTERYOFWAR_API FGrenadeConfig : public FBaseWeaponConfig
+{
+    GENERATED_BODY()
+    
+    FGrenadeConfig()
+    {
+        WeaponType = EWeaponType::Grenade;
+        FireMode = EFireMode::SemiAutomatic;
+
+        MaxAmmo = 1; 
+        
+        // Throwing parameters
+        ThrowForce = 3000.0f;  
+        RespawnDelay = 0.9f;
+        DetonationDelay = 1.1f;
+        
+        // Explosion settings
+        ExplosionRadius = 500.0f;
+        NumRaycastsPerExplosion = 1000;
+        
+        // Damage configuration
+        DamageConfig.BaseDamage = 85; //Max damage
+        DamageConfig.HeadMultiplier = 4.0f;
+        DamageConfig.BodyMultiplier = 1.0f;
+        DamageConfig.ArmsMultiplier = 0.8f;
+        DamageConfig.LegsMultiplier = 0.75f;
+        
+        // Damage falloff
+        DamageRadiusInner = 200.0f;  // Full damage within this radius
+        DamageRadiusOuter = 500.0f;  // No damage beyond this radius
+        DamageFalloffExponent = 1.0f; // Linear falloff
+    }
+    
+    // Core settings
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Throwing")
+    float ThrowForce;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Gameplay")
+    float RespawnDelay;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Gameplay")
+    float DetonationDelay;
+    
+    // Explosion parameters
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Explosion")
+    float ExplosionRadius;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Explosion")
+    int32 NumRaycastsPerExplosion;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Explosion")
+    float DamageRadiusInner;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Explosion")
+    float DamageRadiusOuter;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Explosion")
+    float DamageFalloffExponent;
+    
+    // Effects
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Effects")
+    TObjectPtr<UParticleSystem> ExplosionEffect;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Effects")
+    TObjectPtr<USoundBase> ExplosionSound;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Effects")
+    TObjectPtr<USoundCue> ThrowSound;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Grenade|Effects")
+    TObjectPtr<USoundCue> BounceSound;
+};

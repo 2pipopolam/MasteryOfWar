@@ -15,6 +15,8 @@ class MASTERYOFWAR_API ATestDummy : public ACharacter
 public:    
 	ATestDummy();
 
+	virtual EHitZone GetHitZone(UPrimitiveComponent* HitComponent) const;
+
 protected:
 	virtual void BeginPlay() override;
     

@@ -83,21 +83,22 @@ void AMasteryOfWarGameMode::PostLogin(APlayerController* NewPlayer)
 }
 
 
+
 EGameModeType AMasteryOfWarGameMode::DetermineGameModeFromMap(const FString& MapName)
 {
-    // Define mode by card name
     if (MapName.Contains(TEXT("PistolMap")))
     {
-        //UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Found PistolMode map"));
         return EGameModeType::PistolMode;
+    }
+    else if (MapName.Contains(TEXT("GrenadeMap")))
+    {
+        return EGameModeType::GrenadeMode;
     }
     else if (MapName.Contains(TEXT("ThirdPerson")))
     {
-        //UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Found ThirdPerson map, using RifleMode"));
         return EGameModeType::RifleMode;
     }
     
-    //UE_LOG(LogTemp, Warning, TEXT("DetermineGameModeFromMap: Default to RifleMode"));
     return EGameModeType::RifleMode;
 }
 

@@ -10,7 +10,9 @@ UENUM(BlueprintType)
 enum class EGameModeType : uint8
 {
 	RifleMode    UMETA(DisplayName = "Rifle Mode"),
-	PistolMode   UMETA(DisplayName = "Pistol Mode")
+	PistolMode   UMETA(DisplayName = "Pistol Mode"),
+	GrenadeMode      UMETA(DisplayName = "Grenade Mode"),
+    None             UMETA(DisplayName = "None")
 };
 
 USTRUCT(BlueprintType)
