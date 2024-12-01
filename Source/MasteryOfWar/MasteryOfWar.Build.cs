@@ -18,9 +18,13 @@ public class MasteryOfWar : ModuleRules
 			"EnhancedInput", 
 			"UMG",
 			"Slate",
-			"SlateCore"});
+			"SlateCore",
+			"Json",
+			"JsonUtilities",
+			"Sockets",
+			"Networking"
+		});
 
-		/*
 		if (Target.Platform == UnrealTargetPlatform.Linux)
         {
             // headers
@@ -39,6 +43,5 @@ public class MasteryOfWar : ModuleRules
         
         // SQLite
         PublicDefinitions.Add("WITH_SQLITE=1");
-	*/
     }
 }

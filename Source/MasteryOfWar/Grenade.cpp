@@ -3,6 +3,11 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
+#include "NetworkClient.h"
+#include "MofWGameInstance.h"
+#include "MasteryOfWarCharacter.h"
+#include "NetworkStructs.h"
+
 
 AGrenade::AGrenade()
 {
@@ -74,7 +79,6 @@ void AGrenade::Fire()
     }
 
     bCanThrow = false;
-
     CurrentAmmo--;
 
     ACharacter* Character = Cast<ACharacter>(GetOwner());
@@ -94,14 +98,10 @@ void AGrenade::Fire()
     FVector RightVector = CameraRotation.RotateVector(FVector::RightVector);
     FVector UpVector = CameraRotation.RotateVector(FVector::UpVector);
 
-    /////////////////////////////////////////////////////////////////////////////////////
-    // Spawn further forward and higher to avoid collisions
     FVector SpawnLocation = CameraLocation + 
-                           (ForwardVector * 30.0f) +  // Increased forward distance
-                           (UpVector ) +       // Increased height
-                           (RightVector);      // Right offset
-
-    //////////////////////////////////////////////////////////////////////////////////////
+                           (ForwardVector * 30.0f) +
+                           (UpVector) +
+                           (RightVector);
     
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;
@@ -118,15 +118,36 @@ void AGrenade::Fire()
 
         Projectile->Initialize(GrenadeConfig);
 
+        FVector LaunchVelocity;
         if (UProjectileMovementComponent* ProjectileMovement = Projectile->GetProjectileMovement())
         {
-            // Calculate throw velocity with a higher arc
-            FVector AimPoint = CameraLocation;
+            FVector AimPoint = CameraLocation + ForwardVector * 1000.0f;
             FVector ThrowDirection = (AimPoint - SpawnLocation).GetSafeNormal();
-            FVector LaunchVelocity = ThrowDirection * GrenadeConfig.ThrowForce;
+            LaunchVelocity = ThrowDirection * GrenadeConfig.ThrowForce;
             
             ProjectileMovement->Velocity = LaunchVelocity;
             ProjectileMovement->bSimulationEnabled = true;
+        }
+
+        // Отправка сетевого сообщения
+        if (AMasteryOfWarCharacter* MOWCharacter = Cast<AMasteryOfWarCharacter>(Character))
+        {
+            if (MOWCharacter->IsLocallyControlled())
+            {
+                if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
+                {
+                    if (NetworkClient* Client = GameInstance->GetNetworkClient())
+                    {
+                        FNetworkGrenadeInfo GrenadeInfo;
+                        GrenadeInfo.ThrowerId = MOWCharacter->GetPlayerId();
+                        GrenadeInfo.Location = SpawnLocation;
+                        GrenadeInfo.Rotation = CameraRotation;
+                        GrenadeInfo.Velocity = LaunchVelocity;
+                        
+                        Client->SendGrenadeThrow(GrenadeInfo);
+                    }
+                }
+            }
         }
 
         if (ThrowSound)
@@ -179,5 +200,58 @@ void AGrenade::SetupWeaponCollision()
     {
         WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+    }
+}
+
+
+void AGrenade::SimulateThrow(const FNetworkGrenadeInfo& GrenadeInfo)
+{
+    if (!CanFire())
+    {
+        return;
+    }
+
+    bCanThrow = false;
+    CurrentAmmo--;
+
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character)
+    {
+        return;
+    }
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+    SpawnParams.Instigator = Character;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    if (AGrenadeProjectile* Projectile = GetWorld()->SpawnActor<AGrenadeProjectile>(
+        GrenadeProjectileClass, GrenadeInfo.Location, FRotator(GrenadeInfo.Rotation), SpawnParams))
+    {
+        if (WeaponMesh)
+        {
+            WeaponMesh->SetVisibility(false);
+        }
+
+        Projectile->Initialize(GrenadeConfig);
+
+        if (UProjectileMovementComponent* ProjectileMovement = Projectile->GetProjectileMovement())
+        {
+            ProjectileMovement->Velocity = GrenadeInfo.Velocity;
+            ProjectileMovement->bSimulationEnabled = true;
+        }
+
+        if (ThrowSound)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, ThrowSound, GrenadeInfo.Location);
+        }
+
+        GetWorld()->GetTimerManager().SetTimer(
+            RespawnTimerHandle,
+            this,
+            &AGrenade::RespawnGrenade,
+            GrenadeConfig.RespawnDelay,
+            false
+        );
     }
 }

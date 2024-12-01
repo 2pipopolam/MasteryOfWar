@@ -13,6 +13,12 @@
 #include "GameModeConfig.h"
 #include "Kismet/GameplayStatics.h"
 #include "GlobalArmsConfig.h"
+#include "MofWGameInstance.h"
+#include "NetworkClient.h"
+#include "WeaponConfig.h"
+#include "NetworkStructs.h"
+#include "MofWGameInstance.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -140,6 +146,22 @@ void AMasteryOfWarCharacter::BeginPlay()
 
     GetCharacterMovement()->SetCrouchedHalfHeight(70.0f);
     GetCharacterMovement()->MaxWalkSpeedCrouched = 120.0f;
+
+
+
+        if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
+        {
+            if (GameInstance->IsConnectedToServer())
+            {
+                GetWorld()->GetTimerManager().SetTimer(
+                    NetworkUpdateTimer,
+                    this,
+                    &AMasteryOfWarCharacter::SendNetworkUpdate,
+                    0.05f, // 20 раз в секунду
+                    true
+                );
+            }
+        }
 }
 
 void AMasteryOfWarCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -305,6 +327,54 @@ void AMasteryOfWarCharacter::Tick(float DeltaTime)
         float NewZ = FMath::FInterpTo(CurrentLocation.Z, TargetHeight, DeltaTime, 5.0f);
         
         FollowCamera->SetRelativeLocation(FVector(CurrentLocation.X, CurrentLocation.Y, NewZ));
+    }
+
+    // Сетевое обновление
+    if (IsLocallyControlled())
+    {
+        static float TimeSinceLastUpdate = 0.0f;
+        const float UpdateInterval = 0.05f; // 20 обновлений в секунду
+        
+        TimeSinceLastUpdate += DeltaTime;
+        if (TimeSinceLastUpdate >= UpdateInterval)
+        {
+            SendNetworkUpdate();
+            TimeSinceLastUpdate = 0.0f;
+        }
+    }
+}
+
+
+void AMasteryOfWarCharacter::SendNetworkUpdate()
+{
+    if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
+    {
+        if (NetworkClient* Client = GameInstance->GetNetworkClient())
+        {
+            FNetworkPlayerState State;
+            State.PlayerId = GetPlayerId();
+            State.Position = GetActorLocation();
+            State.Rotation = GetActorRotation();
+            State.bIsCrouching = bIsCrouched;
+            State.bIsWalking = bIsWalking;
+            
+            if (CurrentWeapon)
+            {
+                State.bIsFiring = CurrentWeapon->IsFiring();
+                State.bIsReloading = CurrentWeapon->IsReloading();
+                State.CurrentAmmo = CurrentWeapon->GetCurrentAmmo();
+                State.WeaponType = CurrentWeapon->GetWeaponType();
+            }
+            else
+            {
+                State.bIsFiring = false;
+                State.bIsReloading = false;
+                State.CurrentAmmo = 0;
+                State.WeaponType = EWeaponType::None;
+            }
+            
+            Client->SendPlayerState(State);
+        }
     }
 }
 
@@ -526,4 +596,29 @@ void AMasteryOfWarCharacter::ToggleDebugLine()
 {
     bShowDebugLine = !bShowDebugLine;
     //UE_LOG(LogTemp, Warning, TEXT("Debug line toggled: %s"), bShowDebugLine ? TEXT("On") : TEXT("Off"));
+}
+
+
+void AMasteryOfWarCharacter::UpdateFromNetworkState(const FNetworkPlayerState& State)
+{
+    SetActorLocation(State.Position);
+    SetActorRotation(State.Rotation);
+    
+    if (State.bIsCrouching && !bIsCrouched)
+        Crouch();
+    else if (!State.bIsCrouching && bIsCrouched)
+        UnCrouch();
+        
+    bIsWalking = State.bIsWalking;
+    
+    if (CurrentWeapon)
+    {
+        if (State.bIsFiring && !CurrentWeapon->IsFiring())
+            CurrentWeapon->StartFiring();
+        else if (!State.bIsFiring && CurrentWeapon->IsFiring())
+            CurrentWeapon->StopFiring();
+            
+        if (State.bIsReloading && !CurrentWeapon->IsReloading())
+            CurrentWeapon->Reload();
+    }
 }

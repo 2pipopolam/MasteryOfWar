@@ -11,6 +11,7 @@
 #include "Bullet.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "WeaponInterface.h"
+#include "NetworkStructs.h"
 #include "WeaponSystem.generated.h"
 
 class UBulletFireBehavior;
@@ -191,6 +192,12 @@ public:
     virtual const FBaseWeaponConfig& GetWeaponConfig() const override { return WeaponConfig; }
     virtual EWeaponType GetWeaponType() const override { return WeaponConfig.WeaponType; }
     virtual const FWeaponDamageConfig& GetDamageConfig() const override { return WeaponConfig.DamageConfig; }
+
+
+    virtual void SimulateShot(const FNetworkShotInfo& ShotInfo);
+    bool IsFiring() const { return bIsFiring; }
+    bool IsReloading() const { return MagazineState.bIsReloading; }
+    int32 GetCurrentAmmo() const { return MagazineState.CurrentAmmo; }
 
 protected:
     virtual void BeginPlay() override;

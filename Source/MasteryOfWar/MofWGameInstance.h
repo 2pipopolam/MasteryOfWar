@@ -2,20 +2,73 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "NetworkClient.h"
+#include "GameModeConfig.h"
 #include "MofWGameInstance.generated.h"
+
+// Объявляем делегаты
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNetworkErrorSignature, int32, ErrorCode, const FString&, ErrorMessage);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionCreatedSignature, int32, SessionId);
 
 UCLASS()
 class MASTERYOFWAR_API UMasteryOfWarGameInstance : public UGameInstance
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UMasteryOfWarGameInstance(const FObjectInitializer& ObjectInitializer);
-    
-	void SetCurrentUserId(int32 UserId) { CurrentUserId = UserId; }
-	int32 GetCurrentUserId() const { return CurrentUserId; }
-	bool IsUserLoggedIn() const { return CurrentUserId > 0; }
+    UMasteryOfWarGameInstance(const FObjectInitializer& ObjectInitializer);
+
+    // Networking methods
+    UFUNCTION(BlueprintCallable, Category = "Networking")
+    bool InitializeNetworking(const FString& IPAddress, int32 Port);
+
+    UFUNCTION(BlueprintCallable, Category = "Networking")
+    bool CreateGameSession(EGameMapType MapType, const FString& Password = TEXT(""));
+
+    UFUNCTION(BlueprintCallable, Category = "Networking")
+    bool JoinGameSession(int32 SessionId, const FString& Password = TEXT(""));
+
+    UFUNCTION(BlueprintCallable, Category = "Networking")
+    void DisconnectFromServer();
+
+    UFUNCTION(BlueprintPure, Category = "Networking")
+    bool IsConnectedToServer() const;
+
+    NetworkClient* GetNetworkClient() const { return NetworkConnection.Get(); }
+
+    // Game Mode Management
+    UFUNCTION(BlueprintCallable, Category = "Game Mode")
+    void SetCurrentGameMode(EGameMapType GameMode) { CurrentGameMode = GameMode; }
+
+    UFUNCTION(BlueprintPure, Category = "Game Mode")
+    EGameMapType GetCurrentGameMode() const { return CurrentGameMode; }
+
+    // User Management methods
+    UFUNCTION(BlueprintCallable, Category = "User Management")
+    void SetCurrentUserId(int32 UserId);
+
+    UFUNCTION(BlueprintPure, Category = "User Management")
+    int32 GetCurrentUserId() const { return CurrentUserId; }
+
+    UFUNCTION(BlueprintPure, Category = "User Management")
+    bool IsUserLoggedIn() const { return CurrentUserId > 0; }
+
+    // Network delegates
+    UPROPERTY(BlueprintAssignable, Category = "Networking")
+    FOnNetworkErrorSignature OnNetworkError;
+
+    UPROPERTY(BlueprintAssignable, Category = "Networking")
+    FOnSessionCreatedSignature OnNetworkCreatedSession;
 
 private:
-	int32 CurrentUserId = -1;
+    int32 CurrentUserId;
+    EGameMapType CurrentGameMode;
+    TUniquePtr<NetworkClient> NetworkConnection;
+
+    // Network event handlers
+    void HandleNetworkError(int32 ErrorCode, const FString& ErrorMessage);
+    void HandleSessionCreated(int32 SessionId);
+    void HandlePlayerState(const FNetworkPlayerState& State);
+    void HandleShot(const FNetworkShotInfo& ShotInfo);
+    void HandleGrenadeThrow(const FNetworkGrenadeInfo& GrenadeInfo);
 };

@@ -51,6 +51,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Arms Configuration")
     static bool GetSavedArmsPosition(FVector& OutPosition, FRotator& OutRotation);
 
+
+    void UpdateFromNetworkState(const FNetworkPlayerState& State);
+    int32 GetPlayerId() const { return PlayerId; }
+    void SetPlayerId(int32 NewId) { PlayerId = NewId; }
+
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
@@ -132,4 +137,9 @@ private:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* WalkAction;
+
+    int32 PlayerId = -1;
+    FTimerHandle NetworkUpdateTimer;
+    
+    void SendNetworkUpdate();
 };

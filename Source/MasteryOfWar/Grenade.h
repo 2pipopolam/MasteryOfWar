@@ -24,6 +24,8 @@ public:
 	virtual EWeaponType GetWeaponType() const override { return EWeaponType::Grenade; }
 	virtual const FWeaponDamageConfig& GetDamageConfig() const override { return GrenadeConfig.DamageConfig; }
 
+	void SimulateThrow(const FNetworkGrenadeInfo& GrenadeInfo);
+
 protected:
 	virtual void BeginPlay() override;
 	void RespawnGrenade();

@@ -1,0 +1,215 @@
+#include "GameSession.h"
+#include "NetworkGameServer.h"
+#include <json/json.h>
+
+void GameSession::broadcastPlayerState(const PlayerState& state)
+{
+    Json::Value root;
+    root["type"] = "PLAYER_STATE";
+    root["playerId"] = state.playerId;
+    
+    Json::Value position;
+    position["x"] = state.position.x;
+    position["y"] = state.position.y;
+    position["z"] = state.position.z;
+    root["position"] = position;
+    
+    Json::Value rotation;
+    rotation["x"] = state.rotation.x;
+    rotation["y"] = state.rotation.y;
+    rotation["z"] = state.rotation.z;
+    root["rotation"] = rotation;
+    
+    root["isCrouching"] = state.isCrouching;
+    root["isWalking"] = state.isWalking;
+    
+    Json::Value weapon;
+    weapon["isFiring"] = state.weapon.isFiring;
+    weapon["isReloading"] = state.weapon.isReloading;
+    weapon["currentAmmo"] = state.weapon.currentAmmo;
+    root["weapon"] = weapon;
+    
+    std::string message = Json::FastWriter().write(root);
+    NetworkGameServer::getInstance().broadcastToSession(sessionId, message);
+    
+    // Update player state
+    playerStates[state.playerId] = state;
+}
+
+bool GameSession::validateShot(const ShotInfo& shotInfo)
+{
+    // Get shooter's state
+    auto it = playerStates.find(shotInfo.shooterId);
+    if (it == playerStates.end()) {
+        return false;
+    }
+    
+    const auto& shooterState = it->second;
+    
+    // Validate position
+    float distanceThreshold = 100.0f; // Maximum allowed distance between reported and stored position
+    Vector3 diff = {
+        shotInfo.startLocation.x - shooterState.position.x,
+        shotInfo.startLocation.y - shooterState.position.y,
+        shotInfo.startLocation.z - shooterState.position.z
+    };
+    float distance = sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
+    
+    if (distance > distanceThreshold) {
+        return false;
+    }
+    
+    // Validate weapon state
+    if (shooterState.weapon.isReloading || shooterState.weapon.currentAmmo <= 0) {
+        return false;
+    }
+    
+    // Validate direction vector
+    float dirMagnitude = sqrt(
+        shotInfo.direction.x * shotInfo.direction.x +
+        shotInfo.direction.y * shotInfo.direction.y +
+        shotInfo.direction.z * shotInfo.direction.z
+    );
+    
+    if (abs(dirMagnitude - 1.0f) > 0.01f) {
+        return false;
+    }
+    
+    return true;
+}
+
+void GameSession::broadcastShot(const ShotInfo& shotInfo)
+{
+    Json::Value root;
+    root["type"] = "SHOT";
+    root["shooterId"] = shotInfo.shooterId;
+    root["bulletId"] = shotInfo.bulletId;
+    
+    Json::Value startLocation;
+    startLocation["x"] = shotInfo.startLocation.x;
+    startLocation["y"] = shotInfo.startLocation.y;
+    startLocation["z"] = shotInfo.startLocation.z;
+    root["startLocation"] = startLocation;
+    
+    Json::Value direction;
+    direction["x"] = shotInfo.direction.x;
+    direction["y"] = shotInfo.direction.y;
+    direction["z"] = shotInfo.direction.z;
+    root["direction"] = direction;
+    
+    root["speed"] = shotInfo.speed;
+    root["damage"] = shotInfo.damage;
+    root["spread"] = shotInfo.spread;
+    
+    std::string message = Json::FastWriter().write(root);
+    NetworkGameServer::getInstance().broadcastToSession(sessionId, message);
+}
+
+const std::vector<int32_t>& GameSession::getPlayers() const
+{
+    return connectedPlayers;
+}
+
+void GameSession::broadcastHitConfirmation(const HitInfo& hitInfo)
+{
+    Json::Value root;
+    root["type"] = "HIT_CONFIRM";
+    root["bulletId"] = hitInfo.bulletId;
+    
+    Json::Value hitLocation;
+    hitLocation["x"] = hitInfo.hitLocation.x;
+    hitLocation["y"] = hitInfo.hitLocation.y;
+    hitLocation["z"] = hitInfo.hitLocation.z;
+    root["hitLocation"] = hitLocation;
+    
+    Json::Value hitNormal;
+    hitNormal["x"] = hitInfo.hitNormal.x;
+    hitNormal["y"] = hitInfo.hitNormal.y;
+    hitNormal["z"] = hitInfo.hitNormal.z;
+    root["hitNormal"] = hitNormal;
+    
+    root["damageTaken"] = hitInfo.damageTaken;
+    
+    std::string message = Json::FastWriter().write(root);
+    NetworkGameServer::getInstance().broadcastToSession(sessionId, message);
+}
+
+void GameSession::updateLastActivity()
+{
+    lastActivityTime = std::chrono::steady_clock::now();
+}
+
+bool GameSession::isInactive(const std::chrono::seconds& timeout) const
+{
+    auto now = std::chrono::steady_clock::now();
+    return (now - lastActivityTime) > timeout;
+}
+
+void GameSession::setSessionId(int32_t id)
+{
+    sessionId = id;
+}
+
+int32_t GameSession::getSessionId() const
+{
+    return sessionId;
+}
+
+
+bool GameSession::addPlayer(int32_t playerId, const std::string& inputPassword)
+{
+    // First validate the password if one is set
+    if (!password.empty() && password != inputPassword) {
+        return false;
+    }
+    
+    // Check if player is already in the session
+    if (std::find(connectedPlayers.begin(), connectedPlayers.end(), playerId) != connectedPlayers.end()) {
+        return false;
+    }
+    
+    // Initialize default player state
+    PlayerState newState;
+    newState.playerId = playerId;
+    newState.position = Vector3(0, 0, 0);  // Default spawn position
+    newState.rotation = Vector3(0, 0, 0);  // Default rotation
+    newState.isCrouching = false;
+    newState.isWalking = false;
+    newState.weapon.isFiring = false;
+    newState.weapon.isReloading = false;
+    newState.weapon.currentAmmo = 30;      // Default ammo count
+    
+    // Add player to session
+    playerStates[playerId] = newState;
+    connectedPlayers.push_back(playerId);
+    
+    // Update last activity time
+    updateLastActivity();
+    
+    return true;
+}
+
+
+void GameSession::removePlayer(int32_t playerId)
+{
+    auto it = playerStates.find(playerId);
+    if (it != playerStates.end())
+    {
+        playerStates.erase(it);
+
+        auto playerIt = std::find(connectedPlayers.begin(), connectedPlayers.end(), playerId);
+        if (playerIt != connectedPlayers.end())
+        {
+            connectedPlayers.erase(playerIt);
+        }
+    }
+}
+
+void GameSession::initialize(EGameMapType mapType, const std::string& password)
+{
+    this->mapType = mapType;
+    this->password = password;
+    playerStates.clear();
+    connectedPlayers.clear();
+    lastActivityTime = std::chrono::steady_clock::now();
+}

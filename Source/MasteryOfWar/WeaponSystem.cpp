@@ -6,6 +6,11 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "DrawDebugHelpers.h"
 #include "MasteryOfWarCharacter.h"
+#include "MofWGameInstance.h"
+#include "NetworkClient.h"
+#include "MofWGameInstance.h"
+#include "NetworkStructs.h"
+
 
 UCameraRecoilComponent::UCameraRecoilComponent()
 {
@@ -375,6 +380,8 @@ void AWeapon::Tick(float DeltaTime)
 }
 
 
+
+
 void AWeapon::Fire()
 {
     if (!CanFire()) 
@@ -407,9 +414,30 @@ void AWeapon::Fire()
             QueryParams
         );
 
+        // Отправка сетевого сообщения о выстреле
+        AMasteryOfWarCharacter* Character = Cast<AMasteryOfWarCharacter>(GetOwner());
+        if (Character && Character->IsLocallyControlled())
+        {
+            if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
+            {
+                if (NetworkClient* Client = GameInstance->GetNetworkClient())
+                {
+                    FNetworkShotInfo ShotInfo;
+                    ShotInfo.ShooterId = Character->GetPlayerId();
+                    ShotInfo.StartLocation = StartLocation;
+                    ShotInfo.Direction = (EndLocation - StartLocation).GetSafeNormal();
+                    ShotInfo.Speed = ProjectileSpeed;
+                    ShotInfo.BulletId = FMath::Rand();
+                    ShotInfo.Damage = WeaponConfig.DamageConfig.BaseDamage;
+                    ShotInfo.Spread = CurrentSpread;
+                    
+                    Client->SendShot(ShotInfo);
+                }
+            }
+        }
+
         if (bHit)
         {
-            // Calculate damage with falloff
             float Distance = (HitResult.Location - StartLocation).Size();
             float DamageFalloff = FMath::GetMappedRangeValueClamped(
                 FVector2D(0, WeaponConfig.Range),
@@ -419,7 +447,6 @@ void AWeapon::Fire()
             
             int32 BaseDamage = FMath::RoundToInt(WeaponConfig.DamageConfig.BaseDamage * DamageFalloff);
             
-            // Apply point damage with hit information
             FPointDamageEvent DamageEvent(
                 BaseDamage,
                 HitResult,
@@ -433,33 +460,43 @@ void AWeapon::Fire()
                 GetInstigatorController(),
                 this
             );
+
+            // Отправка сетевого сообщения о попадании
+            if (Character && Character->IsLocallyControlled())
+            {
+                if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
+                {
+                    if (NetworkClient* Client = GameInstance->GetNetworkClient())
+                    {
+                        FNetworkHitInfo HitInfo;
+                        HitInfo.BulletId = FMath::Rand();
+                        HitInfo.ShooterId = Character->GetPlayerId();
+                        HitInfo.HitLocation = HitResult.Location;
+                        HitInfo.HitNormal = HitResult.Normal;
+                        HitInfo.DamageTaken = BaseDamage;
+                        
+                        if (AMasteryOfWarCharacter* HitCharacter = Cast<AMasteryOfWarCharacter>(HitResult.GetActor()))
+                        {
+                            HitInfo.VictimId = HitCharacter->GetPlayerId();
+                        }
+                        
+                        Client->SendHitConfirm(HitInfo);
+                    }
+                }
+            }
         }
 
-        // Draw debug line if needed
-        #if WITH_EDITOR
-            DrawDebugLine(
-                World,
-                StartLocation,
-                bHit ? HitResult.Location : EndLocation,
-                FColor::Red,
-                false,
-                2.0f,
-                0,
-                1.0f
-            );
-        #endif
-    }
+        HandleRecoil();
+        
+        if (CameraRecoilComponent)
+        {
+            CameraRecoilComponent->ApplyRecoil();
+        }
 
-    HandleRecoil();
-    
-    if (CameraRecoilComponent)
-    {
-        CameraRecoilComponent->ApplyRecoil();
+        PlayFireEffects();
+        ConsumeAmmo();
+        UpdateAmmoWidget();
     }
-
-    PlayFireEffects();
-    ConsumeAmmo();
-    UpdateAmmoWidget();
 }
 
 
@@ -923,4 +960,18 @@ FTransform AWeapon::GetShellEjectSocketTransform() const
         return WeaponMesh->GetSocketTransform(WeaponConfig.ShellEjectSocketName);
     }
     return GetActorTransform();
+}
+
+
+
+void AWeapon::SimulateShot(const FNetworkShotInfo& ShotInfo)
+{
+    // Воспроизводим эффекты выстрела без реального урона
+    PlayFireEffects();
+    HandleRecoil();
+    
+    if (CameraRecoilComponent)
+    {
+        CameraRecoilComponent->ApplyRecoil();
+    }
 }

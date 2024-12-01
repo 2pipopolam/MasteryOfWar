@@ -7,70 +7,83 @@
 #include "GameModeConfig.generated.h"
 
 UENUM(BlueprintType)
+enum class EGameMapType : uint8
+{
+    Pistol_Map    UMETA(DisplayName = "Pistol Map"),
+    Rifle_Map     UMETA(DisplayName = "Rifle Map"),
+    Grenade_Map   UMETA(DisplayName = "Grenade Map"),
+    None          UMETA(DisplayName = "None")
+};
+
+UENUM(BlueprintType)
 enum class EGameModeType : uint8
 {
-	RifleMode    UMETA(DisplayName = "Rifle Mode"),
-	PistolMode   UMETA(DisplayName = "Pistol Mode"),
-	GrenadeMode      UMETA(DisplayName = "Grenade Mode"),
-    None             UMETA(DisplayName = "None")
+    RifleMode    UMETA(DisplayName = "Rifle Mode"),
+    PistolMode   UMETA(DisplayName = "Pistol Mode"),
+    GrenadeMode  UMETA(DisplayName = "Grenade Mode"),
+    None         UMETA(DisplayName = "None")
 };
 
 USTRUCT(BlueprintType)
 struct FCharacterAnimConfig
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	// character mesh (third person view)
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
-	USkeletalMesh* CharacterMesh = nullptr;
+    // Character mesh (third person view)
+    UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
+    USkeletalMesh* CharacterMesh = nullptr;
 
-	// character animation
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
-	TSubclassOf<UAnimInstance> AnimationClass = nullptr;
+    // Character animation
+    UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
+    TSubclassOf<UAnimInstance> AnimationClass = nullptr;
 
-	// hands mesh (first person mode)
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
-	USkeletalMesh* ArmsMesh = nullptr;
+    // Hands mesh (first person mode)
+    UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
+    USkeletalMesh* ArmsMesh = nullptr;
 
-	// class of hands animations
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
-	TSubclassOf<UAnimInstance> ArmsAnimClass = nullptr;
+    // Class of hands animations
+    UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
+    TSubclassOf<UAnimInstance> ArmsAnimClass = nullptr;
 };
 
 USTRUCT(BlueprintType)
 struct MASTERYOFWAR_API FGameModeConfig
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	FGameModeConfig()
-		: ModeType(EGameModeType::RifleMode)
-		, WeaponType(EWeaponType::AK47)
-		, CharacterClass(nullptr)
-	{
-	}
-	
+    FGameModeConfig()
+        : ModeType(EGameModeType::RifleMode)
+        , WeaponType(EWeaponType::AK47)
+        , MapType(EGameMapType::Rifle_Map)
+        , CharacterClass(nullptr)
+    {
+    }
 
-	// type game mode
-	UPROPERTY(EditDefaultsOnly, Category = "GameMode")
-	EGameModeType ModeType;
+    // Game mode type
+    UPROPERTY(EditDefaultsOnly, Category = "GameMode")
+    EGameModeType ModeType;
 
-	// weapon type for certain mode
-	UPROPERTY(EditDefaultsOnly, Category = "GameMode|Weapon")
-	EWeaponType WeaponType;
+    // Weapon type for current mode
+    UPROPERTY(EditDefaultsOnly, Category = "GameMode|Weapon")
+    EWeaponType WeaponType;
 
-	// config animations
-	UPROPERTY(EditDefaultsOnly, Category = "GameMode|Character")
-	FCharacterAnimConfig AnimConfig;
+    // Map type for current mode
+    UPROPERTY(EditDefaultsOnly, Category = "GameMode|Map")
+    EGameMapType MapType;
 
-	// path to map
-	UPROPERTY(EditDefaultsOnly, Category = "GameMode|Level")
-	FSoftObjectPath LevelPath;
+    // Animation configuration
+    UPROPERTY(EditDefaultsOnly, Category = "GameMode|Character")
+    FCharacterAnimConfig AnimConfig;
 
-	// character class for certain mode
-	UPROPERTY(EditDefaultsOnly, Category = "GameMode|Character")
-	TSubclassOf<ACharacter> CharacterClass;
+    // Path to map
+    UPROPERTY(EditDefaultsOnly, Category = "GameMode|Level")
+    FSoftObjectPath LevelPath;
 
-	// add damage config
-	UPROPERTY(EditDefaultsOnly, Category = "GameMode|Damage")
-	FModeDamageConfig DamageConfig;
+    // Character class for current mode
+    UPROPERTY(EditDefaultsOnly, Category = "GameMode|Character")
+    TSubclassOf<ACharacter> CharacterClass;
+
+    // Damage configuration
+    UPROPERTY(EditDefaultsOnly, Category = "GameMode|Damage")
+    FModeDamageConfig DamageConfig;
 };

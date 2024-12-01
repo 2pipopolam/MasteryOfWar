@@ -71,48 +71,90 @@ void AMasteryOfWarGameMode::BeginPlay()
     Super::BeginPlay();
 }
 
+
+
 void AMasteryOfWarGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    // Initialize the character with the current configuration 
-    if (AMasteryOfWarCharacter* Character = Cast<AMasteryOfWarCharacter>(NewPlayer->GetPawn()))
+    // Добавляем проверки и логирование
+    if (!NewPlayer)
     {
-        Character->InitializeForGameMode(CurrentModeConfig);
+        UE_LOG(LogTemp, Error, TEXT("PostLogin: NewPlayer is null"));
+        return;
     }
+
+    APawn* Pawn = NewPlayer->GetPawn();
+    if (!Pawn)
+    {
+        UE_LOG(LogTemp, Error, TEXT("PostLogin: Player pawn is null"));
+        return;
+    }
+
+    AMasteryOfWarCharacter* Character = Cast<AMasteryOfWarCharacter>(Pawn);
+    if (!Character)
+    {
+        UE_LOG(LogTemp, Error, TEXT("PostLogin: Failed to cast pawn to MasteryOfWarCharacter"));
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Initializing character with mode: %s, weapon: %s"),
+        *UEnum::GetValueAsString(CurrentModeConfig.ModeType),
+        *UEnum::GetValueAsString(CurrentModeConfig.WeaponType));
+
+    Character->InitializeForGameMode(CurrentModeConfig);
 }
 
 
 
 EGameModeType AMasteryOfWarGameMode::DetermineGameModeFromMap(const FString& MapName)
 {
-    if (MapName.Contains(TEXT("PistolMap")))
+    // Добавляем логирование для отладки
+    UE_LOG(LogTemp, Warning, TEXT("Determining game mode for map: %s"), *MapName);
+
+    if (MapName.Contains(TEXT("PistolMap"), ESearchCase::IgnoreCase))
     {
+        UE_LOG(LogTemp, Warning, TEXT("Selected Pistol Mode"));
         return EGameModeType::PistolMode;
     }
-    else if (MapName.Contains(TEXT("GrenadeMap")))
+    else if (MapName.Contains(TEXT("GrenadeMap"), ESearchCase::IgnoreCase))
     {
+        UE_LOG(LogTemp, Warning, TEXT("Selected Grenade Mode"));
         return EGameModeType::GrenadeMode;
     }
-    else if (MapName.Contains(TEXT("ThirdPerson")))
+    else if (MapName.Contains(TEXT("RifleMap"), ESearchCase::IgnoreCase))
     {
+        UE_LOG(LogTemp, Warning, TEXT("Selected Rifle Mode"));
         return EGameModeType::RifleMode;
     }
     
+    // Логируем, если используется режим по умолчанию
+    UE_LOG(LogTemp, Warning, TEXT("No specific mode found in map name, defaulting to Rifle Mode"));
     return EGameModeType::RifleMode;
 }
+
 
 
 void AMasteryOfWarGameMode::SetGameModeConfig(const FGameModeConfig& NewConfig)
 {
     CurrentModeConfig = NewConfig;
+    CurrentGameMode = NewConfig.ModeType;  // Обновляем текущий режим
 
-    // set default char class
+    // Добавляем логирование
+    UE_LOG(LogTemp, Warning, TEXT("Setting game mode config: Mode=%s, Weapon=%s"), 
+        *UEnum::GetValueAsString(NewConfig.ModeType),
+        *UEnum::GetValueAsString(NewConfig.WeaponType));
+
+    // Устанавливаем класс персонажа
     if (NewConfig.CharacterClass)
     {
         DefaultPawnClass = NewConfig.CharacterClass;
+        UE_LOG(LogTemp, Warning, TEXT("Set character class: %s"), *NewConfig.CharacterClass->GetName());
     }
 }
+
+
+
 
 
 void AMasteryOfWarGameMode::SetGameMode(EGameModeType NewMode)
