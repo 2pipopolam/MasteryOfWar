@@ -237,27 +237,39 @@ void NetworkGameServer::handleClientMessage(const std::string& msg, tcp::socket&
 
 
 
+
       else if (messageType == "JOIN_SESSION") 
-    {
-      int32_t sessionId = root["sessionId"].asInt();
-      int32_t playerId = root["playerId"].asInt();
-      std::string password = root["password"].asString();
-    
-      std::cout << "Join session request - SessionID: " << sessionId 
-              << ", PlayerID: " << playerId << std::endl;
-    
-      bool success = joinGameSession(sessionId, playerId, password);
-    
-      Json::Value response;
-      response["type"] = "SESSION_JOINED";
-      response["success"] = success;
-      response["sessionId"] = sessionId;
-    
-      std::string responseStr = Json::FastWriter().write(response);
-      std::cout << "Sending join response: " << responseStr << std::endl;
-    
-      boost::asio::write(socket, boost::asio::buffer(responseStr));
-    }
+      {
+        int32_t sessionId = root["sessionId"].asInt();
+        int32_t playerId = root["playerId"].asInt();
+        std::string password = root["password"].asString();
+        
+        std::cout << "Join session request - SessionID: " << sessionId 
+                  << ", PlayerID: " << playerId << std::endl;
+        
+        bool success = joinGameSession(sessionId, playerId, password);
+        
+        // Отправляем ответ присоединившемуся клиенту
+        Json::Value response;
+        response["type"] = "SESSION_JOINED";
+        response["success"] = success;
+        response["sessionId"] = sessionId;
+        
+        std::string responseStr = Json::FastWriter().write(response);
+        boost::asio::write(socket, boost::asio::buffer(responseStr));
+
+        // Если успешно присоединились, отправляем информацию всем игрокам в сессии
+        if (success)
+        {
+            Json::Value notification;
+            notification["type"] = "PLAYER_JOINED";
+            notification["playerId"] = playerId;
+            notification["sessionId"] = sessionId;
+            
+            std::string notificationStr = Json::FastWriter().write(notification);
+            broadcastToSession(sessionId, notificationStr);
+        }
+      }
 
 
 
@@ -382,6 +394,35 @@ void NetworkGameServer::handleShot(const Json::Value& root, [[maybe_unused]] tcp
         it->second->broadcastShot(shotInfo);
     }
 }
+
+
+
+void NetworkGameServer::handleGrenadeThrow(const Json::Value& root, [[maybe_unused]] tcp::socket& socket)
+{
+    GrenadeInfo grenadeInfo;
+    grenadeInfo.throwerId = root["throwerId"].asInt();
+    grenadeInfo.location = {
+        root["location"]["x"].asFloat(),
+        root["location"]["y"].asFloat(),
+        root["location"]["z"].asFloat()
+    };
+    grenadeInfo.velocity = {
+        root["velocity"]["x"].asFloat(),
+        root["velocity"]["y"].asFloat(),
+        root["velocity"]["z"].asFloat()
+    };
+
+    int32_t sessionId = root["sessionId"].asInt();
+    
+    std::lock_guard<std::mutex> lock(sessionsMutex);
+    auto it = activeSessions.find(sessionId);
+    if (it != activeSessions.end() && it->second->validateGrenadeThrow(grenadeInfo)) {
+        it->second->broadcastGrenadeThrow(grenadeInfo);
+    }
+}
+
+
+
 
 void NetworkGameServer::handleHitConfirmation(const Json::Value& root, [[maybe_unused]] tcp::socket& socket)
 {

@@ -110,6 +110,73 @@ const std::vector<int32_t>& GameSession::getPlayers() const
     return connectedPlayers;
 }
 
+
+
+
+bool GameSession::validateGrenadeThrow(const GrenadeInfo& grenadeInfo)
+{
+    // Get thrower's state
+    auto it = playerStates.find(grenadeInfo.throwerId);
+    if (it == playerStates.end()) {
+        return false;
+    }
+    
+    const auto& throwerState = it->second;
+    
+    // Validate throw position
+    float distanceThreshold = 100.0f;
+    Vector3 diff = {
+        grenadeInfo.location.x - throwerState.position.x,
+        grenadeInfo.location.y - throwerState.position.y,
+        grenadeInfo.location.z - throwerState.position.z
+    };
+    float distance = sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
+    
+    if (distance > distanceThreshold) {
+        return false;
+    }
+
+    // Add velocity validation if needed
+    float maxVelocity = 1000.0f; // Adjust based on game design
+    float velocityMagnitude = sqrt(
+        grenadeInfo.velocity.x * grenadeInfo.velocity.x +
+        grenadeInfo.velocity.y * grenadeInfo.velocity.y +
+        grenadeInfo.velocity.z * grenadeInfo.velocity.z
+    );
+    
+    if (velocityMagnitude > maxVelocity) {
+        return false;
+    }
+    
+    return true;
+}
+
+
+void GameSession::broadcastGrenadeThrow(const GrenadeInfo& grenadeInfo)
+{
+    Json::Value root;
+    root["type"] = "GRENADE_THROW";
+    root["throwerId"] = grenadeInfo.throwerId;
+    
+    Json::Value location;
+    location["x"] = grenadeInfo.location.x;
+    location["y"] = grenadeInfo.location.y;
+    location["z"] = grenadeInfo.location.z;
+    root["location"] = location;
+    
+    Json::Value velocity;
+    velocity["x"] = grenadeInfo.velocity.x;
+    velocity["y"] = grenadeInfo.velocity.y;
+    velocity["z"] = grenadeInfo.velocity.z;
+    root["velocity"] = velocity;
+    
+    std::string message = Json::FastWriter().write(root);
+    NetworkGameServer::getInstance().broadcastToSession(sessionId, message);
+}
+
+
+
+
 void GameSession::broadcastHitConfirmation(const HitInfo& hitInfo)
 {
     Json::Value root;
