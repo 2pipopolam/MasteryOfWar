@@ -396,7 +396,7 @@ void NetworkGameServer::handleShot(const Json::Value& root, [[maybe_unused]] tcp
 }
 
 
-
+/*
 void NetworkGameServer::handleGrenadeThrow(const Json::Value& root, [[maybe_unused]] tcp::socket& socket)
 {
     GrenadeInfo grenadeInfo;
@@ -420,7 +420,7 @@ void NetworkGameServer::handleGrenadeThrow(const Json::Value& root, [[maybe_unus
         it->second->broadcastGrenadeThrow(grenadeInfo);
     }
 }
-
+*/
 
 
 

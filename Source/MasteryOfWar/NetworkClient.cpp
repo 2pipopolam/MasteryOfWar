@@ -29,53 +29,65 @@ void NetworkClient::SetPlayerId(int32 NewPlayerId)
    UE_LOG(LogTemp, Warning, TEXT("NetworkClient PlayerId set to: %d"), PlayerId);
 }
 
+
+
 bool NetworkClient::Connect(const FString& IPAddress, int32 Port)
 {
-   if (bConnected)
-   {
-       return true;
-   }
+    if (bConnected)
+    {
+        return true;
+    }
 
-   RemoteAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-   bool bIsValid = false;
-   RemoteAddress->SetIp(*IPAddress, bIsValid);
-   if (!bIsValid)
-   {
-       SetLastError(ENetworkError::ConnectionFailed, TEXT("Invalid IP address"));
-       return false;
-   }
-   RemoteAddress->SetPort(Port);
+    RemoteAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
+    bool bIsValid = false;
+    RemoteAddress->SetIp(*IPAddress, bIsValid);
+    if (!bIsValid)
+    {
+        SetLastError(ENetworkError::ConnectionFailed, TEXT("Invalid IP address"));
+        return false;
+    }
+    RemoteAddress->SetPort(Port);
 
-   FSocket* RawSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("GameClient"), false);
-   
-   if (!RawSocket)
-   {
-       SetLastError(ENetworkError::ConnectionFailed, TEXT("Failed to create socket"));
-       return false;
-   }
+    FSocket* RawSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("GameClient"), false);
+    
+    if (!RawSocket)
+    {
+        SetLastError(ENetworkError::ConnectionFailed, TEXT("Failed to create socket"));
+        return false;
+    }
 
-   int32 RecvSize = 64 * 1024;
-   int32 SendSize = 64 * 1024;
-   RawSocket->SetReceiveBufferSize(RecvSize, RecvSize);
-   RawSocket->SetSendBufferSize(SendSize, SendSize);
-   RawSocket->SetReuseAddr(true);
+    int32 RecvSize = 64 * 1024;
+    int32 SendSize = 64 * 1024;
+    RawSocket->SetReceiveBufferSize(RecvSize, RecvSize);
+    RawSocket->SetSendBufferSize(SendSize, SendSize);
+    RawSocket->SetReuseAddr(true);
 
-   Socket = MakeShareable(RawSocket);
+    Socket = MakeShareable(RawSocket);
 
-   UE_LOG(LogTemp, Warning, TEXT("Attempting to connect to %s:%d"), *IPAddress, Port);
+    if (!Socket->Connect(*RemoteAddress))
+    {
+        SetLastError(ENetworkError::ConnectionFailed, TEXT("Failed to connect to server"));
+        return false;
+    }
 
-   if (!Socket->Connect(*RemoteAddress))
-   {
-       SetLastError(ENetworkError::ConnectionFailed, TEXT("Failed to connect to server"));
-       return false;
-   }
+    bConnected = true;
+    
+    // Request initial player ID from server
+    TSharedPtr<FJsonObject> JsonObj = MakeShared<FJsonObject>();
+    JsonObj->SetStringField(TEXT("type"), TEXT("REQUEST_PLAYER_ID"));
+    
+    FString Message;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Message);
+    FJsonSerializer::Serialize(JsonObj.ToSharedRef(), Writer);
+    
+    SendMessage(Message);
+    StartReceiveThread();
 
-   bConnected = true;
-   StartReceiveThread();
-
-   UE_LOG(LogTemp, Warning, TEXT("Successfully connected to server at %s:%d"), *IPAddress, Port);
-   return true;
+    return true;
 }
+
+
+
 
 void NetworkClient::Disconnect()
 {
@@ -347,6 +359,9 @@ void NetworkClient::ReceiveLoop()
    }
 }
 
+
+
+
 void NetworkClient::HandleMessage(const FString& Message)
 {
    TSharedPtr<FJsonObject> JsonObj;
@@ -360,9 +375,22 @@ void NetworkClient::HandleMessage(const FString& Message)
    FString Type = JsonObj->GetStringField(TEXT("type"));
    UE_LOG(LogTemp, Warning, TEXT("Received message type: %s"), *Type);
 
+   // Handle PLAYER_ID_ASSIGNED message first, as it can be processed without a valid PlayerId
+   if (Type == TEXT("PLAYER_ID_ASSIGNED"))
+   {
+       if (JsonObj->HasField(TEXT("playerId")))
+       {
+           int32 NewPlayerId = JsonObj->GetIntegerField(TEXT("playerId"));
+           SetPlayerId(NewPlayerId);
+           UE_LOG(LogTemp, Warning, TEXT("Player ID assigned: %d"), NewPlayerId);
+       }
+       return;
+   }
+
+   // Process other message types
    if (Type == TEXT("SESSION_CREATED"))
    {
-       int32 SessionId = JsonObj->GetNumberField(TEXT("sessionId"));
+       int32 SessionId = JsonObj->GetIntegerField(TEXT("sessionId"));
        bool Success = JsonObj->GetBoolField(TEXT("success"));
        
        UE_LOG(LogTemp, Warning, TEXT("Session created response - Success: %d, SessionID: %d"), 
@@ -381,7 +409,7 @@ void NetworkClient::HandleMessage(const FString& Message)
    else if (Type == TEXT("SESSION_JOINED"))
    {
        bool Success = JsonObj->GetBoolField(TEXT("success"));
-       int32 SessionId = JsonObj->GetNumberField(TEXT("sessionId"));
+       int32 SessionId = JsonObj->GetIntegerField(TEXT("sessionId"));
        
        UE_LOG(LogTemp, Warning, TEXT("Session joined response - Success: %d, SessionID: %d"), 
            Success ? 1 : 0, SessionId);
@@ -395,8 +423,8 @@ void NetworkClient::HandleMessage(const FString& Message)
    }
    else if (Type == TEXT("SESSIONS_LIST"))
    {
-       TArray<FSessionInfo> Sessions;
        const TArray<TSharedPtr<FJsonValue>>* SessionsArray;
+       TArray<FSessionInfo> Sessions;
        
        UE_LOG(LogTemp, Warning, TEXT("Received SESSIONS_LIST response from server"));
        
@@ -409,9 +437,9 @@ void NetworkClient::HandleMessage(const FString& Message)
                const TSharedPtr<FJsonObject>& SessionObj = SessionValue->AsObject();
                FSessionInfo SessionInfo;
                
-               SessionInfo.SessionId = SessionObj->GetNumberField(TEXT("sessionId"));
-               SessionInfo.MapType = static_cast<EGameMapType>(SessionObj->GetNumberField(TEXT("mapType")));
-               SessionInfo.CurrentPlayers = SessionObj->GetNumberField(TEXT("currentPlayers"));
+               SessionInfo.SessionId = SessionObj->GetIntegerField(TEXT("sessionId"));
+               SessionInfo.MapType = static_cast<EGameMapType>(SessionObj->GetIntegerField(TEXT("mapType")));
+               SessionInfo.CurrentPlayers = SessionObj->GetIntegerField(TEXT("currentPlayers"));
                SessionInfo.HasPassword = SessionObj->GetBoolField(TEXT("hasPassword"));
                SessionInfo.SessionName = SessionObj->GetStringField(TEXT("sessionName"));
 
@@ -425,19 +453,11 @@ void NetworkClient::HandleMessage(const FString& Message)
            
            OnSessionsListReceived.Broadcast(Sessions);
        }
-       else
-       {
-           UE_LOG(LogTemp, Error, TEXT("Failed to parse sessions array from response"));
-           FString JsonString;
-           TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonString);
-           FJsonSerializer::Serialize(JsonObj.ToSharedRef(), Writer);
-           UE_LOG(LogTemp, Warning, TEXT("Raw response: %s"), *JsonString);
-       }
    }
    else if (Type == TEXT("PLAYER_STATE"))
    {
        FNetworkPlayerState State;
-       State.PlayerId = JsonObj->GetNumberField(TEXT("playerId"));
+       State.PlayerId = JsonObj->GetIntegerField(TEXT("playerId"));
        
        const TSharedPtr<FJsonObject>* PositionObj;
        if (JsonObj->TryGetObjectField(TEXT("position"), PositionObj))
@@ -467,7 +487,7 @@ void NetworkClient::HandleMessage(const FString& Message)
        {
            State.bIsFiring = (*WeaponObj)->GetBoolField(TEXT("isFiring"));
            State.bIsReloading = (*WeaponObj)->GetBoolField(TEXT("isReloading"));
-           State.CurrentAmmo = (*WeaponObj)->GetNumberField(TEXT("currentAmmo"));
+           State.CurrentAmmo = (*WeaponObj)->GetIntegerField(TEXT("currentAmmo"));
        }
 
        OnPlayerStateReceived.Broadcast(State);
@@ -475,8 +495,8 @@ void NetworkClient::HandleMessage(const FString& Message)
    else if (Type == TEXT("SHOT"))
    {
        FNetworkShotInfo ShotInfo;
-       ShotInfo.ShooterId = JsonObj->GetNumberField(TEXT("shooterId"));
-       ShotInfo.BulletId = JsonObj->GetNumberField(TEXT("bulletId"));
+       ShotInfo.ShooterId = JsonObj->GetIntegerField(TEXT("shooterId"));
+       ShotInfo.BulletId = JsonObj->GetIntegerField(TEXT("bulletId"));
        
        const TSharedPtr<FJsonObject>* StartLocationObj;
        if (JsonObj->TryGetObjectField(TEXT("startLocation"), StartLocationObj))
@@ -499,16 +519,46 @@ void NetworkClient::HandleMessage(const FString& Message)
        }
 
        ShotInfo.Speed = JsonObj->GetNumberField(TEXT("speed"));
-       ShotInfo.Damage = JsonObj->GetNumberField(TEXT("damage"));
+       ShotInfo.Damage = JsonObj->GetIntegerField(TEXT("damage"));
        ShotInfo.Spread = JsonObj->GetNumberField(TEXT("spread"));
 
        OnShotReceived.Broadcast(ShotInfo);
+   }
+   else if (Type == TEXT("GRENADE_THROW"))
+   {
+       FNetworkGrenadeInfo GrenadeInfo;
+       GrenadeInfo.ThrowerId = JsonObj->GetIntegerField(TEXT("throwerId"));
+       
+       const TSharedPtr<FJsonObject>* LocationObj;
+       if (JsonObj->TryGetObjectField(TEXT("location"), LocationObj))
+       {
+           GrenadeInfo.Location = FVector(
+               (*LocationObj)->GetNumberField(TEXT("x")),
+               (*LocationObj)->GetNumberField(TEXT("y")),
+               (*LocationObj)->GetNumberField(TEXT("z"))
+           );
+       }
+
+       const TSharedPtr<FJsonObject>* VelocityObj;
+       if (JsonObj->TryGetObjectField(TEXT("velocity"), VelocityObj))
+       {
+           GrenadeInfo.Velocity = FVector(
+               (*VelocityObj)->GetNumberField(TEXT("x")),
+               (*VelocityObj)->GetNumberField(TEXT("y")),
+               (*VelocityObj)->GetNumberField(TEXT("z"))
+           );
+       }
+
+       OnGrenadeThrowReceived.Broadcast(GrenadeInfo);
    }
    else
    {
        UE_LOG(LogTemp, Warning, TEXT("Unhandled message type: %s"), *Type);
    }
 }
+
+
+
 
 void NetworkClient::ProcessError(int32 ErrorCode, const FString& ErrorMessage)
 {

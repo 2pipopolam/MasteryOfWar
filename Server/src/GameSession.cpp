@@ -136,8 +136,8 @@ bool GameSession::validateGrenadeThrow(const GrenadeInfo& grenadeInfo)
         return false;
     }
 
-    // Add velocity validation if needed
-    float maxVelocity = 1000.0f; // Adjust based on game design
+    // Validate velocity
+    float maxVelocity = 1000.0f;
     float velocityMagnitude = sqrt(
         grenadeInfo.velocity.x * grenadeInfo.velocity.x +
         grenadeInfo.velocity.y * grenadeInfo.velocity.y +
@@ -147,16 +147,21 @@ bool GameSession::validateGrenadeThrow(const GrenadeInfo& grenadeInfo)
     if (velocityMagnitude > maxVelocity) {
         return false;
     }
+
+    // Ensure only 2 players per session
+    if (getPlayerCount() > 2) {
+        return false;
+    }
     
     return true;
 }
-
 
 void GameSession::broadcastGrenadeThrow(const GrenadeInfo& grenadeInfo)
 {
     Json::Value root;
     root["type"] = "GRENADE_THROW";
     root["throwerId"] = grenadeInfo.throwerId;
+    root["sessionId"] = sessionId;
     
     Json::Value location;
     location["x"] = grenadeInfo.location.x;
@@ -173,6 +178,7 @@ void GameSession::broadcastGrenadeThrow(const GrenadeInfo& grenadeInfo)
     std::string message = Json::FastWriter().write(root);
     NetworkGameServer::getInstance().broadcastToSession(sessionId, message);
 }
+
 
 
 

@@ -84,7 +84,16 @@ struct HitInfo {
     float damageTaken;
 };
 
-// Добавим вспомогательные функции для работы с векторами
+
+
+struct GrenadeInfo {
+    int32_t throwerId;
+    Vector3 location;
+    Vector3 velocity;
+    Vector3 rotation;
+};
+
+
 namespace VectorUtils {
     inline float Distance(const Vector3& a, const Vector3& b) {
         Vector3 diff = a - b;

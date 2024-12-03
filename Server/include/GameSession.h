@@ -14,16 +14,22 @@ public:
     void initialize(EGameMapType mapType, const std::string& password);
     bool addPlayer(int32_t playerId, const std::string& inputPassword);
     void removePlayer(int32_t playerId);
+    
+    // Combat functionality
     bool validateShot(const ShotInfo& shotInfo);
-    void broadcastPlayerState(const PlayerState& state);
     void broadcastShot(const ShotInfo& shotInfo);
+    bool validateGrenadeThrow(const GrenadeInfo& grenadeInfo);
+    void broadcastGrenadeThrow(const GrenadeInfo& grenadeInfo);
+    void broadcastPlayerState(const PlayerState& state);
     void broadcastHitConfirmation(const HitInfo& hitInfo);
 
+    // Getters
     int32_t getPlayerCount() const { return static_cast<int32_t>(playerStates.size()); }
     EGameMapType getMapType() const { return mapType; }
     const std::string& getPassword() const { return password; }
     const std::vector<int32_t>& getPlayers() const;
 
+    // Session management
     void updateLastActivity();
     bool isInactive(const std::chrono::seconds& timeout) const;
     void setSessionId(int32_t id);
