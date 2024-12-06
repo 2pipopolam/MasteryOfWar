@@ -24,7 +24,7 @@ public:
     void broadcastHitConfirmation(const HitInfo& hitInfo);
 
     // Getters
-    int32_t getPlayerCount() const { return static_cast<int32_t>(playerStates.size()); }
+    int32_t getPlayerCount() const { return static_cast<int32_t>(connectedPlayers.size()); }
     EGameMapType getMapType() const { return mapType; }
     const std::string& getPassword() const { return password; }
     const std::vector<int32_t>& getPlayers() const;

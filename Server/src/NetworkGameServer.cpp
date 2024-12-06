@@ -126,10 +126,6 @@ void NetworkGameServer::stop()
 
 
 
-
-
-
-
 void NetworkGameServer::startAccept()
 {
     auto socket = std::make_shared<tcp::socket>(io_context);
@@ -137,26 +133,30 @@ void NetworkGameServer::startAccept()
         if (!error)
         {
             int32_t clientId = nextClientId++;
+
+            Json::Value response;
+            response["type"] = "PLAYER_ID_ASSIGNED";
+            response["playerId"] = clientId;
+            std::string message = Json::FastWriter().write(response);
+            message += '\0';  // Добавляем нуль-терминатор
+            boost::asio::write(*socket, boost::asio::buffer(message));
             
+            std::cout << "Sent PLAYER_ID_ASSIGNED, client ID: " << clientId << std::endl;
+
             std::lock_guard<std::mutex> lock(clientsMutex);
             clientSockets[clientId] = socket;
             lastActivityTime[clientId] = std::chrono::steady_clock::now();
             
-            std::cout << "New client connected. ID: " << clientId << std::endl;
-            
-            // Start async read
             auto buffer = std::make_shared<std::array<char, 4096>>();
             startRead(socket, buffer, clientId);
         }
-        else
-        {
-            std::cerr << "Accept error: " << error.message() << std::endl;
-        }
         
-        // Continue accepting new connections
         startAccept();
     });
 }
+
+
+
 
 void NetworkGameServer::startRead(std::shared_ptr<tcp::socket> socket, 
     std::shared_ptr<std::array<char, 4096>> buffer,
@@ -213,6 +213,11 @@ void NetworkGameServer::handleClientMessage(const std::string& msg, tcp::socket&
            }
        }
 
+       if (messageType == "REQUEST_PLAYER_ID") {
+           return;
+       }
+
+
        if (messageType == "CREATE_SESSION") 
        {
            int32_t hostId = root["hostId"].asInt();
@@ -238,38 +243,42 @@ void NetworkGameServer::handleClientMessage(const std::string& msg, tcp::socket&
 
 
 
-      else if (messageType == "JOIN_SESSION") 
-      {
-        int32_t sessionId = root["sessionId"].asInt();
-        int32_t playerId = root["playerId"].asInt();
-        std::string password = root["password"].asString();
-        
-        std::cout << "Join session request - SessionID: " << sessionId 
-                  << ", PlayerID: " << playerId << std::endl;
-        
-        bool success = joinGameSession(sessionId, playerId, password);
-        
-        // Отправляем ответ присоединившемуся клиенту
-        Json::Value response;
-        response["type"] = "SESSION_JOINED";
-        response["success"] = success;
-        response["sessionId"] = sessionId;
-        
-        std::string responseStr = Json::FastWriter().write(response);
-        boost::asio::write(socket, boost::asio::buffer(responseStr));
+        else if (messageType == "JOIN_SESSION") 
+{
+    int32_t sessionId = root["sessionId"].asInt();
+    int32_t playerId = root["playerId"].asInt();
+    std::string password = root["password"].asString();
+    
+    std::cout << "Join session request - Session: " << sessionId 
+              << ", Player: " << playerId << std::endl;
+    
+    bool success = joinGameSession(sessionId, playerId, password);
+    
+    std::cout << "Join session result - Success: " << success << std::endl;
 
-        // Если успешно присоединились, отправляем информацию всем игрокам в сессии
-        if (success)
-        {
-            Json::Value notification;
-            notification["type"] = "PLAYER_JOINED";
-            notification["playerId"] = playerId;
-            notification["sessionId"] = sessionId;
-            
-            std::string notificationStr = Json::FastWriter().write(notification);
-            broadcastToSession(sessionId, notificationStr);
-        }
-      }
+    // Отправляем ответ присоединившемуся клиенту
+    Json::Value response;
+    response["type"] = "SESSION_JOINED";
+    response["success"] = success;
+    response["sessionId"] = sessionId;
+    
+    std::string responseStr = Json::FastWriter().write(response);
+    boost::asio::write(socket, boost::asio::buffer(responseStr));
+    std::cout << "Sent join response: " << responseStr << std::endl;
+
+    if (success)
+    {
+        Json::Value notification;
+        notification["type"] = "PLAYER_JOINED";
+        notification["playerId"] = playerId;
+        notification["sessionId"] = sessionId;
+        
+        std::string notificationStr = Json::FastWriter().write(notification);
+        broadcastToSession(sessionId, notificationStr);
+        std::cout << "Broadcast join notification to session" << std::endl;
+    }
+}
+
 
 
 
@@ -286,45 +295,52 @@ void NetworkGameServer::handleClientMessage(const std::string& msg, tcp::socket&
        {
            handleHitConfirmation(root, socket);
        }
-       else if (messageType == "GET_SESSIONS") 
-       {
-           std::cout << "Handling GET_SESSIONS request" << std::endl;
-           auto sessions = getActiveSessions();
-           
-           Json::Value response;
-           response["type"] = "SESSIONS_LIST";
-           Json::Value sessionsArray(Json::arrayValue);
-           
-           std::cout << "Preparing response with " << sessions.size() << " sessions" << std::endl;
-           
-           for (const auto& session : sessions) 
-           {
-               Json::Value sessionObj;
-               sessionObj["sessionId"] = session.sessionId;
-               sessionObj["mapType"] = static_cast<int>(session.mapType);
-               sessionObj["currentPlayers"] = session.currentPlayers;
-               sessionObj["hasPassword"] = session.hasPassword;
-               sessionObj["sessionName"] = "Session " + std::to_string(session.sessionId);
-               sessionsArray.append(sessionObj);
-               
-               std::cout << "Added session to response - ID: " << session.sessionId 
-                         << ", MapType: " << static_cast<int>(session.mapType)
-                         << ", Players: " << session.currentPlayers << std::endl;
-           }
-           
-           response["sessions"] = sessionsArray;
-           std::string responseStr = Json::FastWriter().write(response);
-           
-           std::cout << "Sending sessions response: " << responseStr << std::endl;
-           
-           try {
-               boost::asio::write(socket, boost::asio::buffer(responseStr));
-               std::cout << "Sessions response sent successfully" << std::endl;
-           }
-           catch (const boost::system::system_error& e) {
-               std::cerr << "Error sending sessions response: " << e.what() << std::endl;
-           }
-       }
+
+
+
+else if (messageType == "GET_SESSIONS") 
+{
+    std::cout << "Handling GET_SESSIONS request" << std::endl;
+    auto sessions = getActiveSessions();
+    
+    Json::Value response;
+    response["type"] = "SESSIONS_LIST";
+    Json::Value sessionsArray(Json::arrayValue);
+    
+    std::cout << "Found " << sessions.size() << " available sessions" << std::endl;
+    
+    for (const auto& session : sessions) 
+    {
+        Json::Value sessionObj;
+        sessionObj["sessionId"] = session.sessionId;
+        sessionObj["mapType"] = static_cast<int>(session.mapType);
+        sessionObj["currentPlayers"] = session.currentPlayers;
+        sessionObj["hasPassword"] = session.hasPassword;
+        sessionObj["sessionName"] = "Session " + std::to_string(session.sessionId);
+        sessionsArray.append(sessionObj);
+        
+        std::cout << "Added session to response:" << std::endl
+                  << "  ID: " << session.sessionId << std::endl
+                  << "  MapType: " << static_cast<int>(session.mapType) << std::endl
+                  << "  Players: " << session.currentPlayers << std::endl;
+    }
+    
+    response["sessions"] = sessionsArray;
+    std::string responseStr = Json::FastWriter().write(response) + '\0';  // Добавляем нуль-терминатор
+    
+    std::cout << "Sending sessions response: " << responseStr << std::endl;
+    
+    try {
+        boost::asio::write(socket, boost::asio::buffer(responseStr));
+        std::cout << "Sessions response sent successfully (" << responseStr.length() << " bytes)" << std::endl;
+    }
+    catch (const boost::system::system_error& e) {
+        std::cerr << "Error sending sessions response: " << e.what() << std::endl;
+    }
+}
+
+
+
        else {
            std::cerr << "Unknown message type: " << messageType << std::endl;
        }
@@ -574,33 +590,50 @@ bool NetworkGameServer::joinGameSession(int32_t sessionId, int32_t playerId, con
 }
 
 
+
+
 std::vector<GameSessionInfo> NetworkGameServer::getActiveSessions()
 {
     std::vector<GameSessionInfo> sessions;
     std::lock_guard<std::mutex> lock(sessionsMutex);
     
-    std::cout << "Getting active sessions, total count: " << activeSessions.size() << std::endl;
+    std::cout << "\nGetting active sessions:" << std::endl;
+    std::cout << "Total sessions in memory: " << activeSessions.size() << std::endl;
     
     for (const auto& [sessionId, session] : activeSessions)
     {
-        if (session->getPlayerCount() < 2) // Only return sessions with space available
+        std::cout << "\nAnalyzing session " << sessionId << ":" << std::endl;
+        
+        int32_t playerCount = session->getPlayerCount();
+        EGameMapType mapType = session->getMapType();
+        bool hasPassword = !session->getPassword().empty();
+        
+        std::cout << "  Players: " << playerCount << "/2" << std::endl;
+        std::cout << "  MapType: " << static_cast<int>(mapType) << std::endl;
+        std::cout << "  HasPassword: " << (hasPassword ? "yes" : "no") << std::endl;
+
+        if (playerCount < 2)
         {
             GameSessionInfo info;
             info.sessionId = sessionId;
-            info.mapType = session->getMapType();
-            info.currentPlayers = session->getPlayerCount();
-            info.hasPassword = !session->getPassword().empty();
+            info.mapType = mapType;
+            info.currentPlayers = playerCount;
+            info.hasPassword = hasPassword;
             info.sessionName = "Session " + std::to_string(sessionId);
             sessions.push_back(info);
             
-            std::cout << "Adding session: " << sessionId << ", MapType: " 
-                      << static_cast<int>(info.mapType) << ", Players: " 
-                      << info.currentPlayers << std::endl;
+            std::cout << "  Status: Added to response (has free slots)" << std::endl;
+        }
+        else 
+        {
+            std::cout << "  Status: Skipped (session is full)" << std::endl;
         }
     }
     
+    std::cout << "\nReturning " << sessions.size() << " available sessions" << std::endl;
     return sessions;
 }
+
 
 
 
@@ -622,6 +655,8 @@ void NetworkGameServer::broadcastToSession(int32_t sessionId, const std::string&
     }
 }
 
+
+
 void NetworkGameServer::broadcastToPlayer(int32_t playerId, const std::string& message)
 {
     std::lock_guard<std::mutex> lock(clientsMutex);
@@ -630,16 +665,14 @@ void NetworkGameServer::broadcastToPlayer(int32_t playerId, const std::string& m
     {
         try 
         {
-            boost::asio::write(*(it->second), boost::asio::buffer(message));
+            // Добавляем нуль-терминатор к сообщению
+            std::string messageWithNull = message + '\0';
+            boost::asio::write(*(it->second), boost::asio::buffer(messageWithNull));
         }
         catch (const std::exception& e) 
         {
             std::cerr << "Error broadcasting to player " << playerId << ": " << e.what() << std::endl;
             handleDisconnect(playerId);
         }
-    }
-    else
-    {
-        std::cerr << "Failed to broadcast: player " << playerId << " not found" << std::endl;
     }
 }

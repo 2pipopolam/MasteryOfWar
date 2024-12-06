@@ -20,6 +20,7 @@ bool UMasteryOfWarGameInstance::InitializeNetworking(const FString& IPAddress, i
     if (!NetworkConnection)
     {
         NetworkConnection = MakeUnique<NetworkClient>();
+        NetworkConnection->SetUserId(CurrentUserId); // Установить User ID
         
         // Subscribe to network events
         NetworkConnection->OnError.AddUObject(this, &UMasteryOfWarGameInstance::HandleNetworkError);
@@ -31,6 +32,8 @@ bool UMasteryOfWarGameInstance::InitializeNetworking(const FString& IPAddress, i
     
     return NetworkConnection->Connect(IPAddress, Port);
 }
+
+
 
 bool UMasteryOfWarGameInstance::CreateGameSession(EGameMapType MapType, const FString& Password)
 {

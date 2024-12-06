@@ -25,8 +25,14 @@ NetworkClient::~NetworkClient()
 
 void NetworkClient::SetPlayerId(int32 NewPlayerId)
 {
-   PlayerId = NewPlayerId;
-   UE_LOG(LogTemp, Warning, TEXT("NetworkClient PlayerId set to: %d"), PlayerId);
+    PlayerId = NewPlayerId;
+    UE_LOG(LogTemp, Warning, TEXT("NetworkClient Client ID set to: %d"), PlayerId);
+}
+
+
+void NetworkClient::SetUserId(int32 NewUserId)
+{
+    UserId = NewUserId;
 }
 
 
@@ -124,29 +130,37 @@ bool NetworkClient::CreateSession(EGameMapType MapType, const FString& Password)
    return SendMessage(Message);
 }
 
+
+
 bool NetworkClient::JoinSession(int32 SessionId, const FString& Password)
 {
-   if (!IsConnected())
-   {
-       SetLastError(ENetworkError::ConnectionFailed, TEXT("Not connected to server"));
-       return false;
-   }
+    if (!IsConnected())
+    {
+        SetLastError(ENetworkError::ConnectionFailed, TEXT("Not connected to server"));
+        return false;
+    }
 
-   UE_LOG(LogTemp, Warning, TEXT("Sending join request - Session: %d, Player: %d"), 
-       SessionId, PlayerId);
+    UE_LOG(LogTemp, Warning, TEXT("Sending join request - Session: %d, Client ID: %d"), 
+        SessionId, PlayerId);
 
-   TSharedPtr<FJsonObject> JsonObj = MakeShared<FJsonObject>();
-   JsonObj->SetStringField(TEXT("type"), TEXT("JOIN_SESSION"));
-   JsonObj->SetNumberField(TEXT("sessionId"), SessionId);
-   JsonObj->SetNumberField(TEXT("playerId"), PlayerId);
-   JsonObj->SetStringField(TEXT("password"), Password);
+    TSharedPtr<FJsonObject> JsonObj = MakeShared<FJsonObject>();
+    JsonObj->SetStringField(TEXT("type"), TEXT("JOIN_SESSION"));
+    JsonObj->SetNumberField(TEXT("sessionId"), SessionId);
+    JsonObj->SetNumberField(TEXT("playerId"), PlayerId); 
+    JsonObj->SetStringField(TEXT("password"), Password);
 
-   FString Message;
-   TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Message);
-   FJsonSerializer::Serialize(JsonObj.ToSharedRef(), Writer);
+    FString Message;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Message);
+    FJsonSerializer::Serialize(JsonObj.ToSharedRef(), Writer);
 
-   return SendMessage(Message);
+    bool sent = SendMessage(Message);
+    UE_LOG(LogTemp, Warning, TEXT("Join request sent: %s"), sent ? TEXT("true") : TEXT("false"));
+    return sent;
 }
+
+
+
+
 
 void NetworkClient::RequestSessionsList()
 {
@@ -333,11 +347,15 @@ void NetworkClient::StartReceiveThread()
    });
 }
 
+
 void NetworkClient::ReceiveLoop()
 {
+   constexpr int32 BufferSize = 4096;
    TArray<uint8> ReceivedData;
-   ReceivedData.SetNumUninitialized(1024);
-
+   ReceivedData.SetNumUninitialized(BufferSize);
+   
+   TArray<uint8> MessageBuffer; // Буфер для накопления полного сообщения
+   
    while (bConnected && Socket)
    {
        int32 BytesRead = 0;
@@ -345,11 +363,49 @@ void NetworkClient::ReceiveLoop()
        {
            if (BytesRead > 0)
            {
-               FString ReceivedMessage = UTF8_TO_TCHAR(ReceivedData.GetData());
-               AsyncTask(ENamedThreads::GameThread, [this, ReceivedMessage]()
+               // Добавляем полученные данные в буфер сообщения
+               MessageBuffer.Append(ReceivedData.GetData(), BytesRead);
+               
+               // Ищем конец сообщения (нуль-терминатор)
+               int32 ProcessedBytes = 0;
+               while (ProcessedBytes < MessageBuffer.Num())
                {
-                   HandleMessage(ReceivedMessage);
-               });
+                   // Ищем нуль-терминатор, означающий конец JSON сообщения
+                   int32 MessageEnd = -1;
+                   for (int32 i = ProcessedBytes; i < MessageBuffer.Num(); ++i)
+                   {
+                       if (MessageBuffer[i] == 0)
+                       {
+                           MessageEnd = i;
+                           break;
+                       }
+                   }
+                   
+                   if (MessageEnd != -1)
+                   {
+                       // Нашли полное сообщение
+                       int32 MessageLength = MessageEnd - ProcessedBytes;
+                       FString ReceivedMessage = FString(UTF8_TO_TCHAR(&MessageBuffer[ProcessedBytes]));
+                       
+                       AsyncTask(ENamedThreads::GameThread, [this, ReceivedMessage]()
+                       {
+                           HandleMessage(ReceivedMessage);
+                       });
+                       
+                       ProcessedBytes = MessageEnd + 1;
+                   }
+                   else
+                   {
+                       // Неполное сообщение, ждем следующей порции данных
+                       break;
+                   }
+               }
+               
+               // Удаляем обработанные данные из буфера
+               if (ProcessedBytes > 0)
+               {
+                   MessageBuffer.RemoveAt(0, ProcessedBytes);
+               }
            }
        }
        else
@@ -364,28 +420,35 @@ void NetworkClient::ReceiveLoop()
 
 void NetworkClient::HandleMessage(const FString& Message)
 {
-   TSharedPtr<FJsonObject> JsonObj;
-   TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Message);
-   if (!FJsonSerializer::Deserialize(Reader, JsonObj))
-   {
-       UE_LOG(LogTemp, Error, TEXT("Failed to parse message: %s"), *Message);
-       return;
-   }
+    // Добавим лог для отладки
+    UE_LOG(LogTemp, Warning, TEXT("Raw message received: %s"), *Message);
+    
+    TSharedPtr<FJsonObject> JsonObj;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Message);
+    if (!FJsonSerializer::Deserialize(Reader, JsonObj))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to parse message: %s"), *Message);
+        return;
+    }
 
-   FString Type = JsonObj->GetStringField(TEXT("type"));
-   UE_LOG(LogTemp, Warning, TEXT("Received message type: %s"), *Type);
+    FString Type = JsonObj->GetStringField(TEXT("type"));
+    UE_LOG(LogTemp, Warning, TEXT("Received message type: %s"), *Type);
 
-   // Handle PLAYER_ID_ASSIGNED message first, as it can be processed without a valid PlayerId
-   if (Type == TEXT("PLAYER_ID_ASSIGNED"))
-   {
-       if (JsonObj->HasField(TEXT("playerId")))
-       {
-           int32 NewPlayerId = JsonObj->GetIntegerField(TEXT("playerId"));
-           SetPlayerId(NewPlayerId);
-           UE_LOG(LogTemp, Warning, TEXT("Player ID assigned: %d"), NewPlayerId);
-       }
-       return;
-   }
+    if (Type == TEXT("PLAYER_ID_ASSIGNED"))
+    {
+        if (JsonObj->HasField(TEXT("playerId")))
+        {
+            int32 NewPlayerId = JsonObj->GetIntegerField(TEXT("playerId"));
+            SetPlayerId(NewPlayerId);
+            OnPlayerIdAssigned.Broadcast(NewPlayerId);
+            UE_LOG(LogTemp, Warning, TEXT("Successfully assigned player ID: %d"), NewPlayerId);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("PLAYER_ID_ASSIGNED message missing playerId field"));
+        }
+        return;
+    }
 
    // Process other message types
    if (Type == TEXT("SESSION_CREATED"))

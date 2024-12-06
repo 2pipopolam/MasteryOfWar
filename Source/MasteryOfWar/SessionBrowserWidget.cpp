@@ -209,23 +209,33 @@ void USessionBrowserWidget::OnBackClicked()
     UGameplayStatics::OpenLevel(this, TEXT("/Game/MofW/Maps/ModeSelectionMap"));
 }
 
+
+
+
+
+
+
 void USessionBrowserWidget::RefreshSessionsList()
 {
     if (!GameInstance || !SessionsList) return;
     
-    // Clear existing entries
-    SessionsList->ClearChildren();
-    
-    // Request new sessions list
-    if (GameInstance->IsConnectedToServer())
+    if (NetworkClient* Client = GameInstance->GetNetworkClient())
     {
-        if (NetworkClient* Client = GameInstance->GetNetworkClient())
+        if (Client->GetPlayerId() <= 0)
         {
-            UE_LOG(LogTemp, Warning, TEXT("Requesting sessions list"));
-            Client->RequestSessionsList();
+            UE_LOG(LogTemp, Warning, TEXT("Waiting for valid player ID before refreshing sessions"));
+            return;
         }
+        
+        UE_LOG(LogTemp, Warning, TEXT("Requesting sessions list"));
+        Client->RequestSessionsList();
     }
 }
+
+
+
+
+
 
 void USessionBrowserWidget::AddSessionEntry(const FSessionInfo& SessionInfo)
 {

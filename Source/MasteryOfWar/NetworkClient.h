@@ -29,6 +29,9 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnShotReceived, const FNetworkShotInfo& /*ShotInfo*/);
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnGrenadeThrowReceived, const FNetworkGrenadeInfo& /*GrenadeInfo*/);
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionsListReceived, const TArray<FSessionInfo>& /*Sessions*/);
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerIdAssigned, int32);
+    
     
     NetworkClient();
     ~NetworkClient();
@@ -36,6 +39,7 @@ public:
 
     DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSessionJoined, bool /*Success*/, int32 /*SessionId*/);
     FOnSessionJoined OnSessionJoined;
+    
     
     bool Connect(const FString& IPAddress, int32 Port);
     void Disconnect();
@@ -60,11 +64,15 @@ public:
     FOnGrenadeThrowReceived OnGrenadeThrowReceived;
     FOnSessionsListReceived OnSessionsListReceived;
 
+    FOnPlayerIdAssigned OnPlayerIdAssigned;
+
 
     void SetPlayerId(int32 NewPlayerId);
+    void SetUserId(int32 NewUserId);
     
 private:
     int32 PlayerId;
+    int32 UserId;  
     bool bConnected;
     TSharedPtr<FSocket> Socket;
     TSharedPtr<FInternetAddr> RemoteAddress;
