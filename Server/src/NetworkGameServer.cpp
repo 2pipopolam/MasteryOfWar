@@ -243,7 +243,7 @@ void NetworkGameServer::handleClientMessage(const std::string& msg, tcp::socket&
 
 
 
-        else if (messageType == "JOIN_SESSION") 
+else if (messageType == "JOIN_SESSION") 
 {
     int32_t sessionId = root["sessionId"].asInt();
     int32_t playerId = root["playerId"].asInt();
@@ -254,18 +254,16 @@ void NetworkGameServer::handleClientMessage(const std::string& msg, tcp::socket&
     
     bool success = joinGameSession(sessionId, playerId, password);
     
-    std::cout << "Join session result - Success: " << success << std::endl;
-
-    // Отправляем ответ присоединившемуся клиенту
+    // Ответ присоединившемуся клиенту
     Json::Value response;
     response["type"] = "SESSION_JOINED";
     response["success"] = success;
     response["sessionId"] = sessionId;
     
-    std::string responseStr = Json::FastWriter().write(response);
+    std::string responseStr = Json::FastWriter().write(response) + '\0';  // Добавляем нуль-терминатор
     boost::asio::write(socket, boost::asio::buffer(responseStr));
-    std::cout << "Sent join response: " << responseStr << std::endl;
 
+    // Если успешно, отправляем уведомление всем игрокам в сессии
     if (success)
     {
         Json::Value notification;
@@ -273,9 +271,8 @@ void NetworkGameServer::handleClientMessage(const std::string& msg, tcp::socket&
         notification["playerId"] = playerId;
         notification["sessionId"] = sessionId;
         
-        std::string notificationStr = Json::FastWriter().write(notification);
+        std::string notificationStr = Json::FastWriter().write(notification) + '\0';  // Добавляем нуль-терминатор
         broadcastToSession(sessionId, notificationStr);
-        std::cout << "Broadcast join notification to session" << std::endl;
     }
 }
 
@@ -657,6 +654,7 @@ void NetworkGameServer::broadcastToSession(int32_t sessionId, const std::string&
 
 
 
+
 void NetworkGameServer::broadcastToPlayer(int32_t playerId, const std::string& message)
 {
     std::lock_guard<std::mutex> lock(clientsMutex);
@@ -665,7 +663,6 @@ void NetworkGameServer::broadcastToPlayer(int32_t playerId, const std::string& m
     {
         try 
         {
-            // Добавляем нуль-терминатор к сообщению
             std::string messageWithNull = message + '\0';
             boost::asio::write(*(it->second), boost::asio::buffer(messageWithNull));
         }
