@@ -2,6 +2,50 @@
 #include "NetworkGameServer.h"
 #include <json/json.h>
 
+
+
+
+
+Json::Value GameSession::getSessionState() const 
+{
+    Json::Value state;
+    state["sessionId"] = sessionId;
+    state["mapType"] = static_cast<int>(mapType);
+    
+    Json::Value players(Json::arrayValue);
+    for (const auto& [playerId, playerState] : playerStates) {
+        Json::Value player;
+        player["playerId"] = playerId;
+        
+        Json::Value position;
+        position["x"] = playerState.position.x;
+        position["y"] = playerState.position.y;
+        position["z"] = playerState.position.z;
+        player["position"] = position;
+        
+        Json::Value rotation;
+        rotation["x"] = playerState.rotation.x;
+        rotation["y"] = playerState.rotation.y;
+        rotation["z"] = playerState.rotation.z;
+        player["rotation"] = rotation;
+        
+        player["isCrouching"] = playerState.isCrouching;
+        player["isWalking"] = playerState.isWalking;
+        
+        Json::Value weapon;
+        weapon["isFiring"] = playerState.weapon.isFiring;
+        weapon["isReloading"] = playerState.weapon.isReloading;
+        weapon["currentAmmo"] = playerState.weapon.currentAmmo;
+        player["weapon"] = weapon;
+        
+        players.append(player);
+    }
+    state["players"] = players;
+    return state;
+}
+
+
+
 void GameSession::broadcastPlayerState(const PlayerState& state)
 {
     Json::Value root;

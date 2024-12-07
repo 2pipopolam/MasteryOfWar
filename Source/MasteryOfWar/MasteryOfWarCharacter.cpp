@@ -345,40 +345,6 @@ void AMasteryOfWarCharacter::Tick(float DeltaTime)
 }
 
 
-void AMasteryOfWarCharacter::SendNetworkUpdate()
-{
-    if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
-    {
-        if (NetworkClient* Client = GameInstance->GetNetworkClient())
-        {
-            FNetworkPlayerState State;
-            State.PlayerId = GetPlayerId();
-            State.Position = GetActorLocation();
-            State.Rotation = GetActorRotation();
-            State.bIsCrouching = bIsCrouched;
-            State.bIsWalking = bIsWalking;
-            
-            if (CurrentWeapon)
-            {
-                State.bIsFiring = CurrentWeapon->IsFiring();
-                State.bIsReloading = CurrentWeapon->IsReloading();
-                State.CurrentAmmo = CurrentWeapon->GetCurrentAmmo();
-                State.WeaponType = CurrentWeapon->GetWeaponType();
-            }
-            else
-            {
-                State.bIsFiring = false;
-                State.bIsReloading = false;
-                State.CurrentAmmo = 0;
-                State.WeaponType = EWeaponType::None;
-            }
-            
-            Client->SendPlayerState(State);
-        }
-    }
-}
-
-
 
 void AMasteryOfWarCharacter::EquipWeaponForMode(EWeaponType WeaponType)
 {
@@ -599,26 +565,60 @@ void AMasteryOfWarCharacter::ToggleDebugLine()
 }
 
 
+
 void AMasteryOfWarCharacter::UpdateFromNetworkState(const FNetworkPlayerState& State)
 {
-    SetActorLocation(State.Position);
-    SetActorRotation(State.Rotation);
-    
-    if (State.bIsCrouching && !bIsCrouched)
-        Crouch();
-    else if (!State.bIsCrouching && bIsCrouched)
-        UnCrouch();
-        
-    bIsWalking = State.bIsWalking;
-    
-    if (CurrentWeapon)
+    if (!IsLocallyControlled())
     {
-        if (State.bIsFiring && !CurrentWeapon->IsFiring())
-            CurrentWeapon->StartFiring();
-        else if (!State.bIsFiring && CurrentWeapon->IsFiring())
-            CurrentWeapon->StopFiring();
+        SetActorLocation(State.Position);
+        SetActorRotation(State.Rotation);
+        
+        if (State.bIsCrouching && !bIsCrouched)
+            Crouch();
+        else if (!State.bIsCrouching && bIsCrouched)
+            UnCrouch();
             
-        if (State.bIsReloading && !CurrentWeapon->IsReloading())
-            CurrentWeapon->Reload();
+        bIsWalking = State.bIsWalking;
+        GetCharacterMovement()->MaxWalkSpeed = bIsWalking ? WalkSpeed : DefaultSpeed;
+        
+        if (CurrentWeapon)
+        {
+            if (State.bIsFiring && !CurrentWeapon->IsFiring())
+                CurrentWeapon->StartFiring();
+            else if (!State.bIsFiring && CurrentWeapon->IsFiring())
+                CurrentWeapon->StopFiring();
+                
+            if (State.bIsReloading && !CurrentWeapon->IsReloading())
+                CurrentWeapon->Reload();
+        }
+    }
+}
+
+void AMasteryOfWarCharacter::SendNetworkUpdate()
+{
+    if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
+    {
+        if (NetworkClient* Client = GameInstance->GetNetworkClient())
+        {
+            if (IsLocallyControlled()) // Добавить эту проверку
+            {
+                FNetworkPlayerState State;
+                State.PlayerId = GetPlayerId();
+                State.Position = GetActorLocation();
+                State.Rotation = GetActorRotation();
+                State.bIsCrouching = bIsCrouched;
+                State.bIsWalking = bIsWalking;
+                
+                if (CurrentWeapon)
+                {
+                    State.bIsFiring = CurrentWeapon->IsFiring();
+                    State.bIsReloading = CurrentWeapon->IsReloading();
+                    State.CurrentAmmo = CurrentWeapon->GetCurrentAmmo();
+                    State.WeaponType = CurrentWeapon->GetWeaponType();
+                }
+                
+                Client->SendPlayerState(State);
+            }
+        }
     }
 }

@@ -142,7 +142,27 @@ struct FNetworkGrenadeInfo
     FVector Velocity;
 };
 
+
+USTRUCT(BlueprintType)
+struct FNetworkSessionState
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadWrite, Category = "Network")
+    int32 SessionId;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Network")
+    TArray<FNetworkPlayerState> Players;
+
+
+    FNetworkSessionState()
+        : SessionId(-1)
+    {
+    }
+};
+
 // Delegate declarations for network events
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnNetworkError, int32, const FString&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionCreated, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionsList, const TArray<FSessionInfo>&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionStateReceived, const FNetworkSessionState&);

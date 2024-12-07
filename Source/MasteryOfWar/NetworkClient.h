@@ -31,6 +31,9 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionsListReceived, const TArray<FSessionInfo>& /*Sessions*/);
 
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerIdAssigned, int32);
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FNetworkPlayerJoined, int32);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FNetworkPlayerLeft, int32);
     
     
     NetworkClient();
@@ -39,6 +42,9 @@ public:
 
     DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSessionJoined, bool /*Success*/, int32 /*SessionId*/);
     FOnSessionJoined OnSessionJoined;
+
+
+    FOnSessionStateReceived OnSessionStateReceived;
     
     
     bool Connect(const FString& IPAddress, int32 Port);
@@ -55,6 +61,8 @@ public:
     void SendHitConfirm(const FNetworkHitInfo& HitInfo);
     
     int32 GetPlayerId() const { return PlayerId; }
+
+    void RequestSessionState();
     
     // Network event delegates
     FOnNetworkError OnError;
@@ -66,6 +74,8 @@ public:
 
     FOnPlayerIdAssigned OnPlayerIdAssigned;
 
+    FNetworkPlayerJoined OnPlayerJoined;
+    FNetworkPlayerLeft OnPlayerLeft;
 
     void SetPlayerId(int32 NewPlayerId);
     void SetUserId(int32 NewUserId);
@@ -80,6 +90,7 @@ private:
     FString LastErrorMessage;
 
     int32 CurrentSessionId = -1;
+
     
     bool SendMessage(const FString& Message);
     void StartReceiveThread();

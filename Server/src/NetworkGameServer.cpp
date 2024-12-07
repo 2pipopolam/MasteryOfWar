@@ -338,6 +338,37 @@ else if (messageType == "GET_SESSIONS")
 
 
 
+
+    else if (messageType == "REQUEST_SESSION_STATE") 
+    {
+        int32_t sessionId = root["sessionId"].asInt();
+        int32_t playerId = root["playerId"].asInt();
+        
+        std::cout << "Handling REQUEST_SESSION_STATE - Session: " << sessionId 
+                  << ", Player: " << playerId << std::endl;
+        
+        std::lock_guard<std::mutex> lock(sessionsMutex);
+        auto it = activeSessions.find(sessionId);
+        if (it != activeSessions.end()) 
+        {
+            Json::Value response;
+            response["type"] = "SESSION_STATE";
+            response["sessionId"] = sessionId;
+            response["state"] = it->second->getSessionState();
+            
+            std::string responseStr = Json::FastWriter().write(response) + '\0';
+            boost::asio::write(socket, boost::asio::buffer(responseStr));
+            
+            std::cout << "Sent session state to player " << playerId << std::endl;
+        }
+        else 
+        {
+            std::cerr << "Session " << sessionId << " not found" << std::endl;
+        }
+    }
+
+
+
        else {
            std::cerr << "Unknown message type: " << messageType << std::endl;
        }

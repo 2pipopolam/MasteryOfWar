@@ -614,11 +614,101 @@ void NetworkClient::HandleMessage(const FString& Message)
 
        OnGrenadeThrowReceived.Broadcast(GrenadeInfo);
    }
-   else
+
+
+   else if (Type == TEXT("PLAYER_JOINED"))
    {
-       UE_LOG(LogTemp, Warning, TEXT("Unhandled message type: %s"), *Type);
+       int32 NewPlayerId = JsonObj->GetIntegerField(TEXT("playerId")); // Переименовываем переменную
+       OnPlayerJoined.Broadcast(NewPlayerId);
    }
+   else if (Type == TEXT("PLAYER_LEFT"))
+   {
+       int32 NewPlayerId = JsonObj->GetIntegerField(TEXT("playerId")); // Переименовываем переменную
+       OnPlayerLeft.Broadcast(NewPlayerId);
+   }
+
+
+
+// В NetworkClient.cpp найти метод HandleMessage и заменить блок обработки SESSION_STATE:
+
+else if (Type == TEXT("SESSION_STATE")) 
+{
+    int32 SessionId = JsonObj->GetIntegerField(TEXT("sessionId"));
+    CurrentSessionId = SessionId;
+    
+    const TSharedPtr<FJsonObject>* StateObj;
+    if (JsonObj->TryGetObjectField(TEXT("state"), StateObj))
+    {
+        const TArray<TSharedPtr<FJsonValue>>* PlayersArray;
+        if ((*StateObj)->TryGetArrayField(TEXT("players"), PlayersArray)) 
+        {
+            FNetworkSessionState SessionState;
+            SessionState.SessionId = SessionId;
+            
+            for (const auto& PlayerValue : *PlayersArray) 
+            {
+                const TSharedPtr<FJsonObject>& PlayerObj = PlayerValue->AsObject();
+                FNetworkPlayerState PlayerState;
+                
+                PlayerState.PlayerId = PlayerObj->GetIntegerField(TEXT("playerId"));
+                
+                // Position
+                const TSharedPtr<FJsonObject>* PositionObj;
+                if (PlayerObj->TryGetObjectField(TEXT("position"), PositionObj))
+                {
+                    PlayerState.Position = FVector(
+                        (*PositionObj)->GetNumberField(TEXT("x")),
+                        (*PositionObj)->GetNumberField(TEXT("y")),
+                        (*PositionObj)->GetNumberField(TEXT("z"))
+                    );
+                }
+                
+                // Rotation
+                const TSharedPtr<FJsonObject>* RotationObj;
+                if (PlayerObj->TryGetObjectField(TEXT("rotation"), RotationObj))
+                {
+                    PlayerState.Rotation = FRotator(
+                        (*RotationObj)->GetNumberField(TEXT("x")),
+                        (*RotationObj)->GetNumberField(TEXT("y")),
+                        (*RotationObj)->GetNumberField(TEXT("z"))
+                    );
+                }
+                
+                PlayerState.bIsCrouching = PlayerObj->GetBoolField(TEXT("isCrouching"));
+                PlayerState.bIsWalking = PlayerObj->GetBoolField(TEXT("isWalking"));
+                
+                const TSharedPtr<FJsonObject>* WeaponObj;
+                if (PlayerObj->TryGetObjectField(TEXT("weapon"), WeaponObj))
+                {
+                    PlayerState.bIsFiring = (*WeaponObj)->GetBoolField(TEXT("isFiring"));
+                    PlayerState.bIsReloading = (*WeaponObj)->GetBoolField(TEXT("isReloading"));
+                    PlayerState.CurrentAmmo = (*WeaponObj)->GetIntegerField(TEXT("currentAmmo"));
+                    PlayerState.WeaponType = static_cast<EWeaponType>((*WeaponObj)->GetIntegerField(TEXT("weaponType")));
+                }
+                
+                // Добавляем состояние только для других игроков
+                if (PlayerState.PlayerId != PlayerId)
+                {
+                    SessionState.Players.Add(PlayerState);
+                    OnPlayerJoined.Broadcast(PlayerState.PlayerId);
+                }
+            }
+            
+            OnSessionStateReceived.Broadcast(SessionState);
+        }
+    }
 }
+
+
+    
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to get players array from session state"));
+    }
+}
+
+
+
 
 
 
@@ -653,4 +743,25 @@ bool NetworkClient::ValidateSessionParameters(EGameMapType MapType, const FStrin
    }
    
    return true;
+}
+
+
+void NetworkClient::RequestSessionState()
+{
+    if (!IsConnected())
+    {
+        SetLastError(ENetworkError::ConnectionFailed, TEXT("Not connected to server"));
+        return;
+    }
+
+    TSharedPtr<FJsonObject> JsonObj = MakeShared<FJsonObject>();
+    JsonObj->SetStringField(TEXT("type"), TEXT("REQUEST_SESSION_STATE"));
+    JsonObj->SetNumberField(TEXT("sessionId"), CurrentSessionId);
+    JsonObj->SetNumberField(TEXT("playerId"), PlayerId);
+
+    FString Message;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Message);
+    FJsonSerializer::Serialize(JsonObj.ToSharedRef(), Writer);
+
+    SendMessage(Message);
 }

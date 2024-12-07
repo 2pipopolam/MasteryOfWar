@@ -4,6 +4,7 @@
 #include "Engine/GameInstance.h"
 #include "NetworkClient.h"
 #include "GameModeConfig.h"
+#include "NetworkPlayerManager.h" 
 #include "MofWGameInstance.generated.h"
 
 // Объявляем делегаты
@@ -60,15 +61,35 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Networking")
     FOnSessionCreatedSignature OnNetworkCreatedSession;
 
+
+    const FGameModeConfig& GetCurrentGameModeConfig() const 
+    { 
+        return GameModeConfigs[static_cast<int32>(CurrentGameMode)]; 
+    }
+
+
+    
+    void SetPlayerManager(ANetworkPlayerManager* Manager);
+    AMasteryOfWarCharacter* SpawnNetworkPlayer(int32 PlayerId);
+
 private:
     int32 CurrentUserId;
     EGameMapType CurrentGameMode;
     TUniquePtr<NetworkClient> NetworkConnection;
 
+    UPROPERTY()
+    TArray<FGameModeConfig> GameModeConfigs;
+    
     // Network event handlers
     void HandleNetworkError(int32 ErrorCode, const FString& ErrorMessage);
     void HandleSessionCreated(int32 SessionId);
     void HandlePlayerState(const FNetworkPlayerState& State);
     void HandleShot(const FNetworkShotInfo& ShotInfo);
     void HandleGrenadeThrow(const FNetworkGrenadeInfo& GrenadeInfo);
+
+    void HandleSessionState(const FNetworkSessionState& State);
+
+
+    UPROPERTY()
+    class ANetworkPlayerManager* PlayerManager;
 };

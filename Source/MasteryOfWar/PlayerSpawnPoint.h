@@ -21,6 +21,14 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UTextRenderComponent* TextComponent;
 
+
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	void SetOccupied(bool bNewOccupied) { bIsOccupied = bNewOccupied; }
+    
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	bool IsOccupied() const { return bIsOccupied; }
+	
+
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

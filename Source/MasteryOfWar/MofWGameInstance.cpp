@@ -155,3 +155,33 @@ void UMasteryOfWarGameInstance::HandleGrenadeThrow(const FNetworkGrenadeInfo& Gr
         }
     }
 }
+
+void UMasteryOfWarGameInstance::SetPlayerManager(ANetworkPlayerManager* Manager)
+{
+    PlayerManager = Manager;
+}
+
+
+void UMasteryOfWarGameInstance::HandleSessionState(const FNetworkSessionState& State)
+{
+    for (const auto& PlayerState : State.Players)
+    {
+        if (PlayerState.PlayerId != NetworkConnection->GetPlayerId())
+        {
+            if (AMasteryOfWarCharacter* Character = SpawnNetworkPlayer(PlayerState.PlayerId))
+            {
+                Character->UpdateFromNetworkState(PlayerState);
+            }
+        }
+    }
+}
+
+
+AMasteryOfWarCharacter* UMasteryOfWarGameInstance::SpawnNetworkPlayer(int32 PlayerId)
+{
+    if (PlayerManager)
+    {
+        return PlayerManager->SpawnNetworkPlayer(PlayerId);
+    }
+    return nullptr;
+}

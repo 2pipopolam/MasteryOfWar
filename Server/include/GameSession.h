@@ -4,12 +4,22 @@
 #include <vector>
 #include <string>
 #include <chrono>
+//#include <jsoncpp/json/json.h>
+
+
+namespace Json {
+    class Value;
+}
 
 class GameSession {
 public:
-    GameSession() : sessionId(-1) {
+
+   GameSession() : sessionId(-1) {
         lastActivityTime = std::chrono::steady_clock::now();
     }
+
+    Json::Value getSessionState() const;
+
 
     void initialize(EGameMapType mapType, const std::string& password);
     bool addPlayer(int32_t playerId, const std::string& inputPassword);
