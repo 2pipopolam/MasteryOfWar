@@ -199,9 +199,17 @@ public:
     bool IsReloading() const { return MagazineState.bIsReloading; }
     int32 GetCurrentAmmo() const { return MagazineState.CurrentAmmo; }
 
+    
+    void HandleNetworkShot(const FNetworkShotInfo& ShotInfo);
+    void HandleNetworkHit(const FNetworkHitInfo& HitInfo);
+    void SynchronizeWeaponState();
+
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
+    
+    bool ValidateFireConditions() const;
+    void BroadcastWeaponState();
 
     // Weapon configuration
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Config")

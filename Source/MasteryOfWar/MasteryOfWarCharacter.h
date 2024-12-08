@@ -56,6 +56,8 @@ public:
     int32 GetPlayerId() const { return PlayerId; }
     void SetPlayerId(int32 NewId) { PlayerId = NewId; }
 
+    virtual bool CanFire() const;
+
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
@@ -88,6 +90,12 @@ protected:
     // Current mode config
     UPROPERTY()
     FGameModeConfig CurrentModeConfig;
+
+    UFUNCTION(BlueprintCallable, Category = "Character")
+    virtual bool IsAlive() const { return Health > 0; }
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+    float Health = 100.0f;
 
 private:
     bool bShowDebugLine = false;

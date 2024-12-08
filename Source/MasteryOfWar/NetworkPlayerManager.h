@@ -28,6 +28,15 @@ public:
 	
 	void CleanupOccupiedSpawnPoints();
 
+	void SynchronizePlayerStates();
+	void ValidateSpawnPoints();
+	FVector GetSpawnLocation(int32 PlayerId);
+
+	void HandleSessionState(const FNetworkSessionState& State);
+
+	UFUNCTION(BlueprintCallable, Category = "Network")
+	const TMap<int32, AMasteryOfWarCharacter*>& GetNetworkPlayers() const { return NetworkPlayers; }
+	
 private:
 	UPROPERTY()
 	TMap<int32, AMasteryOfWarCharacter*> NetworkPlayers;
@@ -36,6 +45,12 @@ private:
 	UMasteryOfWarGameInstance* GameInstance;
 
 	TArray<APlayerSpawnPoint*> OccupiedSpawnPoints;
+
+	TArray<APlayerSpawnPoint*> GetAvailableSpawnPoints();
+	void AssignSpawnPoints();
+    
+	UPROPERTY()
+	TMap<int32, APlayerSpawnPoint*> PlayerSpawnPoints;
 	
 
 	AMasteryOfWarCharacter* SpawnPlayerAtPoint(int32 PlayerId, const APlayerSpawnPoint* SpawnPoint);

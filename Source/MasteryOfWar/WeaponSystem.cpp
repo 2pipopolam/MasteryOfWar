@@ -966,12 +966,94 @@ FTransform AWeapon::GetShellEjectSocketTransform() const
 
 void AWeapon::SimulateShot(const FNetworkShotInfo& ShotInfo)
 {
-    // Воспроизводим эффекты выстрела без реального урона
     PlayFireEffects();
     HandleRecoil();
     
     if (CameraRecoilComponent)
     {
         CameraRecoilComponent->ApplyRecoil();
+    }
+}
+
+
+void AWeapon::HandleNetworkShot(const FNetworkShotInfo& ShotInfo)
+{
+    // Проигрываем визуальные и звуковые эффекты для сетевого выстрела
+    PlayFireEffects();
+    
+    if (AMasteryOfWarCharacter* Character = Cast<AMasteryOfWarCharacter>(GetOwner()))
+    {
+        if (!Character->IsLocallyControlled())
+        {
+            // Применяем отдачу и эффекты для удаленного игрока
+            HandleRecoil();
+            if (CameraRecoilComponent)
+            {
+                CameraRecoilComponent->ApplyRecoil();
+            }
+        }
+    }
+}
+
+/*
+void AWeapon::HandleNetworkHit(const FNetworkHitInfo& HitInfo)
+{
+    if (HitParticleSystem)
+    {
+        UGameplayStatics::SpawnEmitterAtLocation(
+            GetWorld(),
+            HitParticleSystem,
+            HitInfo.HitLocation,
+            HitInfo.HitNormal.Rotation()
+        );
+    }
+    
+    if (HitSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(
+            this,
+            HitSound,
+            HitInfo.HitLocation
+        );
+    }
+}
+*/
+
+bool AWeapon::ValidateFireConditions() const
+{
+    if (!GetOwner()) return false;
+    
+    AMasteryOfWarCharacter* Character = Cast<AMasteryOfWarCharacter>(GetOwner());
+    if (!Character) return false;
+    
+    if (MagazineState.bIsReloading || MagazineState.CurrentAmmo <= 0)
+        return false;
+    
+    if (!Character->CanFire())
+        return false;
+        
+    return true;
+}
+
+void AWeapon::SynchronizeWeaponState()
+{
+    if (!GetOwner()) return;
+    
+    AMasteryOfWarCharacter* Character = Cast<AMasteryOfWarCharacter>(GetOwner());
+    if (!Character || !Character->IsLocallyControlled()) return;
+    
+    if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
+    {
+        if (NetworkClient* Client = GameInstance->GetNetworkClient())
+        {
+            FNetworkPlayerState State;
+            State.PlayerId = Character->GetPlayerId();
+            State.bIsFiring = bIsFiring;
+            State.bIsReloading = MagazineState.bIsReloading;
+            State.CurrentAmmo = MagazineState.CurrentAmmo;
+            State.WeaponType = WeaponConfig.WeaponType;
+            
+            Client->SendPlayerState(State);
+        }
     }
 }

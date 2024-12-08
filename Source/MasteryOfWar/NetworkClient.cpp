@@ -136,25 +136,34 @@ bool NetworkClient::JoinSession(int32 SessionId, const FString& Password)
 {
     if (!IsConnected())
     {
-        SetLastError(ENetworkError::ConnectionFailed, TEXT("Not connected to server"));
+        UE_LOG(LogTemp, Error, TEXT("Not connected to server"));
         return false;
     }
-
-    UE_LOG(LogTemp, Warning, TEXT("Sending join request - Session: %d, Client ID: %d"), 
-        SessionId, PlayerId);
+    
+    if (PlayerId <= 0)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Invalid player ID"));
+        return false;
+    }
 
     TSharedPtr<FJsonObject> JsonObj = MakeShared<FJsonObject>();
     JsonObj->SetStringField(TEXT("type"), TEXT("JOIN_SESSION"));
     JsonObj->SetNumberField(TEXT("sessionId"), SessionId);
-    JsonObj->SetNumberField(TEXT("playerId"), PlayerId); 
+    JsonObj->SetNumberField(TEXT("playerId"), PlayerId);
     JsonObj->SetStringField(TEXT("password"), Password);
 
     FString Message;
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Message);
     FJsonSerializer::Serialize(JsonObj.ToSharedRef(), Writer);
 
+    UE_LOG(LogTemp, Warning, TEXT("Sending join request for session %d"), SessionId);
     bool sent = SendMessage(Message);
-    UE_LOG(LogTemp, Warning, TEXT("Join request sent: %s"), sent ? TEXT("true") : TEXT("false"));
+    
+    if (sent)
+    {
+        RequestSessionState();
+    }
+    
     return sent;
 }
 
@@ -746,11 +755,11 @@ bool NetworkClient::ValidateSessionParameters(EGameMapType MapType, const FStrin
 }
 
 
+
 void NetworkClient::RequestSessionState()
 {
-    if (!IsConnected())
+    if (!IsConnected() || CurrentSessionId == -1)
     {
-        SetLastError(ENetworkError::ConnectionFailed, TEXT("Not connected to server"));
         return;
     }
 
@@ -764,4 +773,5 @@ void NetworkClient::RequestSessionState()
     FJsonSerializer::Serialize(JsonObj.ToSharedRef(), Writer);
 
     SendMessage(Message);
+    UE_LOG(LogTemp, Warning, TEXT("Requested session state for session %d"), CurrentSessionId);
 }

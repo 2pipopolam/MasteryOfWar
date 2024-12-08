@@ -5,57 +5,88 @@
 #include "GameModeConfig.h"
 #include "GameHUD.h"
 #include "GameModesData.h"
+#include "NetworkStructs.h"
+#include "NetworkPlayerManager.h"
 #include "MasteryOfWarGameMode.generated.h"
 
 UCLASS(minimalapi)
 class AMasteryOfWarGameMode : public AGameModeBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AMasteryOfWarGameMode();
+    AMasteryOfWarGameMode();
 
-	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+    virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
     
-	UFUNCTION(BlueprintCallable, Category = "Game Mode")
-	void SetGameModeConfig(const FGameModeConfig& NewConfig);
+    UFUNCTION(BlueprintCallable, Category = "Game Mode")
+    void SetGameModeConfig(const FGameModeConfig& NewConfig);
 
-	UFUNCTION(BlueprintPure, Category = "Game Mode")
-	const FGameModeConfig& GetCurrentConfig() const { return CurrentModeConfig; }
+    UFUNCTION(BlueprintPure, Category = "Game Mode")
+    const FGameModeConfig& GetCurrentConfig() const { return CurrentModeConfig; }
 
-	//Function for manual mode setting 
-	UFUNCTION(BlueprintCallable, Category = "Game Mode")
-	void SetGameMode(EGameModeType NewMode);
+    UFUNCTION(BlueprintCallable, Category = "Game Mode")
+    void SetGameMode(EGameModeType NewMode);
 
-	// Function for obtaining the current mode 
-	UFUNCTION(BlueprintPure, Category = "Game Mode")
-	EGameModeType GetCurrentGameMode() const;
+    UFUNCTION(BlueprintPure, Category = "Game Mode")
+    EGameModeType GetCurrentGameMode() const;
+
+    // Network functionality
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    ANetworkPlayerManager* GetPlayerManager() const { return PlayerManager; }
+
+    // Player Management
+    UFUNCTION(BlueprintCallable, Category = "Network|Players")
+    void NotifyPlayerReady(class AMasteryOfWarCharacter* Character);
+
+    UFUNCTION(BlueprintPure, Category = "Network")
+    bool IsNetworkGame() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Game Mode")
+    void ForceRespawnPlayer(AController* Controller);
 
 protected:
-	virtual void BeginPlay() override;
-	virtual void PostLogin(APlayerController* NewPlayer) override;
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void PostLogin(APlayerController* NewPlayer) override;
+    virtual void Logout(AController* Exiting) override;
 
-	// map mode identification
-	EGameModeType DetermineGameModeFromMap(const FString& MapName);
+    // Map mode identification
+    EGameModeType DetermineGameModeFromMap(const FString& MapName);
 
-	// loading the configuration for the specified mode
-	bool LoadConfigForGameMode(EGameModeType ModeType);
+    // Config management
+    bool LoadConfigForGameMode(EGameModeType ModeType);
 
-	UPROPERTY(EditDefaultsOnly, Category = "Game Mode")
-	FGameModeConfig CurrentModeConfig;
+    // Network initialization
+    virtual void InitializeNetworking();
+    virtual void SetupNetworkCallbacks();
 
-	// Data Asset with GM configs
-	UPROPERTY(EditDefaultsOnly, Category = "Game Mode")
-	TSoftObjectPtr<UGameModesData> GameModesData;
+    // Network event handlers
+    UFUNCTION()
+    virtual void HandleNewPlayerJoined(int32 PlayerId);
+    
+    UFUNCTION()
+    virtual void HandlePlayerLeft(int32 PlayerId);
+    
+    UFUNCTION()
+    virtual void HandleSessionState(const FNetworkSessionState& State);
+    
+    UFUNCTION()
+    virtual void UpdatePlayerState(const FNetworkPlayerState& State);
 
-	UPROPERTY(EditDefaultsOnly, Category = "HUD")
-	TSubclassOf<class AGameHUD> GameHUDClass;
+    UPROPERTY(EditDefaultsOnly, Category = "Game Mode")
+    FGameModeConfig CurrentModeConfig;
 
-	//UPROPERTY(EditDefaultsOnly, Category = "UI")
-	//TSubclassOf<class UUserProfileWidget> UserProfileWidgetClass;
+    UPROPERTY(EditDefaultsOnly, Category = "Game Mode")
+    TSoftObjectPtr<UGameModesData> GameModesData;
+
+    UPROPERTY(EditDefaultsOnly, Category = "HUD")
+    TSubclassOf<class AGameHUD> GameHUDClass;
+    
+    UPROPERTY()
+    ANetworkPlayerManager* PlayerManager;
 
 private:
-	// current GM
-	UPROPERTY()
-	EGameModeType CurrentGameMode;
+    UPROPERTY()
+    EGameModeType CurrentGameMode;
 };

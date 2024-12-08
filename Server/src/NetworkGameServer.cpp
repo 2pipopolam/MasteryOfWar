@@ -254,24 +254,32 @@ else if (messageType == "JOIN_SESSION")
     
     bool success = joinGameSession(sessionId, playerId, password);
     
-    // Ответ присоединившемуся клиенту
     Json::Value response;
     response["type"] = "SESSION_JOINED";
     response["success"] = success;
     response["sessionId"] = sessionId;
     
-    std::string responseStr = Json::FastWriter().write(response) + '\0';  // Добавляем нуль-терминатор
+    std::string responseStr = Json::FastWriter().write(response) + '\0';
     boost::asio::write(socket, boost::asio::buffer(responseStr));
 
-    // Если успешно, отправляем уведомление всем игрокам в сессии
     if (success)
     {
+        auto session = activeSessions[sessionId];
+        
+        Json::Value stateMsg;
+        stateMsg["type"] = "SESSION_STATE";
+        stateMsg["sessionId"] = sessionId;
+        stateMsg["state"] = session->getSessionState();
+        
+        std::string stateStr = Json::FastWriter().write(stateMsg) + '\0';
+        boost::asio::write(socket, boost::asio::buffer(stateStr));
+
         Json::Value notification;
         notification["type"] = "PLAYER_JOINED";
         notification["playerId"] = playerId;
         notification["sessionId"] = sessionId;
         
-        std::string notificationStr = Json::FastWriter().write(notification) + '\0';  // Добавляем нуль-терминатор
+        std::string notificationStr = Json::FastWriter().write(notification) + '\0';
         broadcastToSession(sessionId, notificationStr);
     }
 }
@@ -571,6 +579,7 @@ void NetworkGameServer::handleDisconnect(int32_t playerId)
 }
 
 
+
 int32_t NetworkGameServer::createGameSession(int32_t hostId, EGameMapType mapType, const std::string& password)
 {
     std::lock_guard<std::mutex> lock(sessionsMutex);
@@ -589,8 +598,13 @@ int32_t NetworkGameServer::createGameSession(int32_t hostId, EGameMapType mapTyp
 
     activeSessions[nextSessionId] = session;
     std::cout << "Created new session: " << nextSessionId << std::endl;
+    
+    // Добавляем небольшую задержку перед отправкой следующих сообщений
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    
     return nextSessionId++;
 }
+
 
 
 bool NetworkGameServer::joinGameSession(int32_t sessionId, int32_t playerId, const std::string& password)
@@ -674,6 +688,8 @@ void NetworkGameServer::broadcastToSession(int32_t sessionId, const std::string&
         const auto& players = it->second->getPlayers();
         for (int32_t playerId : players) 
         {
+            // Добавляем задержку между отправкой разным игрокам
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             broadcastToPlayer(playerId, message);
         }
     }

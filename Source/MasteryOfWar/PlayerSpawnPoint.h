@@ -27,7 +27,9 @@ public:
     
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	bool IsOccupied() const { return bIsOccupied; }
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	int32 GetTeamId() const { return TeamId; }
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

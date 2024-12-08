@@ -622,3 +622,22 @@ void AMasteryOfWarCharacter::SendNetworkUpdate()
         }
     }
 }
+
+
+bool AMasteryOfWarCharacter::CanFire() const
+{
+    if (!IsAlive())
+        return false;
+        
+    if (!CurrentWeapon)
+        return false;
+        
+    // can't fire due to animation
+    if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+    {
+        if (AnimInstance->Montage_IsPlaying(nullptr))
+            return false;
+    }
+    
+    return true;
+}

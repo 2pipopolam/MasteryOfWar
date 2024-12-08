@@ -36,6 +36,7 @@ Json::Value GameSession::getSessionState() const
         weapon["isFiring"] = playerState.weapon.isFiring;
         weapon["isReloading"] = playerState.weapon.isReloading;
         weapon["currentAmmo"] = playerState.weapon.currentAmmo;
+        //weapon["weaponType"] = static_cast<int>(playerState.weapon.weaponType);
         player["weapon"] = weapon;
         
         players.append(player);
@@ -48,37 +49,56 @@ Json::Value GameSession::getSessionState() const
 
 void GameSession::broadcastPlayerState(const PlayerState& state)
 {
+    // Create the main JSON message
     Json::Value root;
     root["type"] = "PLAYER_STATE";
     root["playerId"] = state.playerId;
+    root["sessionId"] = sessionId;  // Add session ID to message
     
+    // Position data
     Json::Value position;
     position["x"] = state.position.x;
     position["y"] = state.position.y;
     position["z"] = state.position.z;
     root["position"] = position;
     
+    // Rotation data
     Json::Value rotation;
     rotation["x"] = state.rotation.x;
     rotation["y"] = state.rotation.y;
     rotation["z"] = state.rotation.z;
     root["rotation"] = rotation;
     
+    // Movement state
     root["isCrouching"] = state.isCrouching;
     root["isWalking"] = state.isWalking;
     
+    // Weapon state
     Json::Value weapon;
     weapon["isFiring"] = state.weapon.isFiring;
     weapon["isReloading"] = state.weapon.isReloading;
     weapon["currentAmmo"] = state.weapon.currentAmmo;
     root["weapon"] = weapon;
     
+    // Broadcast player state to all clients in session
     std::string message = Json::FastWriter().write(root);
     NetworkGameServer::getInstance().broadcastToSession(sessionId, message);
     
-    // Update player state
+    // Update stored player state
     playerStates[state.playerId] = state;
+
+    // Create and broadcast session state update
+    Json::Value sessionState = getSessionState();
+    Json::Value stateUpdate;
+    stateUpdate["type"] = "SESSION_STATE";
+    stateUpdate["sessionId"] = sessionId;
+    stateUpdate["state"] = sessionState;
+    
+    std::string stateMessage = Json::FastWriter().write(stateUpdate);
+    NetworkGameServer::getInstance().broadcastToSession(sessionId, stateMessage);
 }
+
+
 
 bool GameSession::validateShot(const ShotInfo& shotInfo)
 {
@@ -295,6 +315,9 @@ bool GameSession::addPlayer(int32_t playerId, const std::string& inputPassword)
     newState.weapon.isFiring = false;
     newState.weapon.isReloading = false;
     newState.weapon.currentAmmo = 30;      // Default ammo count
+
+    //newState.weapon.weaponType = GetDefaultWeaponTypeForMap(mapType); 
+
     
     // Add player to session
     playerStates[playerId] = newState;
@@ -330,3 +353,21 @@ void GameSession::initialize(EGameMapType mapType, const std::string& password)
     connectedPlayers.clear();
     lastActivityTime = std::chrono::steady_clock::now();
 }
+
+
+/*
+EWeaponType GameSession::GetDefaultWeaponTypeForMap(EGameMapType MapType) const
+{
+    switch(MapType)
+    {
+        case EGameMapType::Pistol_Map:
+            return EWeaponType::DesertEagle;
+        case EGameMapType::Rifle_Map:
+            return EWeaponType::AK47;
+        case EGameMapType::Grenade_Map:
+            return EWeaponType::Grenade;
+        default:
+            return EWeaponType::AK47;
+    }
+}
+*/
