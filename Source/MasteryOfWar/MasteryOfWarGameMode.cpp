@@ -104,13 +104,10 @@ void AMasteryOfWarGameMode::SetupNetworkCallbacks()
             Client->OnPlayerJoined.AddUObject(this, &AMasteryOfWarGameMode::HandleNewPlayerJoined);
             Client->OnPlayerLeft.AddUObject(this, &AMasteryOfWarGameMode::HandlePlayerLeft);
             Client->OnPlayerStateReceived.AddUObject(this, &AMasteryOfWarGameMode::UpdatePlayerState);
-            
-            Client->OnSessionStateReceived.AddDynamic(this, &AMasteryOfWarGameMode::HandleSessionState);
+            Client->OnSessionStateReceived.AddUObject(this, &AMasteryOfWarGameMode::HandleSessionState);
         }
     }
 }
-
-
 
 
 void AMasteryOfWarGameMode::PostLogin(APlayerController* NewPlayer)
@@ -263,12 +260,11 @@ void AMasteryOfWarGameMode::SetGameMode(EGameModeType NewMode)
     {
         CurrentGameMode = NewMode;
         
-        // Уведомляем других игроков об изменении режима
         if (UMasteryOfWarGameInstance* GameInstance = Cast<UMasteryOfWarGameInstance>(GetGameInstance()))
         {
             if (NetworkClient* Client = GameInstance->GetNetworkClient())
             {
-                Client->RequestSessionState(); // Запрашиваем обновление состояния сессии
+                Client->RequestSessionState(); 
             }
         }
     }
@@ -280,8 +276,7 @@ bool AMasteryOfWarGameMode::LoadConfigForGameMode(EGameModeType ModeType)
     {
         FGameModeConfig Config = GameModesData->GetModeConfig(ModeType);
         SetGameModeConfig(Config);
-
-        // Проверяем, нужно ли инициализировать сетевые компоненты
+        
         if (!PlayerManager)
         {
             InitializeNetworking();

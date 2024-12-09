@@ -1,27 +1,48 @@
 #include "PlayerSpawnPoint.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/BillboardComponent.h"
 #include "Engine/Canvas.h"
 
 APlayerSpawnPoint::APlayerSpawnPoint()
 {
     PrimaryActorTick.bCanEverTick = false;
-    TeamId = 0;
-    bIsOccupied = false;
 
-    // Создаем корневой компонент
-    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+    // Создаем компонент коллизии
+    CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComponent"));
+    RootComponent = CollisionComponent;
+    
+    // Настраиваем коллизию
+    CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    CollisionComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+    CollisionComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+    
+    // Устанавливаем размер
+    CollisionComponent->SetBoxExtent(FVector(50.0f));
 
-    // Создаем и настраиваем текстовый компонент
-    TextComponent = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextComponent"));
-    TextComponent->SetupAttachment(RootComponent);
-    TextComponent->SetHorizontalAlignment(EHTA_Center);
-    TextComponent->SetWorldSize(70.0f);  // Размер текста
-    TextComponent->SetTextRenderColor(FColor::White);
+    // Добавляем визуальное отображение в редакторе
+#if WITH_EDITORONLY_DATA
+    SpriteComponent = CreateEditorOnlyDefaultSubobject<UBillboardComponent>(TEXT("Sprite"));
+    if (SpriteComponent)
+    {
+        SpriteComponent->SetupAttachment(RootComponent);
+    }
+#endif
 }
+
+
+FTransform APlayerSpawnPoint::GetSpawnTransform() const
+{
+    return GetActorTransform();
+}
+
+
+
 
 void APlayerSpawnPoint::BeginPlay()
 {
     Super::BeginPlay();
+
+    bIsOccupied = false;
     
     #if WITH_EDITOR
         UpdateText();

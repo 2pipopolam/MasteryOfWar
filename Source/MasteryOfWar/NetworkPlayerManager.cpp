@@ -21,34 +21,96 @@ void ANetworkPlayerManager::HandlePlayerJoined(int32 PlayerId, int32 SessionId)
 {
     UE_LOG(LogTemp, Warning, TEXT("Handling player join: PlayerId=%d, SessionId=%d"), PlayerId, SessionId);
 
-    if (AMasteryOfWarCharacter* ExistingCharacter = NetworkPlayers.FindRef(PlayerId))
+    if (NetworkPlayers.Contains(PlayerId))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Player %d already exists, updating"), PlayerId);
+        UE_LOG(LogTemp, Warning, TEXT("Player %d already exists"), PlayerId);
         return;
     }
 
-    CleanupOccupiedSpawnPoints();
-
-    if (APlayerSpawnPoint* SpawnPoint = FindValidSpawnPoint())
+    UWorld* World = GetWorld();
+    if (!World)
     {
-        if (AMasteryOfWarCharacter* Character = SpawnPlayerAtPoint(PlayerId, SpawnPoint))
+        UE_LOG(LogTemp, Error, TEXT("Invalid World reference"));
+        return;
+    }
+
+    // Получаем все точки спавна
+    TArray<AActor*> AllSpawnPoints;
+    UGameplayStatics::GetAllActorsOfClass(World, APlayerSpawnPoint::StaticClass(), AllSpawnPoints);
+    
+    UE_LOG(LogTemp, Warning, TEXT("Found %d spawn points"), AllSpawnPoints.Num());
+
+    FVector SpawnLocation;
+    FRotator SpawnRotation;
+
+    // Если точек спавна нет, используем дефолтные позиции
+    if (AllSpawnPoints.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No spawn points found, using default positions"));
+        
+        // Заданные позиции для разных игроков
+        switch(PlayerId)
         {
-            NetworkPlayers.Add(PlayerId, Character);
-            SpawnPoint->SetOccupied(true);
-            OccupiedSpawnPoints.Add(SpawnPoint);
-
-            UE_LOG(LogTemp, Warning, TEXT("Spawned player %d at point %s"), 
-                PlayerId, *SpawnPoint->GetName());
-
-            if (GameInstance && GameInstance->GetNetworkClient())
-            {
-                GameInstance->GetNetworkClient()->RequestSessionState();
-            }
+            case 1:
+                SpawnLocation = FVector(0.0f, -200.0f, 100.0f);
+                break;
+            case 2:
+                SpawnLocation = FVector(0.0f, 200.0f, 100.0f);
+                break;
+            default:
+                SpawnLocation = FVector(0.0f, 0.0f, 100.0f);
         }
+        SpawnRotation = FRotator(0.0f, 0.0f, 0.0f);
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("No available spawn points for player %d!"), PlayerId);
+        // Используем существующие точки спавна
+        int32 SpawnPointIndex = (PlayerId - 1) % AllSpawnPoints.Num();
+        APlayerSpawnPoint* SelectedSpawnPoint = Cast<APlayerSpawnPoint>(AllSpawnPoints[SpawnPointIndex]);
+        
+        if (SelectedSpawnPoint)
+        {
+            SpawnLocation = SelectedSpawnPoint->GetActorLocation();
+            SpawnRotation = SelectedSpawnPoint->GetActorRotation();
+            SelectedSpawnPoint->SetOccupied(true);
+            OccupiedSpawnPoints.Add(SelectedSpawnPoint);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to cast spawn point"));
+            return;
+        }
+    }
+
+    // Спавним персонажа
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    UE_LOG(LogTemp, Warning, TEXT("Attempting to spawn player %d at location: %s"), 
+        PlayerId, *SpawnLocation.ToString());
+
+    AMasteryOfWarCharacter* Character = World->SpawnActor<AMasteryOfWarCharacter>(
+        AMasteryOfWarCharacter::StaticClass(),
+        SpawnLocation,
+        SpawnRotation,
+        SpawnParams
+    );
+
+    if (Character)
+    {
+        NetworkPlayers.Add(PlayerId, Character);
+        Character->SetPlayerId(PlayerId);
+
+        if (GameInstance)
+        {
+            Character->InitializeForGameMode(GameInstance->GetCurrentGameModeConfig());
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("Successfully spawned player %d"), PlayerId);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to spawn character for player %d"), PlayerId);
     }
 }
 
@@ -149,32 +211,39 @@ AMasteryOfWarCharacter* ANetworkPlayerManager::GetPlayerCharacter(int32 PlayerId
 
 
 
+
+
 APlayerSpawnPoint* ANetworkPlayerManager::FindValidSpawnPoint() const
 {
     TArray<AActor*> SpawnPoints;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerSpawnPoint::StaticClass(), SpawnPoints);
     
-    // Сначала ищем свободные точки спавна
+    UE_LOG(LogTemp, Warning, TEXT("Searching for spawn points. Found: %d"), SpawnPoints.Num());
+    
     for (AActor* Actor : SpawnPoints)
     {
         if (APlayerSpawnPoint* SpawnPoint = Cast<APlayerSpawnPoint>(Actor))
         {
+            UE_LOG(LogTemp, Warning, TEXT("Found spawn point at %s"), *SpawnPoint->GetActorLocation().ToString());
+            
             if (!SpawnPoint->IsOccupied())
             {
+                UE_LOG(LogTemp, Warning, TEXT("Selected unoccupied spawn point"));
                 return SpawnPoint;
             }
         }
     }
     
-    // Если свободных нет, берем случайную точку
     if (SpawnPoints.Num() > 0)
     {
-        int32 RandomIndex = FMath::RandRange(0, SpawnPoints.Num() - 1);
-        return Cast<APlayerSpawnPoint>(SpawnPoints[RandomIndex]);
+        UE_LOG(LogTemp, Warning, TEXT("All spawn points occupied, returning first one"));
+        return Cast<APlayerSpawnPoint>(SpawnPoints[0]);
     }
     
+    UE_LOG(LogTemp, Error, TEXT("No spawn points found!"));
     return nullptr;
 }
+
 
 
 void ANetworkPlayerManager::ValidateSpawnPoints()
@@ -256,21 +325,69 @@ void ANetworkPlayerManager::SynchronizePlayerStates()
 
 void ANetworkPlayerManager::HandleSessionState(const FNetworkSessionState& State)
 {
-    if (State.Players.Num() == 0)
+    UE_LOG(LogTemp, Warning, TEXT("Handling session state with %d players"), State.Players.Num());
+    
+    // Clean up occupied spawn points first
+    CleanupOccupiedSpawnPoints();
+    
+    // Get available spawn points
+    TArray<AActor*> SpawnPoints;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerSpawnPoint::StaticClass(), SpawnPoints);
+    
+    UE_LOG(LogTemp, Warning, TEXT("Found %d spawn points on map"), SpawnPoints.Num());
+    
+    if (UMasteryOfWarGameInstance* GameInst = Cast<UMasteryOfWarGameInstance>(GameInstance))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Received empty session state"));
-        return;
-    }
-
-    for (const auto& PlayerState : State.Players)
-    {
-        if (PlayerState.WeaponType == EWeaponType::None)
+        int32 LocalPlayerId = GameInst->GetNetworkClient()->GetPlayerId();
+        
+        // Process each player in session
+        for (const auto& PlayerState : State.Players)
         {
-            UE_LOG(LogTemp, Error, TEXT("Invalid weapon type for player %d"), PlayerState.PlayerId);
-            continue;
+            // Skip local player
+            if (PlayerState.PlayerId == LocalPlayerId)
+                continue;
+                
+            AMasteryOfWarCharacter* Character = nullptr;
+            
+            // Check if player already exists
+            if (NetworkPlayers.Contains(PlayerState.PlayerId))
+            {
+                Character = NetworkPlayers[PlayerState.PlayerId];
+                UE_LOG(LogTemp, Warning, TEXT("Updating existing player %d"), PlayerState.PlayerId);
+            }
+            else
+            {
+                APlayerSpawnPoint* SpawnPoint = nullptr;
+                for (AActor* Actor : SpawnPoints)
+                {
+                    if (APlayerSpawnPoint* Point = Cast<APlayerSpawnPoint>(Actor))
+                    {
+                        if (!Point->IsOccupied())
+                        {
+                            SpawnPoint = Point;
+                            break;
+                        }
+                    }
+                }
+                
+                if (SpawnPoint)
+                {
+                    Character = SpawnPlayerAtPoint(PlayerState.PlayerId, SpawnPoint);
+                    if (Character)
+                    {
+                        SpawnPoint->SetOccupied(true);
+                        OccupiedSpawnPoints.Add(SpawnPoint);
+                        NetworkPlayers.Add(PlayerState.PlayerId, Character);
+                        UE_LOG(LogTemp, Warning, TEXT("Spawned new player %d at point %s"), 
+                            PlayerState.PlayerId, *SpawnPoint->GetName());
+                    }
+                }
+            }
+            
+            if (Character)
+            {
+                Character->UpdateFromNetworkState(PlayerState);
+            }
         }
-
-        HandlePlayerJoined(PlayerState.PlayerId, State.SessionId);
-        UpdatePlayerState(PlayerState);
     }
 }

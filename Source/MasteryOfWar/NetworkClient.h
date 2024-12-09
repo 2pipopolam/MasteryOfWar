@@ -5,6 +5,10 @@
 #include "GameModeConfig.h"
 #include "Sockets.h"
 #include "SocketSubsystem.h"
+#include "NetworkMapLoader.h"
+
+class UWorld;
+class UMofWGameInstance;
 
 // Network error codes
 UENUM()
@@ -23,29 +27,24 @@ class NetworkClient
 {
 public:
     // Delegates for network events
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnNetworkError, int32 /*ErrorCode*/, const FString& /*ErrorMessage*/);
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionCreated, int32 /*SessionId*/);
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerStateReceived, const FNetworkPlayerState& /*State*/);
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnShotReceived, const FNetworkShotInfo& /*ShotInfo*/);
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGrenadeThrowReceived, const FNetworkGrenadeInfo& /*GrenadeInfo*/);
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionsListReceived, const TArray<FSessionInfo>& /*Sessions*/);
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerIdAssigned, int32);
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FNetworkPlayerJoined, int32);
-    DECLARE_MULTICAST_DELEGATE_OneParam(FNetworkPlayerLeft, int32);
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnNetworkError, int32, const FString&);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionCreated, int32);
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerStateReceived, const FNetworkPlayerState&);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnShotReceived, const FNetworkShotInfo&);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGrenadeThrowReceived, const FNetworkGrenadeInfo&);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionsListReceived, const TArray<FSessionInfo>&);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerIdAssigned, int32);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerJoined, int32);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerLeft, int32);
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSessionJoined, bool, int32);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionStateReceived, const FNetworkSessionState&);
 
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerJoined, int32, PlayerId);
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerLeft, int32, PlayerId);
     
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionStateReceived, const FNetworkSessionState&, State);
     
     NetworkClient();
     ~NetworkClient();
 
 
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSessionJoined, bool /*Success*/, int32 /*SessionId*/);
     FOnSessionJoined OnSessionJoined;
     
     
@@ -80,8 +79,8 @@ public:
 
     FOnPlayerIdAssigned OnPlayerIdAssigned;
 
-    FNetworkPlayerJoined OnPlayerJoined;
-    FNetworkPlayerLeft OnPlayerLeft;
+    FOnPlayerJoined OnPlayerJoined;
+    FOnPlayerLeft OnPlayerLeft;
 
     
     FOnSessionStateReceived OnSessionStateReceived;
@@ -89,6 +88,10 @@ public:
     
     void SetPlayerId(int32 NewPlayerId);
     void SetUserId(int32 NewUserId);
+
+    void SetWorld(UWorld* InWorld) { CurrentWorld = InWorld; }
+
+    void SetMapLoader(INetworkMapLoader* InMapLoader) { MapLoader = InMapLoader; }
     
 private:
     int32 PlayerId;
@@ -101,6 +104,9 @@ private:
 
     int32 CurrentSessionId = -1;
 
+    UWorld* CurrentWorld = nullptr;
+
+    INetworkMapLoader* MapLoader = nullptr;
     
     bool SendMessage(const FString& Message);
     void StartReceiveThread();

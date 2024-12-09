@@ -10,6 +10,10 @@
 #include "GameModeConfig.h"
 #include "IPAddress.h"
 #include "Misc/StringBuilder.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+#include "MofWGameInstance.h"
+
 
 NetworkClient::NetworkClient()
    : PlayerId(-1)
@@ -478,21 +482,59 @@ void NetworkClient::HandleMessage(const FString& Message)
            SetLastError(ENetworkError::SessionCreationFailed, TEXT("Failed to create session"));
        }
    }
-   else if (Type == TEXT("SESSION_JOINED"))
-   {
-       bool Success = JsonObj->GetBoolField(TEXT("success"));
-       int32 SessionId = JsonObj->GetIntegerField(TEXT("sessionId"));
-       
-       UE_LOG(LogTemp, Warning, TEXT("Session joined response - Success: %d, SessionID: %d"), 
-           Success ? 1 : 0, SessionId);
 
-       if (Success)
-       {
-           CurrentSessionId = SessionId;
-       }
-       
-       OnSessionJoined.Broadcast(Success, SessionId);
-   }
+
+
+    
+    if (Type == TEXT("SESSION_JOINED"))
+    {
+        bool Success = JsonObj->GetBoolField(TEXT("success"));
+        int32 SessionId = JsonObj->GetIntegerField(TEXT("sessionId"));
+        
+        if (Success)
+        {
+            CurrentSessionId = SessionId;
+            
+            const TSharedPtr<FJsonObject>* StateObj;
+            if (JsonObj->TryGetObjectField(TEXT("state"), StateObj))
+            {
+                int32 MapTypeInt = (*StateObj)->GetIntegerField(TEXT("mapType"));
+                EGameMapType MapType = static_cast<EGameMapType>(MapTypeInt);
+                
+                FString MapPath;
+                switch (MapType)
+                {
+                case EGameMapType::Pistol_Map:
+                    MapPath = TEXT("/Game/MofW/Maps/PistolMap");
+                    break;
+                case EGameMapType::Rifle_Map:
+                    MapPath = TEXT("/Game/MofW/Maps/RifleMap");
+                    break;
+                case EGameMapType::Grenade_Map:
+                    MapPath = TEXT("/Game/MofW/Maps/GrenadeMap");
+                    break;
+                default:
+                    MapPath = TEXT("/Game/MofW/Maps/PistolMap");
+                }
+                
+                if (MapLoader)
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Loading map %s for session %d"), *MapPath, SessionId);
+                    MapLoader->LoadNetworkMap(MapPath, SessionId);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Error, TEXT("MapLoader is null when trying to load map"));
+                }
+            }
+        }
+        
+        OnSessionJoined.Broadcast(Success, SessionId);
+    }
+
+
+
+    
    else if (Type == TEXT("SESSIONS_LIST"))
    {
        const TArray<TSharedPtr<FJsonValue>>* SessionsArray;

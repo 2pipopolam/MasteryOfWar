@@ -20,7 +20,8 @@ bool UMasteryOfWarGameInstance::InitializeNetworking(const FString& IPAddress, i
     if (!NetworkConnection)
     {
         NetworkConnection = MakeUnique<NetworkClient>();
-        NetworkConnection->SetUserId(CurrentUserId); // Установить User ID
+        NetworkConnection->SetUserId(CurrentUserId);
+        NetworkConnection->SetMapLoader(this); 
         
         // Subscribe to network events
         NetworkConnection->OnError.AddUObject(this, &UMasteryOfWarGameInstance::HandleNetworkError);
@@ -184,4 +185,16 @@ AMasteryOfWarCharacter* UMasteryOfWarGameInstance::SpawnNetworkPlayer(int32 Play
         return PlayerManager->SpawnNetworkPlayer(PlayerId);
     }
     return nullptr;
+}
+
+
+void UMasteryOfWarGameInstance::LoadNetworkMap(const FString& MapPath, int32 SessionId)
+{
+    // Store the session ID for use after map load
+    if (NetworkConnection)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Loading network map: %s for session %d"), *MapPath, SessionId);
+        
+        UGameplayStatics::OpenLevel(this, FName(*MapPath), true);
+    }
 }

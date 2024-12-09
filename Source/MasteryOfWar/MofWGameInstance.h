@@ -4,20 +4,26 @@
 #include "Engine/GameInstance.h"
 #include "NetworkClient.h"
 #include "GameModeConfig.h"
-#include "NetworkPlayerManager.h" 
+#include "NetworkPlayerManager.h"
+#include "NetworkMapLoader.h"
 #include "MofWGameInstance.generated.h"
 
-// Объявляем делегаты
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNetworkErrorSignature, int32, ErrorCode, const FString&, ErrorMessage);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionCreatedSignature, int32, SessionId);
 
 UCLASS()
-class MASTERYOFWAR_API UMasteryOfWarGameInstance : public UGameInstance
+
+
+class MASTERYOFWAR_API UMasteryOfWarGameInstance : public UGameInstance,  public INetworkMapLoader
 {
     GENERATED_BODY()
 
 public:
     UMasteryOfWarGameInstance(const FObjectInitializer& ObjectInitializer);
+
+
+    virtual void LoadNetworkMap(const FString& MapPath, int32 SessionId) override;
 
     // Networking methods
     UFUNCTION(BlueprintCallable, Category = "Networking")
@@ -66,7 +72,7 @@ public:
     { 
         return GameModeConfigs[static_cast<int32>(CurrentGameMode)]; 
     }
-
+    
 
     
     void SetPlayerManager(ANetworkPlayerManager* Manager);

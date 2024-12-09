@@ -3,7 +3,20 @@
 #include <json/json.h>
 
 
-
+EWeaponType GameSession::GetDefaultWeaponTypeForMap(EGameMapType MapType) const
+{
+    switch(MapType)
+    {
+        case EGameMapType::Pistol_Map:
+            return EWeaponType::DesertEagle;
+        case EGameMapType::Rifle_Map:
+            return EWeaponType::AK47;
+        case EGameMapType::Grenade_Map:
+            return EWeaponType::Grenade;
+        default:
+            return EWeaponType::AK47;
+    }
+}
 
 
 Json::Value GameSession::getSessionState() const 
@@ -36,7 +49,7 @@ Json::Value GameSession::getSessionState() const
         weapon["isFiring"] = playerState.weapon.isFiring;
         weapon["isReloading"] = playerState.weapon.isReloading;
         weapon["currentAmmo"] = playerState.weapon.currentAmmo;
-        //weapon["weaponType"] = static_cast<int>(playerState.weapon.weaponType);
+        weapon["weaponType"] = static_cast<int>(playerState.weapon.weaponType);
         player["weapon"] = weapon;
         
         players.append(player);
@@ -308,7 +321,7 @@ bool GameSession::addPlayer(int32_t playerId, const std::string& inputPassword)
     // Initialize default player state
     PlayerState newState;
     newState.playerId = playerId;
-    newState.position = Vector3(0, 0, 0);  // Default spawn position
+    newState.position = Vector3(300, 0, 0);  // Default spawn position
     newState.rotation = Vector3(0, 0, 0);  // Default rotation
     newState.isCrouching = false;
     newState.isWalking = false;
@@ -316,7 +329,7 @@ bool GameSession::addPlayer(int32_t playerId, const std::string& inputPassword)
     newState.weapon.isReloading = false;
     newState.weapon.currentAmmo = 30;      // Default ammo count
 
-    //newState.weapon.weaponType = GetDefaultWeaponTypeForMap(mapType); 
+    newState.weapon.weaponType = GetDefaultWeaponTypeForMap(mapType); 
 
     
     // Add player to session
@@ -353,21 +366,3 @@ void GameSession::initialize(EGameMapType mapType, const std::string& password)
     connectedPlayers.clear();
     lastActivityTime = std::chrono::steady_clock::now();
 }
-
-
-/*
-EWeaponType GameSession::GetDefaultWeaponTypeForMap(EGameMapType MapType) const
-{
-    switch(MapType)
-    {
-        case EGameMapType::Pistol_Map:
-            return EWeaponType::DesertEagle;
-        case EGameMapType::Rifle_Map:
-            return EWeaponType::AK47;
-        case EGameMapType::Grenade_Map:
-            return EWeaponType::Grenade;
-        default:
-            return EWeaponType::AK47;
-    }
-}
-*/

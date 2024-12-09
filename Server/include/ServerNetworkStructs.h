@@ -39,6 +39,16 @@ struct Vector3 {
     }
 };
 
+
+enum class EWeaponType {
+    None,
+    DesertEagle,
+    AK47,
+    Grenade
+};
+
+
+
 enum class EGameMapType {
     Pistol_Map,
     Rifle_Map,
@@ -64,6 +74,7 @@ struct PlayerState {
         bool isFiring;
         bool isReloading;
         int32_t currentAmmo;
+        EWeaponType weaponType;
     } weapon;
 };
 

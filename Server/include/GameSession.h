@@ -52,4 +52,5 @@ private:
     std::map<int32_t, PlayerState> playerStates;
     std::vector<int32_t> connectedPlayers;
     std::chrono::steady_clock::time_point lastActivityTime;
+    EWeaponType GetDefaultWeaponTypeForMap(EGameMapType MapType) const;
 };
