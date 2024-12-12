@@ -66,7 +66,7 @@ void GameSession::broadcastPlayerState(const PlayerState& state)
     Json::Value root;
     root["type"] = "PLAYER_STATE";
     root["playerId"] = state.playerId;
-    root["sessionId"] = sessionId;  // Add session ID to message
+    root["sessionId"] = sessionId; 
     
     // Position data
     Json::Value position;
@@ -308,6 +308,15 @@ int32_t GameSession::getSessionId() const
 
 bool GameSession::addPlayer(int32_t playerId, const std::string& inputPassword)
 {
+
+
+    if (connectedPlayers.size() >= 2)
+    {
+        return false; 
+    }
+
+
+
     // First validate the password if one is set
     if (!password.empty() && password != inputPassword) {
         return false;

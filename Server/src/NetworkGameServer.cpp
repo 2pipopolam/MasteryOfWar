@@ -6,6 +6,7 @@
 #include <thread>
 #include <memory>
 #include <string>
+#include <random>
 
 NetworkGameServer& NetworkGameServer::getInstance()
 {
@@ -13,27 +14,38 @@ NetworkGameServer& NetworkGameServer::getInstance()
     return instance;
 }
 
-NetworkGameServer::NetworkGameServer() : running(true) {}
+NetworkGameServer::NetworkGameServer() : running(true), dbPath("DB/game.db") {}
 
 NetworkGameServer::~NetworkGameServer() 
 {
     stop();
 }
 
-bool NetworkGameServer::initialize(uint16_t port)
+
+
+bool NetworkGameServer::initialize(uint16_t port, const std::string& dbPath)
 {
+    this->dbPath = dbPath;
+    
+    sqlite3* db;
+    if (sqlite3_open(dbPath.c_str(), &db) != SQLITE_OK)
+    {
+        std::cerr << "Failed to open database at " << dbPath << ": " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
+        return false;
+    }
+    sqlite3_close(db);
+    
     try 
     {
         acceptor = std::make_unique<tcp::acceptor>(io_context, 
             tcp::endpoint(tcp::v4(), port));
         startAccept();
         
-        // Start main IO context thread
         serverThread = std::thread([this]() {
             io_context.run();
         });
 
-        // Start cleanup thread
         cleanupThread = std::thread([this]() {
             cleanupInactiveSessions();
         });
@@ -46,6 +58,9 @@ bool NetworkGameServer::initialize(uint16_t port)
         return false;
     }
 }
+
+
+
 
 
 void NetworkGameServer::stop()
@@ -193,199 +208,164 @@ void NetworkGameServer::startRead(std::shared_ptr<tcp::socket> socket,
 
 void NetworkGameServer::handleClientMessage(const std::string& msg, tcp::socket& socket)
 {
-   try {
-       Json::Value root;
-       Json::Reader reader;
-       if (!reader.parse(msg, root)) {
-           std::cerr << "Failed to parse message: " << msg << std::endl;
-           return;
-       }
+    try {
+        Json::Value root;
+        Json::Reader reader;
+        if (!reader.parse(msg, root)) {
+            std::cerr << "Failed to parse message: " << msg << std::endl;
+            return;
+        }
 
-       std::string messageType = root["type"].asString();
-       std::cout << "Received message type: " << messageType << std::endl;
+        std::string messageType = root["type"].asString();
+        std::cout << "Received message type: " << messageType << std::endl;
 
-       // Update last activity time
-       if (root.isMember("playerId")) {
-           int32_t playerId = root["playerId"].asInt();
-           {
-               std::lock_guard<std::mutex> lock(clientsMutex);
-               lastActivityTime[playerId] = std::chrono::steady_clock::now();
-           }
-       }
+        // Update last activity time
+        if (root.isMember("playerId")) {
+            int32_t playerId = root["playerId"].asInt();
+            {
+                std::lock_guard<std::mutex> lock(clientsMutex);
+                lastActivityTime[playerId] = std::chrono::steady_clock::now();
+            }
+        }
 
-       if (messageType == "REQUEST_PLAYER_ID") {
-           return;
-       }
-
-
-       if (messageType == "CREATE_SESSION") 
-       {
-           int32_t hostId = root["hostId"].asInt();
-           EGameMapType mapType = static_cast<EGameMapType>(root["mapType"].asInt());
-           std::string password = root["password"].asString();
+        // Обработка сообщений
+        if (messageType == "REQUEST_PLAYER_ID") {
+            return;
+        }
+        else if (messageType == "REGISTER") {
+            handleRegister(root, socket);
+        }
+        else if (messageType == "AUTHENTICATE") {
+            handleAuthenticate(root, socket);
+        }
+        else if (messageType == "CREATE_SESSION") {
+            int32_t hostId = root["hostId"].asInt();
+            EGameMapType mapType = static_cast<EGameMapType>(root["mapType"].asInt());
+            std::string password = root["password"].asString();
            
-           std::cout << "Creating session request - HostID: " << hostId 
+            std::cout << "Creating session request - HostID: " << hostId 
                      << ", MapType: " << static_cast<int>(mapType) << std::endl;
            
-           int32_t sessionId = createGameSession(hostId, mapType, password);
+            int32_t sessionId = createGameSession(hostId, mapType, password);
            
-           Json::Value response;
-           response["type"] = "SESSION_CREATED";
-           response["sessionId"] = sessionId;
-           response["success"] = (sessionId != -1);
-           
-           std::string responseStr = Json::FastWriter().write(response);
-           std::cout << "Sending response: " << responseStr << std::endl;
-           
-           boost::asio::write(socket, boost::asio::buffer(responseStr));
-       }
-
-
-
-
-else if (messageType == "JOIN_SESSION") 
-{
-    int32_t sessionId = root["sessionId"].asInt();
-    int32_t playerId = root["playerId"].asInt();
-    std::string password = root["password"].asString();
-    
-    std::cout << "Join session request - Session: " << sessionId 
-              << ", Player: " << playerId << std::endl;
-    
-    bool success = joinGameSession(sessionId, playerId, password);
-    
-    Json::Value response;
-    response["type"] = "SESSION_JOINED";
-    response["success"] = success;
-    response["sessionId"] = sessionId;
-    
-    std::string responseStr = Json::FastWriter().write(response) + '\0';
-    boost::asio::write(socket, boost::asio::buffer(responseStr));
-
-    if (success)
-    {
-        auto session = activeSessions[sessionId];
-        
-        Json::Value stateMsg;
-        stateMsg["type"] = "SESSION_STATE";
-        stateMsg["sessionId"] = sessionId;
-        stateMsg["state"] = session->getSessionState();
-        
-        std::string stateStr = Json::FastWriter().write(stateMsg) + '\0';
-        boost::asio::write(socket, boost::asio::buffer(stateStr));
-
-        Json::Value notification;
-        notification["type"] = "PLAYER_JOINED";
-        notification["playerId"] = playerId;
-        notification["sessionId"] = sessionId;
-        
-        std::string notificationStr = Json::FastWriter().write(notification) + '\0';
-        broadcastToSession(sessionId, notificationStr);
-    }
-}
-
-
-
-
-
-       else if (messageType == "PLAYER_STATE") 
-       {
-           handlePlayerState(root, socket);
-       }
-       else if (messageType == "SHOT") 
-       {
-           handleShot(root, socket);
-       }
-       else if (messageType == "HIT_CONFIRM") 
-       {
-           handleHitConfirmation(root, socket);
-       }
-
-
-
-else if (messageType == "GET_SESSIONS") 
-{
-    std::cout << "Handling GET_SESSIONS request" << std::endl;
-    auto sessions = getActiveSessions();
-    
-    Json::Value response;
-    response["type"] = "SESSIONS_LIST";
-    Json::Value sessionsArray(Json::arrayValue);
-    
-    std::cout << "Found " << sessions.size() << " available sessions" << std::endl;
-    
-    for (const auto& session : sessions) 
-    {
-        Json::Value sessionObj;
-        sessionObj["sessionId"] = session.sessionId;
-        sessionObj["mapType"] = static_cast<int>(session.mapType);
-        sessionObj["currentPlayers"] = session.currentPlayers;
-        sessionObj["hasPassword"] = session.hasPassword;
-        sessionObj["sessionName"] = "Session " + std::to_string(session.sessionId);
-        sessionsArray.append(sessionObj);
-        
-        std::cout << "Added session to response:" << std::endl
-                  << "  ID: " << session.sessionId << std::endl
-                  << "  MapType: " << static_cast<int>(session.mapType) << std::endl
-                  << "  Players: " << session.currentPlayers << std::endl;
-    }
-    
-    response["sessions"] = sessionsArray;
-    std::string responseStr = Json::FastWriter().write(response) + '\0';  // Добавляем нуль-терминатор
-    
-    std::cout << "Sending sessions response: " << responseStr << std::endl;
-    
-    try {
-        boost::asio::write(socket, boost::asio::buffer(responseStr));
-        std::cout << "Sessions response sent successfully (" << responseStr.length() << " bytes)" << std::endl;
-    }
-    catch (const boost::system::system_error& e) {
-        std::cerr << "Error sending sessions response: " << e.what() << std::endl;
-    }
-}
-
-
-
-
-    else if (messageType == "REQUEST_SESSION_STATE") 
-    {
-        int32_t sessionId = root["sessionId"].asInt();
-        int32_t playerId = root["playerId"].asInt();
-        
-        std::cout << "Handling REQUEST_SESSION_STATE - Session: " << sessionId 
-                  << ", Player: " << playerId << std::endl;
-        
-        std::lock_guard<std::mutex> lock(sessionsMutex);
-        auto it = activeSessions.find(sessionId);
-        if (it != activeSessions.end()) 
-        {
             Json::Value response;
-            response["type"] = "SESSION_STATE";
+            response["type"] = "SESSION_CREATED";
             response["sessionId"] = sessionId;
-            response["state"] = it->second->getSessionState();
+            response["success"] = (sessionId != -1);
+           
+            std::string responseStr = Json::FastWriter().write(response);
+            std::cout << "Sending response: " << responseStr << std::endl;
+           
+            boost::asio::write(socket, boost::asio::buffer(responseStr));
+        }
+        else if (messageType == "JOIN_SESSION") {
+            int32_t sessionId = root["sessionId"].asInt();
+            int32_t playerId = root["playerId"].asInt();
+            std::string password = root["password"].asString();
+            
+            std::cout << "Join session request - Session: " << sessionId 
+                      << ", Player: " << playerId << std::endl;
+            
+            bool success = joinGameSession(sessionId, playerId, password);
+            
+            Json::Value response;
+            response["type"] = "SESSION_JOINED";
+            response["success"] = success;
+            response["sessionId"] = sessionId;
             
             std::string responseStr = Json::FastWriter().write(response) + '\0';
             boost::asio::write(socket, boost::asio::buffer(responseStr));
-            
-            std::cout << "Sent session state to player " << playerId << std::endl;
+
+            if (success) {
+                auto session = activeSessions[sessionId];
+                
+                Json::Value stateMsg;
+                stateMsg["type"] = "SESSION_STATE";
+                stateMsg["sessionId"] = sessionId;
+                stateMsg["state"] = session->getSessionState();
+                
+                std::string stateStr = Json::FastWriter().write(stateMsg) + '\0';
+                boost::asio::write(socket, boost::asio::buffer(stateStr));
+
+                Json::Value notification;
+                notification["type"] = "PLAYER_JOINED";
+                notification["playerId"] = playerId;
+                notification["sessionId"] = sessionId;
+                
+                std::string notificationStr = Json::FastWriter().write(notification) + '\0';
+                broadcastToSession(sessionId, notificationStr);
+            }
         }
-        else 
-        {
-            std::cerr << "Session " << sessionId << " not found" << std::endl;
+        else if (messageType == "PLAYER_STATE") {
+            handlePlayerState(root, socket);
+        }
+        else if (messageType == "SHOT") {
+            handleShot(root, socket);
+        }
+        else if (messageType == "HIT_CONFIRM") {
+            handleHitConfirmation(root, socket);
+        }
+        else if (messageType == "GET_SESSIONS") {
+            std::cout << "Handling GET_SESSIONS request" << std::endl;
+            auto sessions = getActiveSessions();
+            
+            Json::Value response;
+            response["type"] = "SESSIONS_LIST";
+            Json::Value sessionsArray(Json::arrayValue);
+            
+            for (const auto& session : sessions) {
+                Json::Value sessionObj;
+                sessionObj["sessionId"] = session.sessionId;
+                sessionObj["mapType"] = static_cast<int>(session.mapType);
+                sessionObj["currentPlayers"] = session.currentPlayers;
+                sessionObj["hasPassword"] = session.hasPassword;
+                sessionObj["sessionName"] = "Session " + std::to_string(session.sessionId);
+                sessionsArray.append(sessionObj);
+            }
+            
+            response["sessions"] = sessionsArray;
+            std::string responseStr = Json::FastWriter().write(response) + '\0';
+            boost::asio::write(socket, boost::asio::buffer(responseStr));
+        }
+
+
+
+        else if (messageType == "REQUEST_SESSION_STATE") {
+            int32_t sessionId = root["sessionId"].asInt();
+            std::lock_guard<std::mutex> lock(sessionsMutex);
+            auto it = activeSessions.find(sessionId);
+            if (it != activeSessions.end()) {
+                Json::Value response;
+                response["type"] = "SESSION_STATE";
+                response["sessionId"] = sessionId;
+                response["state"] = it->second->getSessionState();
+                std::string responseStr = Json::FastWriter().write(response) + '\0';
+                boost::asio::write(socket, boost::asio::buffer(responseStr));
+            }
+        }
+
+
+
+        else if (messageType == "SESSION_STATE") {
+            int32_t sessionId = root["sessionId"].asInt();
+            auto it = activeSessions.find(sessionId);
+            if (it == activeSessions.end() || it->second->getPlayerCount() > 2) {
+                return;
+            }
+        }
+
+
+        else {
+            std::cerr << "Unknown message type: " << messageType << std::endl;
         }
     }
-
-
-
-       else {
-           std::cerr << "Unknown message type: " << messageType << std::endl;
-       }
-   }
-   catch (const std::exception& e) {
-       std::cerr << "Error handling client message: " << e.what() << std::endl;
-       std::cerr << "Message content: " << msg << std::endl;
-   }
+    catch (const std::exception& e) {
+        std::cerr << "Error handling client message: " << e.what() << std::endl;
+        std::cerr << "Message content: " << msg << std::endl;
+    }
 }
+
+
 
 
 
@@ -545,34 +525,32 @@ void NetworkGameServer::cleanupInactiveSessions()
     }
 }
 
+
 void NetworkGameServer::handleDisconnect(int32_t playerId)
 {
-    std::cout << "Client disconnected: " << playerId << std::endl;
-
-    // Remove player from all sessions
     {
-        std::lock_guard<std::mutex> lock(sessionsMutex);
-        for (auto& [_, session] : activeSessions) {
-            session->removePlayer(playerId);
-        }
-
-        // Remove empty sessions
-        for (auto it = activeSessions.begin(); it != activeSessions.end();)
+        std::lock_guard<std::mutex> sessionsLock(sessionsMutex);
+        for (auto& [sessionId, session] : activeSessions)
         {
-            if (it->second->getPlayerCount() == 0)
+            const auto& players = session->getPlayers();
+            if (std::find(players.begin(), players.end(), playerId) != players.end())
             {
-                it = activeSessions.erase(it);
-            }
-            else
-            {
-                ++it;
+                Json::Value notification;
+                notification["type"] = "PLAYER_DISCONNECTED";
+                notification["playerId"] = playerId;
+                notification["sessionId"] = sessionId;
+                
+                std::string message = Json::FastWriter().write(notification);
+                broadcastToSession(sessionId, message);
+                
+                session->removePlayer(playerId);
+                break;
             }
         }
     }
-    
-    // Remove client socket
+
     {
-        std::lock_guard<std::mutex> lock(clientsMutex);
+        std::lock_guard<std::mutex> clientsLock(clientsMutex);
         clientSockets.erase(playerId);
         lastActivityTime.erase(playerId);
     }
@@ -627,6 +605,15 @@ bool NetworkGameServer::joinGameSession(int32_t sessionId, int32_t playerId, con
     {
         std::cerr << "Failed to add player " << playerId << " to session " << sessionId << std::endl;
     }
+
+
+
+    if (it->second->getPlayerCount() >= 2)
+    {
+        return false;
+    }
+
+
 
     return success;
 }
@@ -686,11 +673,16 @@ void NetworkGameServer::broadcastToSession(int32_t sessionId, const std::string&
     if (it != activeSessions.end()) 
     {
         const auto& players = it->second->getPlayers();
+
+        std::cout << "Broadcasting to session " << sessionId << " with " << players.size() << " players" << std::endl;
+
+
         for (int32_t playerId : players) 
         {
-            // Добавляем задержку между отправкой разным игрокам
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             broadcastToPlayer(playerId, message);
+
+            std::cout << "Attempting to broadcast to player " << playerId << std::endl;
         }
     }
     else
@@ -719,4 +711,258 @@ void NetworkGameServer::broadcastToPlayer(int32_t playerId, const std::string& m
             handleDisconnect(playerId);
         }
     }
+}
+
+
+
+bool NetworkGameServer::authenticateUser(const std::string& nickname, const std::string& password)
+{
+    sqlite3* db;
+    if (sqlite3_open("DB/game.db", &db) != SQLITE_OK)
+    {
+        std::cerr << "Failed to open database" << std::endl;
+        return false;
+    }
+
+    const char* query = "SELECT user_id, password, salt FROM Users WHERE nickname = ?";
+    
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, nickname.c_str(), -1, SQLITE_STATIC);
+        
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            //int userId = sqlite3_column_int(stmt, 0);
+            std::string storedHash = (const char*)sqlite3_column_text(stmt, 1);
+            std::string storedSalt = (const char*)sqlite3_column_text(stmt, 2);
+
+            std::string hashedPassword = hashPassword(password, storedSalt);
+            
+            sqlite3_finalize(stmt);
+            sqlite3_close(db);
+
+            return storedHash == hashedPassword;
+        }
+    }
+    
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return false;
+}
+
+
+std::string NetworkGameServer::hashPassword(const std::string& password, const std::string& salt)
+{
+
+
+    //bcrypt, scrypt или Argon2.
+
+    
+    // TODO: Заменить на реальную хеш-функцию
+    // Например, используя OpenSSL:
+    // unsigned char hash[SHA256_DIGEST_LENGTH];
+    // SHA256_CTX sha256;
+    // SHA256_Init(&sha256);
+    // SHA256_Update(&sha256, saltedPassword.c_str(), saltedPassword.length());
+    // SHA256_Final(hash, &sha256);
+
+
+    std::string saltedPassword = password + salt;
+    return saltedPassword; 
+}
+
+
+
+std::string NetworkGameServer::generateRandomSalt(size_t length)
+{
+    const std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::uniform_int_distribution<int> distribution(0, charset.size() - 1);
+    
+    std::string salt;
+    salt.reserve(length);
+    
+    for (size_t i = 0; i < length; ++i)
+    {
+        salt += charset[distribution(generator)];
+    }
+    
+    return salt;
+}
+
+
+
+void NetworkGameServer::handleRegister(const Json::Value& root, tcp::socket& socket)
+{
+    std::string nickname = root["nickname"].asString();
+    std::string password = root["password"].asString();
+    
+    bool success = false;
+    int32_t userId = -1;
+    std::string errorMessage;
+    
+    sqlite3* db;
+    int rc = sqlite3_open(dbPath.c_str(), &db);
+    if (rc != SQLITE_OK)
+    {
+        errorMessage = sqlite3_errmsg(db);
+        std::cerr << "Failed to open database: " << errorMessage << std::endl;
+        sqlite3_close(db);
+    }
+    else
+    {
+        sqlite3_exec(db, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
+        
+        const char* checkQuery = "SELECT user_id FROM Users WHERE nickname = ?";
+        sqlite3_stmt* checkStmt;
+        
+        if (sqlite3_prepare_v2(db, checkQuery, -1, &checkStmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_text(checkStmt, 1, nickname.c_str(), -1, SQLITE_STATIC);
+            
+            if (sqlite3_step(checkStmt) == SQLITE_DONE) // Пользователь не существует
+            {
+                sqlite3_finalize(checkStmt);
+                
+                std::string salt = generateRandomSalt();
+                std::string hashedPassword = hashPassword(password, salt);
+                
+                const char* insertQuery = 
+                    "INSERT INTO Users (nickname, password, salt, avatar_path, created_at) "
+                    "VALUES (?, ?, ?, 'default_avatar', CURRENT_TIMESTAMP)";
+                    
+                sqlite3_stmt* insertStmt;
+                if (sqlite3_prepare_v2(db, insertQuery, -1, &insertStmt, nullptr) == SQLITE_OK)
+                {
+                    sqlite3_bind_text(insertStmt, 1, nickname.c_str(), -1, SQLITE_STATIC);
+                    sqlite3_bind_text(insertStmt, 2, hashedPassword.c_str(), -1, SQLITE_STATIC);
+                    sqlite3_bind_text(insertStmt, 3, salt.c_str(), -1, SQLITE_STATIC);
+                    
+                    if (sqlite3_step(insertStmt) == SQLITE_DONE)
+                    {
+                        userId = sqlite3_last_insert_rowid(db);
+                        success = true;
+                        sqlite3_exec(db, "COMMIT", nullptr, nullptr, nullptr);
+                    }
+                    else
+                    {
+                        errorMessage = sqlite3_errmsg(db);
+                        sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr);
+                    }
+                    
+                    sqlite3_finalize(insertStmt);
+                }
+                else
+                {
+                    errorMessage = sqlite3_errmsg(db);
+                    sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr);
+                }
+            }
+            else
+            {
+                errorMessage = "User already exists";
+                sqlite3_finalize(checkStmt);
+                sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr);
+            }
+        }
+        else
+        {
+            errorMessage = sqlite3_errmsg(db);
+            sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr);
+        }
+        
+        sqlite3_close(db);
+    }
+    
+    std::cout << "Registration attempt for user " << nickname 
+              << ": " << (success ? "success" : "failed - " + errorMessage) << std::endl;
+    
+    Json::Value response;
+    response["type"] = "REGISTRATION_RESULT";
+    response["success"] = success;
+    response["userId"] = userId;
+    if (!success) {
+        response["error"] = errorMessage;
+    }
+    
+    std::string responseStr = Json::FastWriter().write(response) + '\0';
+    boost::asio::write(socket, boost::asio::buffer(responseStr));
+}
+
+
+
+
+void NetworkGameServer::handleAuthenticate(const Json::Value& root, tcp::socket& socket)
+{
+    std::string nickname = root["nickname"].asString();
+    std::string password = root["password"].asString();
+    
+    bool success = false;
+    int32_t userId = -1;
+    std::string errorMessage;
+    
+    sqlite3* db;
+    int rc = sqlite3_open(dbPath.c_str(), &db);
+    if (rc != SQLITE_OK)
+    {
+        errorMessage = sqlite3_errmsg(db);
+        std::cerr << "Failed to open database: " << errorMessage << std::endl;
+        sqlite3_close(db);
+    }
+    else
+    {
+        const char* query = "SELECT user_id, password, salt FROM Users WHERE nickname = ?";
+        sqlite3_stmt* stmt;
+        
+        if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_text(stmt, 1, nickname.c_str(), -1, SQLITE_STATIC);
+            
+            if (sqlite3_step(stmt) == SQLITE_ROW)
+            {
+                userId = sqlite3_column_int(stmt, 0);
+                std::string storedHash = (const char*)sqlite3_column_text(stmt, 1);
+                std::string storedSalt = (const char*)sqlite3_column_text(stmt, 2);
+                
+                std::string hashedPassword = hashPassword(password, storedSalt);
+                success = (storedHash == hashedPassword);
+                
+                if (!success) {
+                    errorMessage = "Invalid password";
+                }
+                
+                std::cout << "Authentication details for " << nickname << ":" << std::endl
+                         << "Stored hash: " << storedHash << std::endl
+                         << "Generated hash: " << hashedPassword << std::endl;
+            }
+            else
+            {
+                errorMessage = "User not found";
+            }
+            sqlite3_finalize(stmt);
+        }
+        else
+        {
+            errorMessage = sqlite3_errmsg(db);
+        }
+        
+        sqlite3_close(db);
+    }
+    
+    std::cout << "Authentication attempt for user " << nickname 
+              << ": " << (success ? "success" : "failed - " + errorMessage) << std::endl;
+    
+    Json::Value response;
+    response["type"] = "AUTHENTICATION_RESULT";
+    response["success"] = success;
+    response["userId"] = userId;
+    if (!success) {
+        response["error"] = errorMessage;
+    }
+    
+    std::string responseStr = Json::FastWriter().write(response) + '\0';
+    boost::asio::write(socket, boost::asio::buffer(responseStr));
 }

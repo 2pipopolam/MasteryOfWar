@@ -16,10 +16,19 @@ int main() {
 
 	auto& server = NetworkGameServer::getInstance();
     
+	/*
 	if (!server.initialize(7777)) {
 		std::cerr << "Failed to initialize server" << std::endl;
 		return 1;
 	}
+	*/
+
+
+	if (!NetworkGameServer::getInstance().initialize(7777, "/app/DB/game.db")) {
+    	std::cerr << "Failed to initialize server" << std::endl;
+    	return 1;
+	}
+
 
 	std::cout << "Server started on port 7777" << std::endl;
 

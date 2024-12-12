@@ -5,17 +5,26 @@ def init_database():
     # Path to the database in DB folder
     db_path = "DB/game.db"
     
-    # Remove old database if exists
+    # Check if database already exists with proper structure
     if os.path.exists(db_path):
-        os.remove(db_path)
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Check if required tables exist
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Users'")
+            if cursor.fetchone():
+                print("Database already initialized, skipping initialization")
+                conn.close()
+                return
+            conn.close()
+        except sqlite3.Error as e:
+            print(f"Error checking database: {e}")      
     
-    # Create DB folder if it doesn't exist
+
     os.makedirs("DB", exist_ok=True)
     
-    # Connect to database (creates new if doesn't exist)
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    
+   
     # Create tables
     cursor.executescript("""
     -- Users table
