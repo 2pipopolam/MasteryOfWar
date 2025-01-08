@@ -38,8 +38,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Grenade")
 	TSubclassOf<class AGrenadeProjectile> GrenadeProjectileClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Grenade|Sound")
-	USoundBase* ThrowSound;
+	//UPROPERTY(EditDefaultsOnly, Category = "Grenade|Sound")
+	//USoundBase* ThrowSound;
 
 	UPROPERTY()
 	FTimerHandle RespawnTimerHandle;

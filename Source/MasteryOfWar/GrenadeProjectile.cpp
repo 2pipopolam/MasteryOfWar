@@ -82,11 +82,13 @@ void AGrenadeProjectile::BeginPlay()
     );
 }
 
+
 void AGrenadeProjectile::OnGrenadeHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
                                      UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
                                      const FHitResult& Hit)
 {
-    if (GrenadeConfig.BounceSound)
+    
+    /*if (GrenadeConfig.BounceSound)
     {
         UGameplayStatics::PlaySoundAtLocation(
             this,
@@ -94,7 +96,9 @@ void AGrenadeProjectile::OnGrenadeHit(UPrimitiveComponent* HitComponent, AActor*
             GetActorLocation()
         );
     }
+    */
 }
+
 
 
 void AGrenadeProjectile::SetupInitialCollision()

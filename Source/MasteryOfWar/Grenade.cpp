@@ -51,11 +51,11 @@ void AGrenade::LoadWeaponAssets()
         GrenadeProjectileClass = ProjectileClassFinder.Class;
     }
 
-    static ConstructorHelpers::FObjectFinder<USoundBase> ThrowSFX(TEXT("/Game/Weapons/Sounds/grenade_throw"));
-    if (ThrowSFX.Succeeded())
-    {
-        ThrowSound = ThrowSFX.Object;
-    }
+    //static ConstructorHelpers::FObjectFinder<USoundBase> ThrowSFX(TEXT("/Game/Weapons/Sounds/grenade_throw"));
+    //if (ThrowSFX.Succeeded())
+    //{
+        //ThrowSound = ThrowSFX.Object;
+    //}
 }
 
 void AGrenade::BeginPlay()
@@ -129,10 +129,10 @@ void AGrenade::Fire()
             ProjectileMovement->bSimulationEnabled = true;
         }
 
-        if (ThrowSound)
-        {
-            UGameplayStatics::PlaySoundAtLocation(this, ThrowSound, SpawnLocation);
-        }
+        //if (ThrowSound)
+        //{
+            //UGameplayStatics::PlaySoundAtLocation(this, ThrowSound, SpawnLocation);
+        //}
 
         GetWorld()->GetTimerManager().SetTimer(
             RespawnTimerHandle,
