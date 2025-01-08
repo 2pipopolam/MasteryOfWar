@@ -6,7 +6,7 @@
 		},
 		{
 			"name": "UE5",
-			"path": "/home/pipopolam/UE5"
+			"path": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 		}
 	],
 	"settings": {
@@ -30,13 +30,13 @@
 					"MasteryOfWar",
 					"Linux",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -47,7 +47,7 @@
 					"MasteryOfWar",
 					"Linux",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -56,7 +56,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -67,14 +67,14 @@
 					"MasteryOfWar",
 					"Linux",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -85,13 +85,13 @@
 					"MasteryOfWar",
 					"Linux",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -102,7 +102,7 @@
 					"MasteryOfWar",
 					"Linux",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -111,7 +111,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -122,14 +122,14 @@
 					"MasteryOfWar",
 					"Linux",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -140,13 +140,13 @@
 					"MasteryOfWar",
 					"Linux",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -157,7 +157,7 @@
 					"MasteryOfWar",
 					"Linux",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -166,7 +166,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -177,14 +177,14 @@
 					"MasteryOfWar",
 					"Linux",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -195,13 +195,13 @@
 					"MasteryOfWar",
 					"Linux",
 					"Test",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -212,7 +212,7 @@
 					"MasteryOfWar",
 					"Linux",
 					"Test",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -221,7 +221,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -232,14 +232,14 @@
 					"MasteryOfWar",
 					"Linux",
 					"Test",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -250,13 +250,13 @@
 					"MasteryOfWar",
 					"Linux",
 					"Shipping",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -267,7 +267,7 @@
 					"MasteryOfWar",
 					"Linux",
 					"Shipping",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -276,7 +276,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -287,14 +287,14 @@
 					"MasteryOfWar",
 					"Linux",
 					"Shipping",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -305,13 +305,13 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -322,7 +322,7 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -331,7 +331,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -342,14 +342,14 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -360,13 +360,13 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -377,7 +377,7 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -386,7 +386,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -397,14 +397,14 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -415,13 +415,13 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -432,7 +432,7 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -441,7 +441,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -452,14 +452,14 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -470,13 +470,13 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Test",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -487,7 +487,7 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Test",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -496,7 +496,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -507,14 +507,14 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Test",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -525,13 +525,13 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Shipping",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -542,7 +542,7 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Shipping",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -551,7 +551,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -562,14 +562,14 @@
 					"MasteryOfWar",
 					"LinuxArm64",
 					"Shipping",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -580,13 +580,13 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -597,7 +597,7 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -606,7 +606,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -617,14 +617,14 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"Debug",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -635,13 +635,13 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -652,7 +652,7 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -661,7 +661,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -672,14 +672,14 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"DebugGame",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -690,13 +690,13 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -707,7 +707,7 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex"
 				],
 				"problemMatcher": "$msCompile",
@@ -716,7 +716,7 @@
 				],
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			},
 			{
@@ -727,14 +727,14 @@
 					"MasteryOfWarEditor",
 					"Linux",
 					"Development",
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject",
 					"-waitmutex",
 					"-clean"
 				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
-					"cwd": "/home/pipopolam/UE5"
+					"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 				}
 			}
 		]
@@ -745,100 +745,100 @@
 			{
 				"name": "Launch MasteryOfWar (Debug)",
 				"request": "launch",
-				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Debug",
+				"program": "/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Debug",
 				"preLaunchTask": "MasteryOfWar Linux Debug Build",
 				"args": [
 				],
-				"cwd": "/home/pipopolam/UE5",
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4",
 				"type": "cppdbg",
-				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"visualizerFile": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
 				"showDisplayString": true
 			},
 			{
 				"name": "Launch MasteryOfWar (DebugGame)",
 				"request": "launch",
-				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-DebugGame",
+				"program": "/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-DebugGame",
 				"preLaunchTask": "MasteryOfWar Linux DebugGame Build",
 				"args": [
 				],
-				"cwd": "/home/pipopolam/UE5",
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4",
 				"type": "cppdbg",
-				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"visualizerFile": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
 				"showDisplayString": true
 			},
 			{
 				"name": "Launch MasteryOfWar (Development)",
 				"request": "launch",
-				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame",
+				"program": "/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame",
 				"preLaunchTask": "MasteryOfWar Linux Development Build",
 				"args": [
 				],
-				"cwd": "/home/pipopolam/UE5",
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4",
 				"type": "cppdbg",
-				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"visualizerFile": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
 				"showDisplayString": true
 			},
 			{
 				"name": "Launch MasteryOfWar (Test)",
 				"request": "launch",
-				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Test",
+				"program": "/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Test",
 				"preLaunchTask": "MasteryOfWar Linux Test Build",
 				"args": [
 				],
-				"cwd": "/home/pipopolam/UE5",
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4",
 				"type": "cppdbg",
-				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"visualizerFile": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
 				"showDisplayString": true
 			},
 			{
 				"name": "Launch MasteryOfWar (Shipping)",
 				"request": "launch",
-				"program": "/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Shipping",
+				"program": "/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/Binaries/Linux/UnrealGame-Linux-Shipping",
 				"preLaunchTask": "MasteryOfWar Linux Shipping Build",
 				"args": [
 				],
-				"cwd": "/home/pipopolam/UE5",
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4",
 				"type": "cppdbg",
-				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"visualizerFile": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
 				"showDisplayString": true
 			},
 			{
 				"name": "Launch MasteryOfWarEditor (Debug)",
 				"request": "launch",
-				"program": "/home/pipopolam/UE5/Engine/Binaries/Linux/UnrealEditor-Linux-Debug",
+				"program": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Binaries/Linux/UnrealEditor-Linux-Debug",
 				"preLaunchTask": "MasteryOfWarEditor Linux Debug Build",
 				"args": [
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
 				],
-				"cwd": "/home/pipopolam/UE5",
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4",
 				"type": "cppdbg",
-				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"visualizerFile": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
 				"showDisplayString": true
 			},
 			{
 				"name": "Launch MasteryOfWarEditor (DebugGame)",
 				"request": "launch",
-				"program": "/home/pipopolam/UE5/Engine/Binaries/Linux/UnrealEditor-Linux-DebugGame",
+				"program": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Binaries/Linux/UnrealEditor-Linux-DebugGame",
 				"preLaunchTask": "MasteryOfWarEditor Linux DebugGame Build",
 				"args": [
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
 				],
-				"cwd": "/home/pipopolam/UE5",
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4",
 				"type": "cppdbg",
-				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"visualizerFile": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
 				"showDisplayString": true
 			},
 			{
 				"name": "Launch MasteryOfWarEditor (Development)",
 				"request": "launch",
-				"program": "/home/pipopolam/UE5/Engine/Binaries/Linux/UnrealEditor",
+				"program": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Binaries/Linux/UnrealEditor",
 				"preLaunchTask": "MasteryOfWarEditor Linux Development Build",
 				"args": [
-					"/home/pipopolam/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
+					"/home/dohodyaga/Documents/Unreal Projects/MasteryOfWar/MasteryOfWar.uproject"
 				],
-				"cwd": "/home/pipopolam/UE5",
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4",
 				"type": "cppdbg",
-				"visualizerFile": "/home/pipopolam/UE5/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
+				"visualizerFile": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Extras/VisualStudioDebugging/Unreal.natvis",
 				"showDisplayString": true
 			},
 			{
@@ -846,7 +846,7 @@
 				"type": "coreclr",
 				"request": "launch",
 				"preLaunchTask": "UnrealBuildTool Linux Development Build",
-				"program": "/home/pipopolam/UE5/Engine/Build/BatchFiles/RunUBT.bat",
+				"program": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4/Engine/Build/BatchFiles/RunUBT.bat",
 				"args": [
 					"-projectfiles",
 					"-vscode",
@@ -856,7 +856,7 @@
 				"console": "internalConsole",
 				"internalConsoleOptions": "openOnSessionStart",
 				"stopAtEntry": false,
-				"cwd": "/home/pipopolam/UE5"
+				"cwd": "/home/dohodyaga/Linux_Unreal_Engine_5.4.4"
 			}
 		]
 	}
